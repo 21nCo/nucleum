@@ -25,6 +25,7 @@ import {
   replayFileQueue,
   resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
+  toRecordsView,
   type QueuedFileClaim,
   type QueuedFileReferences
 } from "@nucleum/shared-state/files/file-queue";
@@ -68,6 +69,24 @@ let latestSync: Promise<void> = Promise.resolve();
 let isAuthorityPending = false;
 let ownerEpoch = 0;
 let ownerUserId: string | undefined;
+/**
+ * Who may send replay on this page, until the session ends (see
+ * isReplayAuthorized and endAccountUploadReplay): `liveOwner` is the cloud
+ * account, at the region it names, that the latest live session confirmed
+ * (null before one did or once a resolution stopped the replay);
+ * `contradictedUserIds` are the users a live session showed are not the
+ * signed-in account, or that a session which ended knew; `fileGrantUserIds`
+ * are the users a file operation requested the client for while not
+ * contradicted.
+ */
+const replayAuthorization = {
+  liveOwner: null as FileFnAccountScope | null,
+  contradictedUserIds: new Set<string>(),
+  fileGrantUserIds: new Set<string>()
+};
+/** What each client runs when the replay authorization expands. */
+const replayWaiters = new Set<() => void>();
+let stopLiveBindWait: () => void = () => undefined;
 const pendingDeleteDrains = new Map<string, Promise<void>>();
 
 /**
@@ -146,8 +165,225 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
   return currentEntry === entry ? client : getFileFnClient();
 }
 
-/** Binds the client to the account state once, then syncs it with the account. */
+/**
+ * Starts the signed-in cloud account's upload replay once its stored session
+ * is resolved, so files queued before a reload upload also when the page never
+ * renders or captures a file. It binds the FileFn client to the account state
+ * (see getFileFnClient); signing out tears the client down. Tabs started
+ * together share the queue as described in replayFileQueue.
+ *
+ * A client bound this way sends nothing (no offline replay, queue replay or
+ * pending delete) until its replay is authorized (see isReplayAuthorized):
+ * `liveSession` is the account and region a live session establishes. Without
+ * it (a cached cloud session restored offline) an earlier live confirmation no
+ * longer counts (see stopAccountUploadReplay), and the client is bound and
+ * waits for the next one. With it, the client is bound only once the account
+ * state carries the same cloud user at the same region, waiting while it
+ * carries no cloud user yet; every other user the page knows, or the account
+ * state publishes, is contradicted until a live session confirms it, a bound
+ * client of another user or region is torn down, a pending bind of another
+ * user creates none (see cancelPendingBind), and an account state seeded with
+ * another user binds nothing. The account state, the queue and the pending
+ * deletes stay as they are.
+ */
+export function startAccountUploadReplay(
+  liveSession?: FileFnAccountScope
+): void {
+  if (!liveSession) {
+    if (replayAuthorization.liveOwner) stopAccountUploadReplay();
+    bindToAccount();
+    return;
+  }
+  const { contradictedUserIds, fileGrantUserIds } = replayAuthorization;
+  replayAuthorization.liveOwner = liveSession;
+  contradictedUserIds.delete(liveSession.userId);
+  const known = [
+    ...fileGrantUserIds,
+    currentEntry?.userId,
+    resolveFileFnAccountScope(account.get())?.userId
+  ];
+  for (const userId of known) {
+    if (userId && userId !== liveSession.userId) {
+      contradictedUserIds.add(userId);
+      fileGrantUserIds.delete(userId);
+    }
+  }
+  stopLiveBindWait();
+  cancelPendingBind(liveSession.userId);
+  const entry = currentEntry;
+  if (entry && !isLiveReplayOwner(entry.userId, entry.baseUrl)) {
+    fileGrantUserIds.delete(entry.userId);
+    tearDownFileFnClient();
+  }
+  notifyReplayWaiters();
+  let isSettled = false;
+  let unsubscribe: (() => void) | undefined;
+  const settle = () => {
+    isSettled = true;
+    unsubscribe?.();
+  };
+  stopLiveBindWait = settle;
+  unsubscribe = account.subscribe((value) => {
+    const scope = resolveFileFnAccountScope(value);
+    if (isSettled || !scope) return;
+    settle();
+    if (isLiveSessionScope(scope, liveSession)) {
+      bindToAccount();
+    } else {
+      if (scope.userId !== liveSession.userId) {
+        contradictedUserIds.add(scope.userId);
+        cancelPendingBind(liveSession.userId);
+      }
+      logger.warn({ at: "filefn.uploadReplay.start.accountMismatch" });
+    }
+  });
+  if (isSettled) unsubscribe();
+}
+
+/**
+ * Stops the upload replay the session restore started, once the stored session
+ * resolves as expired, signed out, local-only, unavailable or only as the
+ * cached session: the client it bound is torn down, and the account state,
+ * the queue, the pending deletes and the users a live session contradicted
+ * stay as they are. A client a file operation requested, or its pending
+ * stored-region bind (see cancelPendingBind), is left to it.
+ */
+export function stopAccountUploadReplay(): void {
+  const { fileGrantUserIds } = replayAuthorization;
+  replayAuthorization.liveOwner = null;
+  stopLiveBindWait();
+  if (!fileGrantUserIds.has(ownerUserId ?? "")) cancelPendingBind();
+  if (!fileGrantUserIds.has(currentEntry?.userId ?? "")) {
+    tearDownFileFnClient();
+  }
+}
+
+/**
+ * Ends the page's session for the upload replay on sign-out: every grant is
+ * cleared and every user the session knew (its live owner, file grants, bound
+ * client and the account state's cloud user) is contradicted, so no file
+ * operation during or after the sign-out authorizes their replay again; only
+ * a later live session that confirms a user does. The bound client is torn
+ * down, and the queue and the pending deletes stay as they are.
+ */
+export function endAccountUploadReplay(): void {
+  const { liveOwner, contradictedUserIds, fileGrantUserIds } =
+    replayAuthorization;
+  const known = [
+    liveOwner?.userId,
+    ...fileGrantUserIds,
+    currentEntry?.userId,
+    resolveFileFnAccountScope(account.get())?.userId
+  ];
+  for (const userId of known) {
+    if (userId) contradictedUserIds.add(userId);
+  }
+  replayAuthorization.liveOwner = null;
+  fileGrantUserIds.clear();
+  stopLiveBindWait();
+  cancelPendingBind();
+  tearDownFileFnClient();
+}
+
+function isLiveSessionScope(
+  scope: FileFnAccountScope,
+  liveSession: FileFnAccountScope
+): boolean {
+  return (
+    scope.userId === liveSession.userId &&
+    (!scope.region ||
+      !liveSession.region ||
+      resolveFileFnBaseUrl(scope.region) ===
+        resolveFileFnBaseUrl(liveSession.region))
+  );
+}
+
+/**
+ * Whether the account may send replay (offline uploads, queued files or
+ * pending deletes) at the authority now: never once a live session of this
+ * page's session contradicted it; otherwise when a file operation requested
+ * its client (at every authority, as a file page does) or the latest live
+ * session confirmed it at that authority.
+ */
+function isReplayAuthorized(userId: string, baseUrl: string): boolean {
+  if (isContradicted(userId)) return false;
+  return (
+    replayAuthorization.fileGrantUserIds.has(userId) ||
+    isLiveReplayOwner(userId, baseUrl)
+  );
+}
+
+function isContradicted(userId: string): boolean {
+  const { liveOwner, contradictedUserIds } = replayAuthorization;
+  return (
+    contradictedUserIds.has(userId) ||
+    (liveOwner !== null && liveOwner.userId !== userId)
+  );
+}
+
+function isLiveReplayOwner(userId: string, baseUrl: string): boolean {
+  const owner = replayAuthorization.liveOwner;
+  return (
+    owner?.userId === userId &&
+    (!owner.region || resolveFileFnBaseUrl(owner.region) === baseUrl)
+  );
+}
+
+/** Starts the replay once it is authorized, unless the client is torn down first. */
+function whenReplayAuthorized(
+  userId: string,
+  baseUrl: string,
+  teardown: AbortSignal,
+  start: () => void
+) {
+  if (teardown.aborted) return;
+  const tryStart = () => {
+    if (teardown.aborted || !isReplayAuthorized(userId, baseUrl)) return;
+    replayWaiters.delete(tryStart);
+    start();
+  };
+  onReplayAuthorizationExpanded(tryStart, teardown);
+  tryStart();
+}
+
+/** Runs `listener` on every expansion of the replay authorization until teardown. */
+function onReplayAuthorizationExpanded(
+  listener: () => void,
+  teardown: AbortSignal
+) {
+  if (teardown.aborted) return;
+  replayWaiters.add(listener);
+  teardown.addEventListener("abort", () => replayWaiters.delete(listener), {
+    once: true
+  });
+}
+
+function notifyReplayWaiters() {
+  for (const tryStart of [...replayWaiters]) tryStart();
+}
+
+/**
+ * Binds the client to the account state for a file operation. Its replay
+ * starts as soon as it is created, unless a live session contradicted the
+ * account (it stays contradicted when that session's confirmation lapses),
+ * whose replay then waits for one that confirms it.
+ */
 function syncWithAccount() {
+  const userId = resolveFileFnAccountScope(account.get())?.userId;
+  const { liveOwner, contradictedUserIds, fileGrantUserIds } =
+    replayAuthorization;
+  if (userId && liveOwner && liveOwner.userId !== userId) {
+    contradictedUserIds.add(userId);
+  }
+  if (userId && !isContradicted(userId) && !fileGrantUserIds.has(userId)) {
+    fileGrantUserIds.add(userId);
+    notifyReplayWaiters();
+  }
+  bindToAccount();
+}
+
+/** Binds the client to the account state once, then syncs it with the account. */
+function bindToAccount() {
   if (!isBoundToAccount) {
     isBoundToAccount = true;
     account.subscribe(syncFileFnClient);
@@ -194,6 +430,17 @@ function syncFileFnClient(value: UserAccount | null | undefined) {
   latestSync = Promise.resolve();
 }
 
+/**
+ * Drops the pending stored-region bind (see syncFileFnClient) unless it binds
+ * `userId`, once a session contradicted or ended its user, so the read creates
+ * no client for that user. A later sync binds the account state again.
+ */
+function cancelPendingBind(userId?: string) {
+  if (!isAuthorityPending || ownerUserId === userId) return;
+  syncGeneration += 1;
+  isAuthorityPending = false;
+}
+
 function bindToStoredRegion(userId: string, generation: number) {
   const sync = clientStorage.get(ClientStorageKey.REGION).then((stored) => {
     if (generation === syncGeneration) {
@@ -207,7 +454,16 @@ function bindToStoredRegion(userId: string, generation: number) {
   return sync;
 }
 
+/**
+ * Creates the account's client at the region's authority, unless it is
+ * already bound there. A user a live session contradicted gets none, and its
+ * client is torn down, until a live session confirms it.
+ */
 function bindFileFnClient(userId: string, region: string) {
+  if (isContradicted(userId)) {
+    tearDownFileFnClient();
+    return;
+  }
   const baseUrl = resolveFileFnBaseUrl(region);
   const key = `${userId}:${baseUrl}`;
   if (currentEntry?.key === key) return;
@@ -239,7 +495,8 @@ function tearDownFileFnClient() {
  * Creates an account's FileFn client. The SDK's HEIC preprocessing is off, so
  * the original keeps its bytes and the processing mode owns conversion. The
  * client sends the account's pending deletes, at every authority, now and on
- * every reconnect until it is torn down.
+ * every reconnect and every expansion of the replay authorization until it
+ * is torn down, once its replay is authorized (see startAccountUploadReplay).
  */
 async function createAccountFileFnClient(
   userId: string,
@@ -251,11 +508,11 @@ async function createAccountFileFnClient(
     baseUrl,
     teardown,
     { enabled: true, opfsDir: resolveFileFnOfflineDir(userId) },
-    sent
+    { sent }
   );
   const guarded = guardFileFnClient(client, teardown);
   countSentRequests(guarded, sent);
-  if (!teardown.aborted) {
+  whenReplayAuthorized(userId, baseUrl, teardown, () => {
     startOfflineReplayWhenOwner(userId, client, teardown);
     startFileQueueReplay(userId, baseUrl, guarded, teardown);
     const drain = () =>
@@ -266,7 +523,8 @@ async function createAccountFileFnClient(
       );
     drain();
     globalThis.addEventListener?.("online", drain, { signal: teardown });
-  }
+    onReplayAuthorizationExpanded(drain, teardown);
+  });
   return guarded;
 }
 
@@ -294,8 +552,11 @@ function startFileQueueReplay(
   client: FileFnClient,
   teardown: AbortSignal
 ) {
-  const replay = () =>
-    replayAccountFileQueue({ userId, baseUrl, client, signal: teardown });
+  const replay = () => {
+    if (isReplayAuthorized(userId, baseUrl)) {
+      replayAccountFileQueue({ userId, baseUrl, client, signal: teardown });
+    }
+  };
   const stop = datafnRuntime.subscribe((runtime) => {
     if (runtime?.namespace === `user:${userId}`) replay();
   });
@@ -309,14 +570,38 @@ function startFileQueueReplay(
   globalThis.addEventListener?.("online", replay, { signal: teardown });
 }
 
+/**
+ * Replays the account's queue (see replayFileQueue) with its records as the
+ * DataFn runtime current now holds them: once another runtime replaces it,
+ * also one of the same account at the same authority, the references are no
+ * longer current, so no decision read from the replaced runtime is acted on,
+ * also by the retries and deadline passes that reuse them; the replay that
+ * runtime starts decides again (see startFileQueueReplay). They watch the
+ * runtime until it is replaced or the client is torn down.
+ */
 function replayAccountFileQueue(uploader: FileQueueUploader) {
   const { userId, baseUrl, client, signal } = uploader;
   if (signal.aborted || isAppOffline()) return;
   const namespace = `user:${userId}`;
+  const bound = { runtime: undefined as unknown, isReplaced: false };
+  let stopWatching = () => undefined as void;
+  const unwatch = () => {
+    stopWatching();
+    signal.removeEventListener("abort", unwatch);
+  };
+  stopWatching = datafnRuntime.subscribe((runtime) => {
+    if (bound.runtime === undefined) bound.runtime = runtime;
+    else if (runtime !== bound.runtime && !bound.isReplaced) {
+      bound.isReplaced = true;
+      queueMicrotask(unwatch);
+    }
+  });
+  signal.addEventListener("abort", unwatch, { once: true });
   const isAccountRecords = () => {
     const runtime = get(datafnRuntime);
     return (
       !signal.aborted &&
+      !bound.isReplaced &&
       datafn.currentNamespace() === namespace &&
       runtime?.namespace === namespace &&
       runtime.remoteUrl?.replace(/\/datafn\/?$/, "") ===
@@ -326,6 +611,7 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
   const references: QueuedFileReferences = {
     owner: { userId, baseUrl },
     isCurrent: isAccountRecords,
+    view: () => toRecordsView(get(datafnRuntime)),
     async sync() {
       if (!isAccountRecords()) return false;
       if (!get(datafnRuntime)?.storage) return true;
@@ -346,10 +632,14 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
       return result.data.length > 0;
     },
     async discard(fileId) {
+      if (!isAccountRecords()) return false;
       await client.deleteFile(fileId).catch(async (error: unknown) => {
         logger.warn({ at: "filefn.client.queue.discard", fileId, error });
-        await recordPendingDelete(userId, baseUrl, fileId);
+        if (isAccountRecords()) {
+          await recordPendingDelete(userId, baseUrl, fileId);
+        }
       });
+      return isAccountRecords();
     }
   };
   replayFileQueue(
@@ -472,20 +762,21 @@ export async function uploadQueuedFiles(): Promise<void> {
 
 /**
  * Creates an SDK client at an authority, authenticated as the signed-in
- * account, whose requests end when the teardown signal aborts and whose
+ * account, whose requests end when the teardown signal aborts, are each
+ * dispatched only while `isDispatchAllowed` (when given) holds, and whose
  * upload requests add to `sent` once dispatched (see createTeardownFetch).
  */
 async function createSdkClient(
   baseUrl: string,
   teardown: AbortSignal,
   offline: { enabled: boolean; opfsDir?: string },
-  sent?: Map<string, number>
+  dispatch: DispatchGate = {}
 ): Promise<FileFnClient> {
   const transport = await createNucleumAuthFnTransportAuth();
   return createFileFnClient({
     baseUrl,
     credentials: (await transport.getCredentials?.()) ?? "include",
-    fetch: createTeardownFetch(teardown, sent),
+    fetch: createTeardownFetch(teardown, dispatch),
     getAuthHeaders: async () => {
       teardown.throwIfAborted();
       return Object.fromEntries(
@@ -547,6 +838,13 @@ function startOfflineReplay(client: FileFnClient) {
 
 function createTeardownError() {
   return new DOMException("The FileFn client was torn down", "AbortError");
+}
+
+function createDispatchRefusedError() {
+  return new DOMException(
+    "The FileFn replay is not authorized at this authority",
+    "AbortError"
+  );
 }
 
 /**
@@ -808,9 +1106,11 @@ async function recordPendingDelete(
 }
 
 /**
- * Sends the account's pending deletes at every authority that has one: at
- * the client's own authority through it, at another through a client of that
- * authority made for the account and ended with the client's teardown.
+ * Sends the account's pending deletes at every authority that has one and
+ * where its replay is authorized (see isReplayAuthorized): at the client's
+ * own authority through it, at another through a client of that authority
+ * made for the account and ended with the client's teardown, which sends each
+ * request, an SDK retry included, only while the replay is authorized there.
  */
 async function drainAccountPendingDeletes(
   userId: string,
@@ -827,11 +1127,17 @@ async function drainAccountPendingDeletes(
   }
   for (const authority of authorities) {
     if (teardown.aborted) return;
-    await drainPendingDeletes(userId, authority, async () =>
+    if (!isReplayAuthorized(userId, authority)) continue;
+    await drainPendingDeletes(userId, authority, teardown, async () =>
       authority === baseUrl
         ? client
         : guardFileFnClient(
-            await createSdkClient(authority, teardown, { enabled: false }),
+            await createSdkClient(
+              authority,
+              teardown,
+              { enabled: false },
+              { isDispatchAllowed: () => isReplayAuthorized(userId, authority) }
+            ),
             teardown
           )
     );
@@ -845,11 +1151,12 @@ async function drainAccountPendingDeletes(
 function drainPendingDeletes(
   userId: string,
   baseUrl: string,
+  teardown: AbortSignal,
   getClient: () => Promise<FileFnClient>
 ): Promise<void> {
   const key = `${userId}:${baseUrl}`;
   const drain = (pendingDeleteDrains.get(key) ?? Promise.resolve())
-    .then(() => replayPendingDeletes(userId, baseUrl, getClient))
+    .then(() => replayPendingDeletes(userId, baseUrl, teardown, getClient))
     .catch((error: unknown) => {
       logger.error({ at: "filefn.client.pendingDelete", error });
     });
@@ -901,10 +1208,15 @@ async function getPendingDeleteDir(
  * Sends the account's pending deletes at an authority, dropping each one
  * that succeeds or finds the file already gone and keeping each other
  * failure for the next drain. The client is made only when one is pending.
+ * The client is made, and each delete sent, only while the client is not
+ * torn down and the replay is authorized at the authority (see
+ * isReplayAuthorized); once it is not, the drain stops and keeps the rest
+ * for a later one.
  */
 async function replayPendingDeletes(
   userId: string,
   baseUrl: string,
+  teardown: AbortSignal,
   getClient: () => Promise<FileFnClient>
 ) {
   const dir = await getPendingDeleteDir(userId, baseUrl, false);
@@ -914,9 +1226,12 @@ async function replayPendingDeletes(
       fileIds.add(decodeURIComponent(name));
     }
   }
-  if (fileIds.size === 0) return;
+  const isSendable = () =>
+    !teardown.aborted && isReplayAuthorized(userId, baseUrl);
+  if (fileIds.size === 0 || !isSendable()) return;
   const client = await getClient();
   for (const fileId of fileIds) {
+    if (!isSendable()) return;
     try {
       await client.deleteFile(fileId).catch((error: unknown) => {
         if (!(error instanceof FileFnHttpError && error.status === 404)) {
@@ -1035,17 +1350,32 @@ function guardFileFnClient(
 }
 
 /**
+ * How an SDK client dispatches: `isDispatchAllowed`, when given, is checked
+ * right before each request, including every retry the SDK makes, and `sent`
+ * counts each upload's first request (see createTeardownFetch).
+ */
+interface DispatchGate {
+  isDispatchAllowed?: () => boolean;
+  sent?: Map<string, number>;
+}
+
+/**
  * Sends requests through the global fetch until the client is torn down, then
  * aborts in-flight requests and rejects new ones with an AbortError, which the
- * offline queue keeps staged without spending a retry. Counts in `sent` only
+ * offline queue keeps staged without spending a retry. Rejects a request with
+ * an AbortError, which the SDK does not retry, when `isDispatchAllowed` is
+ * given and does not hold right before it is sent. Counts in `sent` only
  * each upload's first request, as dispatched, by its key (see readUploadKey).
  */
 function createTeardownFetch(
   teardown: AbortSignal,
-  sent?: Map<string, number>
+  { isDispatchAllowed, sent }: DispatchGate = {}
 ): typeof fetch {
   return async (input, init) => {
     teardown.throwIfAborted();
+    if (isDispatchAllowed && !isDispatchAllowed()) {
+      throw createDispatchRefusedError();
+    }
     const linked = new AbortController();
     const sources = [teardown, init?.signal].filter(
       (signal): signal is AbortSignal => Boolean(signal)

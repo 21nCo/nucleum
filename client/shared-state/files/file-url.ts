@@ -1,17 +1,27 @@
 import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
+import account from "@nucleum/client/runtime/account/account.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
+import { clientStorage } from "@nucleum/persistence/client-storage";
+import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import {
+  isQueuedFileFailed,
+  onQueuedFileFailureChange,
   resolveFileQueueDirsOf,
-  resolveQueuedFileUrl
+  resolveQueuedFileUrl,
+  retryFailedQueuedFile,
+  type QueuedFileFailureOwner
 } from "@nucleum/shared-state/files/file-queue";
 import {
   captureFileFnOwner,
+  captureFileQueueClaim,
   captureSettledFileFnOwner,
   confirmFileFnOwner,
   getOwnedFileFnClient,
   isFileFnOwnerCurrent,
   isFileFnOwnerLive,
+  resolveFileFnAccountScope,
+  resolveFileFnBaseUrl,
   settleFileFnOwner,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
@@ -120,6 +130,137 @@ export async function resolveFileUrl(
     return undefined;
   }
   return url;
+}
+
+/**
+ * Calls `onChange` with whether a file's upload failed on this device: FileFn
+ * rejected it for good while it is still in the FileFn OPFS queue of the
+ * signed-in cloud account, or of the device's local queue, read as
+ * resolveFileUrl reads them (see isQueuedFileFailed). It reads it now,
+ * again whenever that file's failed state may have changed (see
+ * onQueuedFileFailureChange: marked, retried, removed, uploaded or written
+ * again) and whenever another cloud account, or none, is signed in,
+ * reporting the latest read only, and never once stopped; a read during
+ * which another account, or none, was signed in, or that fails, and one of
+ * a file another account or authority claimed or started (see
+ * isQueuedFileFailed), reports false, so another account or device shows the
+ * file as it shows any file it cannot resolve. Returns the stop.
+ *
+ * Reading is not a file operation: it only reads the account state, so it
+ * never requests the account's FileFn client nor authorizes its replay (see
+ * captureFileFnOwner); only the user's Retry does (see retryFileUpload). It
+ * reads at the authority the account's client binds to (see
+ * readAccountOwner), the one Retry captures, so a file shown failed is one
+ * whose Retry uploads it again. A change of the stored region alone, which
+ * the client only reads when the account state changes, is read on the
+ * next account change or failure change.
+ */
+export function watchFileUploadFailure(
+  fileId: string,
+  onChange: (isFailed: boolean) => void
+): () => void {
+  let isStopped = false;
+  let reads = 0;
+  const read = async () => {
+    const at = ++reads;
+    const isFailed = await readFileUploadFailure(fileId);
+    if (!isStopped && at === reads) onChange(isFailed);
+  };
+  const stopChanges = onQueuedFileFailureChange((changed) => {
+    if (changed === fileId) void read();
+  });
+  let readerKey: string | undefined;
+  const stopAccount = account.subscribe(() => {
+    const scope = readAccountScope();
+    const key = scope ? `${scope.userId}\n${scope.region ?? ""}` : "";
+    if (key === readerKey) return;
+    readerKey = key;
+    void read();
+  });
+  return () => {
+    isStopped = true;
+    stopChanges();
+    stopAccount();
+  };
+}
+
+/** The signed-in cloud account and its session region, null without one. */
+function readAccountScope() {
+  try {
+    return resolveFileFnAccountScope(account.get());
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.failure.owner", error });
+    return null;
+  }
+}
+
+/**
+ * The signed-in cloud account at the FileFn authority its client binds to
+ * (see syncFileFnClient): its session region's, else the stored region's,
+ * else insouth's; null without an account. Read from the account state and
+ * the stored region alone, it requests no FileFn client or replay grant.
+ */
+async function readAccountOwner(): Promise<QueuedFileFailureOwner> {
+  const scope = readAccountScope();
+  if (!scope) return null;
+  const region =
+    scope.region ??
+    (await clientStorage.get(ClientStorageKey.REGION)) ??
+    "insouth";
+  return { userId: scope.userId, baseUrl: resolveFileFnBaseUrl(region) };
+}
+
+function toReaderKey(owner: QueuedFileFailureOwner) {
+  return owner ? `${owner.userId}\n${owner.baseUrl}` : "";
+}
+
+async function readFileUploadFailure(fileId: string): Promise<boolean> {
+  try {
+    const owner = await readAccountOwner();
+    const isFailed = await isQueuedFileFailed(
+      resolveFileQueueDirsOf(owner?.userId ?? null),
+      fileId,
+      owner
+    );
+    if (!isFailed) return false;
+    return toReaderKey(await readAccountOwner()) === toReaderKey(owner);
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.failure", fileId, error });
+    return false;
+  }
+}
+
+/**
+ * Retries a file whose upload failed (see watchFileUploadFailure) from the
+ * queues of the signed-in cloud account, or the device's local queue: it
+ * uploads again on the queue's next replay, which starts now while one is
+ * running for the queue (see retryFailedQueuedFile). Resolves whether the
+ * file was failed; a retry that fails is logged and resolves false. Unlike
+ * watching, a Retry is the user's file operation, so it requests the
+ * account's FileFn client as any file operation does (see captureFileFnOwner),
+ * and retries only at the authority that client settles on (see
+ * captureFileQueueClaim) while the owner's generation lasts: a file that
+ * authority would not replay, or an owner that ended, keeps its mark.
+ */
+export async function retryFileUpload(fileId: string): Promise<boolean> {
+  try {
+    const owner = captureFileFnOwner();
+    if (!owner) {
+      return await retryFailedQueuedFile(resolveFileQueueDirsOf(null), fileId);
+    }
+    if (!isFileFnOwnerLive(owner)) return false;
+    const claim = await captureFileQueueClaim(owner);
+    if (!claim || !isFileFnOwnerLive(owner)) return false;
+    return await retryFailedQueuedFile(
+      resolveFileQueueDirsOf(owner.userId),
+      fileId,
+      claim,
+      () => isFileFnOwnerLive(owner)
+    );
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.retry", fileId, error });
+    return false;
+  }
 }
 
 /** Drops every cached URL; the next lookup of each variant resolves it again. */
