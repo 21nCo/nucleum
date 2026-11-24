@@ -8,6 +8,7 @@ import { ACCOUNT_AUTH_NAMESPACE } from './constants.js';
 
 const authority = 'http://127.0.0.1:18788';
 const email = 'existing-user@example.test';
+const fixedSocialOAuthVersion = '0.2.1';
 
 describe('OAuth sign-in linking by verified email', () => {
   let harness: AccountTestHarness;
@@ -24,22 +25,22 @@ describe('OAuth sign-in linking by verified email', () => {
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).toEqual(['google']);
   });
 
-  it('keeps Apple out of email linking until @authfn/social-oauth 0.1.8 or later is installed', () => {
+  it(`keeps Apple out of email linking until @authfn/social-oauth ${fixedSocialOAuthVersion} or later is installed`, () => {
     const version = installedSocialOAuthVersion();
-    const fixed = compareVersions(version, '0.1.8') >= 0;
+    const fixed = compareVersions(version, fixedSocialOAuthVersion) >= 0;
     expect(
       fixed,
-      `@authfn/social-oauth ${version} is installed. Once it is 0.1.8 or later, decide whether to add "apple" back to OAUTH_EMAIL_LINKING_PROVIDERS and update this test.`
+      `@authfn/social-oauth ${version} is installed. Once it is ${fixedSocialOAuthVersion} or later, decide whether to add "apple" back to OAUTH_EMAIL_LINKING_PROVIDERS and update this test.`
     ).toBe(false);
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).not.toContain('apple');
   });
 
-  it('compares versions so the guard trips at the stable 0.1.8 release', () => {
-    expect(compareVersions('0.1.7', '0.1.8')).toBeLessThan(0);
-    expect(compareVersions('0.1.8-rc.1', '0.1.8')).toBeLessThan(0);
-    expect(compareVersions('0.1.8', '0.1.8')).toBe(0);
-    expect(compareVersions('0.1.8+build.1', '0.1.8')).toBe(0);
-    expect(compareVersions('0.2.0', '0.1.8')).toBeGreaterThan(0);
+  it(`compares versions so the guard trips at the stable ${fixedSocialOAuthVersion} release`, () => {
+    expect(compareVersions('0.2.0', fixedSocialOAuthVersion)).toBeLessThan(0);
+    expect(compareVersions('0.2.1-rc.1', fixedSocialOAuthVersion)).toBeLessThan(0);
+    expect(compareVersions('0.2.1', fixedSocialOAuthVersion)).toBe(0);
+    expect(compareVersions('0.2.1+build.1', fixedSocialOAuthVersion)).toBe(0);
+    expect(compareVersions('0.2.2', fixedSocialOAuthVersion)).toBeGreaterThan(0);
   });
 
   it('turns off a provider-level linkByVerifiedEmail for providers outside the policy', () => {
