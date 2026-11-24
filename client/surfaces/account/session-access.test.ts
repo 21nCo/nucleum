@@ -12,7 +12,9 @@ const mocks = vi.hoisted(() => ({
   refreshPlan: vi.fn(),
   gotoPath: vi.fn(),
   storageGet: vi.fn(),
-  storageSet: vi.fn()
+  storageSet: vi.fn(),
+  startUploadReplay: vi.fn(),
+  ticket: { signal: new AbortController().signal, generation: 1 }
 }));
 const account = vi.hoisted(() => ({ current: undefined as any }));
 vi.mock("@nucleum/client/runtime/account/account.store", () => ({
@@ -33,6 +35,12 @@ vi.mock("@nucleum/shell/navigation/navigation", () => ({
 }));
 vi.mock("@nucleum/persistence/client-storage", () => ({
   clientStorage: { get: mocks.storageGet, set: mocks.storageSet }
+}));
+const replay = vi.hoisted(() => ({ abandon: vi.fn() }));
+vi.mock("@nucleum/surfaces/account/account-upload-replay", () => ({
+  abandonSessionResolution: replay.abandon,
+  beginSessionResolution: () => mocks.ticket,
+  startUploadReplayForSession: mocks.startUploadReplay
 }));
 vi.mock("@nucleum/client/runtime/logging/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn() }
@@ -108,5 +116,52 @@ describe("product-configured account access", () => {
     expect(mocks.storageSet).toHaveBeenCalledTimes(2);
     expect(mocks.refreshPlan).toHaveBeenCalledOnce();
     expect(mocks.gotoPath).not.toHaveBeenCalled();
+  });
+
+  it("abandons its session resolution when resolving the session fails", async () => {
+    mocks.resolve.mockRejectedValueOnce(
+      new Error("stored session read failed")
+    );
+    await expect(performLoginStatusCheck()).rejects.toThrow();
+    expect(replay.abandon).toHaveBeenCalledWith(mocks.ticket);
+    expect(mocks.startUploadReplay).not.toHaveBeenCalled();
+  });
+
+  it("abandons its session resolution when storing the live session fails", async () => {
+    mocks.resolve.mockResolvedValue({
+      status: "authenticated",
+      session: { id: "session", actorId: "123", metadata: {} },
+      storedState: {}
+    });
+    mocks.storageSet.mockRejectedValueOnce(new Error("storage write failed"));
+    await expect(performLoginStatusCheck()).rejects.toThrow();
+    expect(replay.abandon).toHaveBeenCalledWith(mocks.ticket);
+    expect(mocks.startUploadReplay).not.toHaveBeenCalled();
+  });
+
+  it("applies every resolved session to the account upload replay once", async () => {
+    const applied = async (resolution: object) => {
+      mocks.startUploadReplay.mockClear();
+      mocks.resolve.mockResolvedValue(resolution);
+      await performLoginStatusCheck();
+      expect(mocks.resolve.mock.lastCall?.[0].signal).toBe(mocks.ticket.signal);
+      return mocks.startUploadReplay.mock.calls;
+    };
+    for (const resolution of [
+      { status: "cached-cloud" },
+      {
+        status: "authenticated",
+        session: { id: "session", actorId: "123", metadata: {} },
+        storedState: {}
+      },
+      { status: "offline-only" },
+      { status: "unavailable" },
+      { status: "expired" },
+      { status: "signed-out" }
+    ]) {
+      const calls = await applied(resolution);
+      expect(calls).toEqual([[resolution, mocks.ticket]]);
+      expect(calls[0][1]).toBe(mocks.ticket);
+    }
   });
 });
