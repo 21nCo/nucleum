@@ -8,6 +8,11 @@ import { ACCOUNT_AUTH_NAMESPACE } from './constants.js';
 
 const authority = 'http://127.0.0.1:18788';
 const email = 'existing-user@example.test';
+/**
+ * First @authfn/social-oauth release that takes the Apple email only from the
+ * verified identity token. 0.2.0 does not contain the fix and 0.2.1 failed to
+ * build and was never published, so the guard trips at 0.2.2.
+ */
 const FIRST_FIXED_SOCIAL_OAUTH = '0.2.2';
 
 describe('OAuth sign-in linking by verified email', () => {
@@ -25,9 +30,6 @@ describe('OAuth sign-in linking by verified email', () => {
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).toEqual(['google']);
   });
 
-  // The fix that takes the Apple email only from the verified identity token
-  // first ships in @authfn/social-oauth 0.2.2. 0.2.0 does not contain it, and
-  // 0.2.1 failed to build and was never published, so the guard trips at 0.2.2.
   it(`keeps Apple out of email linking until @authfn/social-oauth ${FIRST_FIXED_SOCIAL_OAUTH} or later is installed`, () => {
     const version = installedSocialOAuthVersion();
     const fixed = compareVersions(version, FIRST_FIXED_SOCIAL_OAUTH) >= 0;
@@ -213,9 +215,12 @@ function compareVersions(left: string, right: string): number {
   return comparePrerelease(a.prerelease.split('.'), b.prerelease.split('.'));
 }
 
-// SemVer 2.0.0 section 11: numeric identifiers compare numerically and sort
-// before alphanumeric ones, which compare in ASCII order; a longer list wins
-// when every shared identifier is equal.
+/**
+ * Orders prerelease identifiers by SemVer 2.0.0 section 11: numeric
+ * identifiers compare numerically and sort before alphanumeric ones, which
+ * compare in ASCII order; a longer list wins when every shared identifier is
+ * equal.
+ */
 function comparePrerelease(left: string[], right: string[]): number {
   for (let index = 0; index < Math.min(left.length, right.length); index += 1) {
     const a = left[index];
@@ -236,8 +241,10 @@ function comparePrerelease(left: string[], right: string[]): number {
   return left.length - right.length;
 }
 
-// Compares digit strings without converting them to numbers, so identifiers
-// above Number.MAX_SAFE_INTEGER keep their order.
+/**
+ * Compares digit strings without converting them to numbers, so identifiers
+ * above Number.MAX_SAFE_INTEGER keep their order.
+ */
 function compareNumericIdentifiers(left: string, right: string): number {
   const a = left.replace(/^0+(?=\d)/, '');
   const b = right.replace(/^0+(?=\d)/, '');
