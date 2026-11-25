@@ -2673,6 +2673,78 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
+  it("keeps the upload of a publish whose reread verified its copy when the removal of its publishing mark fails, and uploads nothing again at the next replay", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    let isFailed = false;
+    let withdrawals = 0;
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name === "uploaded" && isFailed) withdrawals += 1;
+            if (name === "publishing" && !isFailed) {
+              isFailed = true;
+              throw new DOMException(
+                "The file system is busy",
+                "NotReadableError"
+              );
+            }
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    const started = sdk.started.length;
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(isFailed).toBe(true);
+    expect(withdrawals).toBe(0);
+    expect(sdk.started).toHaveLength(started);
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+  });
+
+  it.each([
+    ["a whole backup", true],
+    ["a backup of the queue's changes", false]
+  ])(
+    "leaves out of %s the uploaded mark a publish left unverified, so its restore publishes the capture again",
+    async (_, isWhole) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      await writeLocalEntryFile(record.fileId, "uploaded", "version-1");
+      await writeLocalEntryFile(record.fileId, "sent-thumbnail");
+      await writeLocalEntryFile(record.fileId, "publishing", "{}");
+
+      const { files } = await exportQueuedFiles(
+        LOCAL_QUEUE,
+        async () => null,
+        isWhole
+      );
+
+      expect(files.map((copy) => copy.fileId)).toEqual([record.fileId]);
+      const names = (files[0]?.marks ?? []).map((mark) => mark.name);
+      expect(names).not.toContain("uploaded");
+    }
+  );
+
   it("keeps an account-side edit made after an outdated save over the guest change fenced during it", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
@@ -4744,6 +4816,36 @@ describe("files captured offline or by a local-only user", () => {
     await expect(fence).rejects.toThrow("The disk is full");
     expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
     expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).toContain("deleted");
+  });
+
+  it("leaves no mark of a fence whose generation's mark fails after a pass verified a copy covering its change", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const copy = readLocalCopy(fileId) as never;
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== `stale.${generation}`) return;
+        await writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+          covered: [generation],
+          listed: []
+        });
+        throw new DOMException("The disk is full", "QuotaExceededError");
+      }
+    });
+
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, false, generation);
+
+    const names = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(names.filter((name) => name.startsWith("stale"))).toEqual([]);
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
   });
 
   it.each([
