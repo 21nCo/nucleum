@@ -731,9 +731,8 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * unless the copy read again covers the generation by then, the plain mark
  * if absent and the generation's mark again. A deleted mark names the
  * generation, or none (also one present) when its read failed or it wrote no
- * generation mark. A stale mark is never replaced, so an earlier build's ("")
- * keeps telling nothing, and it removes no mark: only a locked settle does
- * (see settleMarks). A `generation` is optional (no change names one).
+ * generation mark (`generation` is optional). A stale mark is never replaced,
+ * so an earlier build's ("") keeps telling nothing. It removes no mark.
  */
 export async function markQueuedFileStale(
   dir: string,
@@ -1492,7 +1491,7 @@ export async function restoreLocalQueuedFiles(
           });
           const write = writeEntryFile.bind(null, dir, entryName);
           for (const { name, text } of copy.marks ?? [])
-            await write(name, text);
+            await write(name, name === DELETED_FILE ? "" : text);
           if (copy.claim) await write(CLAIM_FILE, JSON.stringify(copy.claim));
           const { thumbnail } = copy;
           if (thumbnail && THUMBNAIL_TYPES.has(thumbnail.type)) {

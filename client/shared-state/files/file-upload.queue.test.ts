@@ -5030,6 +5030,40 @@ describe("files captured offline or by a local-only user", () => {
     expect(await readAnyRecord(record.id)).toBeUndefined();
   });
 
+  it("keeps a restored claimed capture held once signed in by its backup's deleted mark that names a delete its copy covers, and publishes nothing", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await settleLocalFileRecords();
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    // A delete fence that paused across a verified copy covering its delete
+    // left its deleted mark naming that delete; the record that copy is of
+    // is then deleted before its own fence, and a guest backup is taken.
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", covered);
+    const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+    const [copy] = files;
+    expect(copy.claim).toBeDefined();
+    expect(copy.marks).toContainEqual({ name: "deleted", text: covered });
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await queue.removeEntry(entry, { recursive: true });
+
+    await restoreLocalQueuedFiles([copy], () => false);
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+  });
+
   it("decides nothing on a runtime that replaced the one the publisher was created with, even in the same namespace", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
