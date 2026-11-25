@@ -7,7 +7,7 @@ import { interfaceApps, interfaceContract, interfaceResources, type InterfaceApp
 import type { SyncContext, SyncServer } from '../datafn/server.js';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
 import { resolveAccountUserNamespace } from '../datafn/namespace.js';
-import { createInterfaceApiRouter, keyedCreateId } from './router.js';
+import { createInterfaceApiRouter, keyedCreateId, type StoredTransaction } from './router.js';
 import { resourceSegment } from './resources.js';
 
 const base = 'http://127.0.0.1:8787';
@@ -716,7 +716,12 @@ describe('v1 writes on the real DataFn executor', () => {
    */
   function routerAround(
     app: InterfaceApp,
-    hooks: { beforeWrite?: () => Promise<void>; failQueriesAfterWrite?: boolean }
+    hooks: {
+      beforeWrite?: () => Promise<void>;
+      failQueriesAfterWrite?: boolean;
+      /** Changes the reads the router's in-transaction check makes. */
+      transactionReads?: (transaction: StoredTransaction) => StoredTransaction;
+    }
   ) {
     let beforeWrite = hooks.beforeWrite ?? null;
     let written = false;
@@ -724,7 +729,8 @@ describe('v1 writes on the real DataFn executor', () => {
     const router = createInterfaceApiRouter(app, {
       authenticate: (request) => harness.services.auth.provider.authenticate(request),
       readStored: harness.services.readSyncRecord,
-      inWriteTransaction: harness.services.inSyncWriteTransaction,
+      inWriteTransaction: (check, write) => harness.services.inSyncWriteTransaction(
+        (transaction) => check(hooks.transactionReads ? hooks.transactionReads(transaction) : transaction), write),
       getSyncServer: async () => {
         const executor = (await harness.services.getSyncServer()).executor;
         const wrapped: Executor = {
@@ -894,6 +900,70 @@ describe('v1 writes on the real DataFn executor', () => {
     } finally {
       await seed(setting(false));
     }
+  });
+
+  it.each(['create', 'update'])('rolls a %s back without a retry outside the transaction when its readback fails', async (write) => {
+    const id = `task:readback-${write}`;
+    if (write === 'update') await seed(insert('task', id, { label: 'Before the failed readback', dateUnix: 1_700_000_000_000 }));
+    let reads = 0;
+    const send = routerAround('pointron', {
+      // DataFn retries a transaction that failed as "not supported" without one.
+      transactionReads: (transaction) => ({
+        ...transaction,
+        read: async (resource, recordId, namespace) => {
+          if (resource !== 'task') return transaction.read(resource, recordId, namespace);
+          reads += 1;
+          throw new Error('readback not supported near sentinel-note-body');
+        }
+      })
+    });
+    const response = await send(write === 'create' ? '/v1/pointron/tasks' : `/v1/pointron/tasks/${id}`, actors.pointronWrite, {
+      method: write === 'create' ? 'POST' : 'PATCH',
+      body: { label: 'After the failed readback', ...(write === 'create' ? { dateUnix: 1_700_000_000_000 } : {}) }
+    });
+    await problem(response, 500, 'internal');
+    expect(reads).toBe(1);
+    const written = await json(await call('/datafn/query', actors.cookie, {
+      body: { resource: 'task', version: 1, filters: { label: { eq: 'After the failed readback' } } }
+    }), 200) as { result: { data: Body[] } };
+    expect(written.result.data).toEqual([]);
+  });
+
+  it.each(['create', 'update'])('replays a keyed %s that DataFn dedupes with the stored record', async (write) => {
+    const id = `task:replayed-${write}`;
+    if (write === 'update') await seed(insert('task', id, { label: 'Before the replay', dateUnix: 1_700_000_000_000 }));
+    // Without a claim store every retry reaches DataFn, which answers it from its replay record.
+    const send = routerAround('pointron', {});
+    const path = write === 'create' ? '/v1/pointron/tasks' : `/v1/pointron/tasks/${id}`;
+    const init = {
+      method: write === 'create' ? 'POST' : 'PATCH',
+      body: { label: `Replayed ${write}`, ...(write === 'create' ? { dateUnix: 1_700_000_000_000 } : {}) }
+    };
+    const headers = { ...actors.pointronWrite, 'idempotency-key': `replay-${write}` };
+    const status = write === 'create' ? 201 : 200;
+    const first = await send(path, headers, init);
+    const record = await json(first, status);
+    const retry = await send(path, headers, init);
+    expect(retry.headers.get('idempotent-replayed')).toBe('true');
+    expect(await json(retry, status)).toEqual(record);
+    expect(record).toMatchObject({ label: `Replayed ${write}` });
+  });
+
+  it('answers a space update with the items of the revision it committed, filtered to the app', async () => {
+    const id = 'space:race-items';
+    const items = (...ids: string[]) => ids.map((item) => item === 'goal'
+      ? { id: 'item-goal', type: 'resource', resourceType: 'objective', resourceId: 'objective:o1', label: 'Goal' }
+      : { id: `item-${item}`, type: 'resource', resourceType: 'node', resourceId: 'node:n1', label: item });
+    await seed(insert('space', id, { label: 'Race', view: 'sidenav', items: items('first', 'goal') }));
+    const send = routerAround('memotron', {
+      // Another client replaces the items after the router's read and before the write.
+      beforeWrite: () => seed(mutation('space', 'merge', id, { record: { items: items('second', 'goal') } }))
+    });
+    const updated = await json(await send(`/v1/memotron/spaces/${id}`, actors.memotronWrite, {
+      method: 'PATCH', body: { isStarred: true }
+    }), 200);
+    expect(updated).toMatchObject({ isStarred: true });
+    expect((updated.items as Body[]).map((item) => item.id)).toEqual(['item-second']);
   });
 
   it('answers a space update with only the items the app may see', async () => {

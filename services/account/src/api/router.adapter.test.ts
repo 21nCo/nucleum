@@ -7,7 +7,7 @@ import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import type { AuthFnSession } from 'authfn';
 import type { SyncServer } from '../datafn/server.js';
 import { resolveAccountUserNamespace } from '../datafn/namespace.js';
-import { createInterfaceApiRouter, type InterfaceApiServices, type StoredReader } from './router.js';
+import { createInterfaceApiRouter, type InterfaceApiServices, type StoredReader, type StoredTransaction } from './router.js';
 
 /**
  * Routes against an executor that behaves like DataFn on PostgreSQL: numeric
@@ -85,7 +85,7 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
   /** Runs once after a transact call commits and before it returns, when set. */
   let afterCommit: (() => Promise<void>) | null = null;
   /** The in-transaction check of the write running in the current async context. */
-  const checks = new AsyncLocalStorage<(read: StoredReader) => Promise<void>>();
+  const checks = new AsyncLocalStorage<(transaction: StoredTransaction) => Promise<void>>();
   const readRow: StoredReader = async (resource, id, namespace) => {
     storedReads.push({ resource, id, namespace });
     const found = rows.find((row) => row.resource === resource && row.id === id);
@@ -93,6 +93,11 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
     const { resource: _, ...row } = found;
     return { ...row };
   };
+  const findRows: StoredTransaction['find'] = async (model, where) => rows
+    .filter((row) => row.resource === model && where.every((clause) => clause.operator === 'in'
+      ? (clause.value as unknown[]).includes(row[clause.field])
+      : row[clause.field] === clause.value))
+    .map(({ resource: _, ...row }) => ({ ...row }));
   /** A query's rows; DataFn's query path, unlike a transact read, hides trashed rows. */
   const select = (payload: Row, hideTrashed: boolean) => {
     const filters = (payload.filters ?? {}) as Row;
@@ -160,7 +165,7 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
       }
       if (result.ok === true && check) {
         try {
-          await check(readRow);
+          await check({ read: readRow, find: findRows });
         } catch {
           // The transaction rolls back: only this mutation's change is undone.
           const at = rows.findIndex((row) => row.resource === mutation.resource && row.id === mutation.id);
@@ -647,7 +652,11 @@ describe('v1 routes on PostgreSQL-like storage', () => {
 
     /** Services whose in-transaction reads pass through `map`. */
     function mapTransactionReads(services: InterfaceApiServices, map: (read: StoredReader) => StoredReader): InterfaceApiServices {
-      return { ...services, inWriteTransaction: (check, write) => services.inWriteTransaction((read) => check(map(read)), write) };
+      return {
+        ...services,
+        inWriteTransaction: (check, write) =>
+          services.inWriteTransaction((transaction) => check({ ...transaction, read: map(transaction.read) }), write)
+      };
     }
 
     it.each(writes)('rolls a $method back and answers a logged 500 when its in-transaction readback fails', async (write) => {

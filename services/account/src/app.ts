@@ -143,12 +143,12 @@ export interface AccountServices {
   /**
    * Runs `write` with `check` run inside each sync database transaction the
    * write opens (one for a DataFn transact call), after the transaction's
-   * work and before it commits. `check` reads rows by id through that
-   * transaction, scoped as readSyncRecord is; a check that throws rolls the
-   * transaction back.
+   * work and before it commits. `check` reads rows through that transaction,
+   * scoped as readSyncRecord is; a check that throws rolls the transaction
+   * back.
    */
   inSyncWriteTransaction: <T>(
-    check: (read: SyncRecordReader) => Promise<void>,
+    check: (transaction: SyncTransactionReads) => Promise<void>,
     write: () => Promise<T>
   ) => Promise<T>;
   regionId: string;
@@ -167,24 +167,42 @@ export type SyncRecordReader = (
   namespace: string
 ) => Promise<Record<string, unknown> | null>;
 
-type SyncWriteCheck = (read: SyncRecordReader) => Promise<void>;
+/** Namespace-scoped reads through one sync database transaction. */
+export interface SyncTransactionReads {
+  read: SyncRecordReader;
+  find(
+    model: string,
+    where: readonly { field: string; operator: "eq" | "in"; value: unknown }[],
+    namespace: string
+  ): Promise<Record<string, unknown>[]>;
+}
+
+type SyncWriteCheck = (transaction: SyncTransactionReads) => Promise<void>;
 
 /** The checks of the sync write running in the current async context. */
 const syncWriteChecks = new AsyncLocalStorage<SyncWriteCheck>();
 
-/** A by-id reader scoped to a namespace by the `__ns` column, as DataFn scopes its reads. */
-function namespacedReader(database: Adapter): SyncRecordReader {
+/** Reads scoped to a namespace by the `__ns` column, as DataFn scopes its reads. */
+function namespacedReads(database: Adapter): SyncTransactionReads {
   const scoped = wrapWithRowLevelNamespace(database, {
     enabled: true,
     columnName: "__ns",
     mandatory: true
   });
-  return (resource, id, namespace) =>
-    scoped.findOne<Record<string, unknown>>({
-      model: resource,
-      where: [{ field: "id", operator: "eq", value: id }],
-      namespace
-    });
+  return {
+    read: (resource, id, namespace) =>
+      scoped.findOne<Record<string, unknown>>({
+        model: resource,
+        where: [{ field: "id", operator: "eq", value: id }],
+        namespace
+      }),
+    find: (model, where, namespace) =>
+      scoped.findMany<Record<string, unknown>>({
+        model,
+        where: where.map((clause) => ({ ...clause })),
+        namespace
+      })
+  };
 }
 
 /**
@@ -204,7 +222,7 @@ function withSyncWriteChecks(database: Adapter): Adapter {
           const result = await callback(trx);
           const check = syncWriteChecks.getStore();
           // Only the reads below run on the transaction, which lacks transaction() and close().
-          if (check) await check(namespacedReader(trx as unknown as Adapter));
+          if (check) await check(namespacedReads(trx as unknown as Adapter));
           return result;
         });
     }
@@ -294,7 +312,7 @@ export function buildAccountServices(
   const getSyncServer = () => {
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
       .then((syncDatabase) => {
-        readSyncDatabase = namespacedReader(syncDatabase);
+        readSyncDatabase = namespacedReads(syncDatabase).read;
         // Resolved here, as the sync server would, so the v1 API indexes its
         // writes with the same provider instance.
         syncSearchProvider =

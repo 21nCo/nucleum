@@ -15,7 +15,12 @@ import {
   type InterfaceResourceContract
 } from '@nucleum/schema/interfaces';
 import type { SyncContext, SyncServer } from '../datafn/server.js';
-import { resolveAppScopeAccess, type AppGrant } from '../datafn/app-scopes.js';
+import {
+  filterScopedResponseBody,
+  resolveAppScopeAccess,
+  type AppGrant,
+  type AppScopeWhere
+} from '../datafn/app-scopes.js';
 import { resolveAccountUserNamespace } from '../datafn/namespace.js';
 import { ApiProblem, parameterProblem, problemSchema, validationProblem } from './problem.js';
 import {
@@ -32,6 +37,13 @@ import {
 
 /** Reads one stored row of a namespace by id. */
 export type StoredReader = (resource: string, id: string, namespace: string) => Promise<Row | null>;
+
+/** Namespace-scoped reads through a write's database transaction. */
+export interface StoredTransaction {
+  read: StoredReader;
+  /** The rows of a namespace that match every clause. */
+  find(model: string, where: readonly AppScopeWhere[], namespace: string): Promise<Row[]>;
+}
 
 /** What a router needs to serve requests. Without it the router only describes the API. */
 export interface InterfaceApiServices {
@@ -61,10 +73,10 @@ export interface InterfaceApiServices {
   /**
    * Runs `write`, one DataFn transact call, with `check` run inside its
    * database transaction after the mutation and before the commit. `check`
-   * reads stored rows by id through that transaction, as `readStored` does
+   * reads stored rows through that transaction, scoped as `readStored` is
    * outside it; a check that throws rolls the write back.
    */
-  inWriteTransaction<T>(check: (read: StoredReader) => Promise<void>, write: () => Promise<T>): Promise<T>;
+  inWriteTransaction<T>(check: (transaction: StoredTransaction) => Promise<void>, write: () => Promise<T>): Promise<T>;
   /**
    * Records failures the API answers with a 500. It receives only a
    * failure's class, code and status, never its message, which can quote
@@ -757,29 +769,6 @@ function referenceFields(contract: InterfaceResourceContract): string[] {
   return contract.fields.filter((name) => referenceTarget(contract.resource, name) !== null);
 }
 
-/**
- * A record a write read back in its transaction, with a space's items taken
- * from the earlier read.
- */
-function withAppItems(
-  app: InterfaceApp,
-  contract: InterfaceResourceContract,
-  row: Row,
-  before: Row = {}
-): Row {
-  const complete = { ...row };
-  // A space's items are filtered to the app only by DataFn's read, so they
-  // come from the earlier read (writes never set them) and not from storage.
-  const shared = resolveInterfaceSharedFilter(app, contract.resource as InterfaceExposedResource);
-  if (shared?.kind === 'items') {
-    const items = complete[shared.field];
-    // A new space's empty item list hides nothing, so it is kept.
-    if (shared.field in before) complete[shared.field] = before[shared.field];
-    else if (!Array.isArray(items) || items.length > 0) delete complete[shared.field];
-  }
-  return complete;
-}
-
 function hasCapability(resource: string, capability: string): boolean {
   const schema = nucleumDatafnSchema as { capabilities?: readonly unknown[] };
   const declared = nucleumDatafnSchema.resources.find((entry) => entry.name === resource) as
@@ -896,9 +885,8 @@ async function createRecord(
       await committed();
       // A replayed create whose record is gone meanwhile has nothing to answer with.
       if (row === null) throw result.deduped === true ? idempotencyConflict() : notVisible(contract, id);
-      const stored = withAppItems(app, contract, row);
-      await indexWritten(caller, contract.resource, stored);
-      return respond(project(contract, stored), result.deduped === true);
+      await indexWritten(caller, contract.resource, row);
+      return respond(project(contract, row), result.deduped === true);
     }
     if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
     const stored = await matchKeyedRecord(app, contract, caller, id, body);
@@ -963,9 +951,8 @@ async function updateRecord(
     await committed();
     // The row left this token's view in the same transaction: nothing to answer with or index.
     if (row === null) throw notVisible(contract, id);
-    const stored = withAppItems(app, contract, row, before);
-    await indexWritten(caller, contract.resource, stored);
-    return respond(project(contract, stored), result.deduped === true);
+    await indexWritten(caller, contract.resource, row);
+    return respond(project(contract, row), result.deduped === true);
   });
 }
 
@@ -1057,7 +1044,11 @@ interface TransactResult {
   results?: unknown[];
 }
 
-/** Thrown inside a write's transaction to roll it back; its message quotes nothing stored. */
+/**
+ * Thrown inside a write's transaction to roll it back. Its message quotes
+ * nothing stored, and it never reads as an unsupported feature, which would
+ * make DataFn retry the write outside the transaction.
+ */
 class WriteRolledBack extends Error {
   constructor() {
     super('v1 write rolled back by its in-transaction check');
@@ -1080,13 +1071,29 @@ class WriteRolledBack extends Error {
 async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<Written> {
   const resource = payload.resource as string;
   const namespace = resolveAccountUserNamespace(caller.actorId);
-  const inTransaction: { encrypted: boolean; row: Row | null } = { encrypted: false, row: null };
-  const check = async (read: StoredReader) => {
-    if (encryptionEnabled(await read('kv', E2EE_SETTINGS_ID, namespace))) {
-      inTransaction.encrypted = true;
-      throw new WriteRolledBack();
+  const inTransaction: { checked: boolean; encrypted: boolean; failure?: unknown; row: Row | null } =
+    { checked: false, encrypted: false, row: null };
+  const check = async (transaction: StoredTransaction) => {
+    try {
+      if (encryptionEnabled(await transaction.read('kv', E2EE_SETTINGS_ID, namespace))) {
+        inTransaction.encrypted = true;
+      } else {
+        const row = await transaction.read(resource, payload.id as string, namespace);
+        inTransaction.row = visibleRow(app, resource, row && await withScopedItems(app, caller, resource, row, transaction));
+        inTransaction.checked = true;
+        return;
+      }
+    } catch (error) {
+      inTransaction.failure = error;
     }
-    inTransaction.row = await read(resource, payload.id as string, namespace);
+    throw new WriteRolledBack();
+  };
+  const settle = () => {
+    if (inTransaction.encrypted) throw encryptedProblem();
+    if (inTransaction.failure !== undefined) {
+      caller.services.logError?.('v1 API write readback failed; the write was rolled back', failureSummary(inTransaction.failure));
+      throw new ApiProblem(500, 'internal', 'The request could not be completed.');
+    }
   };
   let response: TransactResult;
   try {
@@ -1106,16 +1113,43 @@ async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<
       }
     }), 'write', caller.services);
   } catch (error) {
-    if (inTransaction.encrypted) throw encryptedProblem();
+    settle();
     throw error;
   }
-  if (inTransaction.encrypted) throw encryptedProblem();
+  settle();
   const [step] = Array.isArray(response.results) ? response.results : [];
   const result = isMutationResult(step)
     ? step
     : { ok: false, errors: [{ code: 'INTERNAL', message: 'DataFn returned no mutation result.' }] };
   if (!result.ok) return { result, row: null };
-  return { result, row: visibleRow(app, resource, inTransaction.row) };
+  // DataFn runs every successful transact mutation, a replay included, in one transaction.
+  if (!inTransaction.checked) throw new Error('v1 write finished without its in-transaction check');
+  return { result, row: inTransaction.row };
+}
+
+/**
+ * A space's items as this token's DataFn read shows them, decided on the
+ * rows of the same transaction. Other resources come back unchanged.
+ */
+async function withScopedItems(
+  app: InterfaceApp,
+  caller: Caller,
+  resource: string,
+  row: Row,
+  transaction: StoredTransaction
+): Promise<Row> {
+  if (resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource)?.kind !== 'items') return row;
+  const namespace = resolveAccountUserNamespace(caller.actorId);
+  const body = { ok: true, result: { data: [row] } };
+  const filtered = await filterScopedResponseBody(
+    'query',
+    { resource, version: 1 },
+    body,
+    resolveAppScopeAccess(caller.context.session ?? { scopes: [] }).read,
+    { findMany: (model, where) => transaction.find(model, where, namespace) },
+    nucleumDatafnSchema
+  ) as typeof body;
+  return filtered.result.data[0] ?? row;
 }
 
 /**
