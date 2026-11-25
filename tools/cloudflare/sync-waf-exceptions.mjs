@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+
 const managedFirewallPhase = 'http_request_firewall_managed';
 
 /** Applies each zone's managed WAF exception plan or prints its changes in dry-run mode. */
@@ -9,8 +11,9 @@ export async function syncWafExceptions({ exceptionsByZone, dryRun, token, cloud
       throw new Error(`Cloudflare managed WAF entrypoint not found for ${zoneName}. Enable the managed ruleset first, then sync exceptions.`);
     }
 
-    const nextRules = upsertExceptionRules(entrypoint.rules ?? [], exceptions.map((exception) => exception.rule));
-    const changed = JSON.stringify(nextRules) !== JSON.stringify((entrypoint.rules ?? []).map(toWritableRule));
+    const currentRules = (entrypoint.rules ?? []).map(toWritableRule);
+    const nextRules = upsertExceptionRules(currentRules, exceptions.map((exception) => exception.rule));
+    const changed = !isDeepStrictEqual(nextRules, currentRules);
 
     if (!changed) {
       console.log(`ok WAF exceptions for ${zoneName}`);
@@ -45,26 +48,40 @@ async function readManagedRulesEntrypoint(zoneId, token, cloudflare) {
   }
 }
 
+/** Preserves rules already ahead of the managed rules and inserts missing or late exceptions. */
 function upsertExceptionRules(existingRules, exceptionRules) {
-  const existingWritableRules = existingRules.map(toWritableRule);
-  const exceptionRefs = new Set(exceptionRules.map((rule) => rule.ref));
-  const existingExceptionsByRef = new Map(
-    existingWritableRules.filter((rule) => exceptionRefs.has(rule.ref)).map((rule) => [rule.ref, rule])
+  const desiredByRef = new Map();
+  for (const rule of exceptionRules) {
+    const desired = toWritableRule(rule);
+    const previous = desiredByRef.get(desired.ref);
+    if (previous && !isDeepStrictEqual(previous, desired)) {
+      throw new Error(`Conflicting WAF exception definitions for ${desired.ref}`);
+    }
+    desiredByRef.set(desired.ref, desired);
+  }
+
+  const firstExecuteIndex = existingRules.findIndex((rule) =>
+    rule.action === 'execute' && !desiredByRef.has(rule.ref)
   );
-  const nextExceptionRules = exceptionRules.map((rule) => toWritableRule({
-    id: existingExceptionsByRef.get(rule.ref)?.id,
-    ...rule
-  }));
-  const withoutExistingExceptions = existingWritableRules.filter((rule) => !exceptionRefs.has(rule.ref));
-  const firstExecuteIndex = withoutExistingExceptions.findIndex((rule) => rule.action === 'execute');
   if (firstExecuteIndex < 0) {
     throw new Error('Cloudflare managed WAF entrypoint has no managed rules execute rule to place exceptions before.');
   }
 
+  const pending = new Map(desiredByRef);
+  const beforeExecute = existingRules.slice(0, firstExecuteIndex).map((rule) => {
+    const desired = pending.get(rule.ref);
+    if (!desired) return rule;
+    pending.delete(rule.ref);
+    return toWritableRule({ id: rule.id, ...desired });
+  });
+  const existingByRef = new Map(existingRules.map((rule) => [rule.ref, rule]));
+  const insertions = Array.from(pending.values(), (rule) =>
+    toWritableRule({ id: existingByRef.get(rule.ref)?.id, ...rule })
+  );
   return [
-    ...withoutExistingExceptions.slice(0, firstExecuteIndex),
-    ...nextExceptionRules,
-    ...withoutExistingExceptions.slice(firstExecuteIndex)
+    ...beforeExecute,
+    ...insertions,
+    ...existingRules.slice(firstExecuteIndex).filter((rule) => !desiredByRef.has(rule.ref))
   ];
 }
 

@@ -38,6 +38,7 @@ async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
 export async function oauth(body: any) {
   try {
     const { code, app, slug, context } = body;
+    console.log({ code, app, slug });
     if (!code || !app || !slug)
       return { error: "code, app and slug are required" };
     let config;
