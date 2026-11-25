@@ -1,0 +1,21 @@
+services/account/src/api/router.adapter.test.ts
+  s_dec82fa886cfad::t_939c136f0465cd 69-70,74,115-121,136-155,204-277
+services/account/src/api/router.ts
+  s_dec82fa886cfad::t_bc871e1554be2d 482-488,491,494,510-511,515-530,564,567-571,575,577,579-585,590-594,598-603,661,672-675,677-679,701,713,862,874,878-881,908-914,920-921,940,942,952,955-957,971-976,978,980-982,989-993
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5fb1cb5e56bcfc236ea8119322bf5d5f12abff5f",
+  "prompts": {},
+  "sessions": {
+    "s_dec82fa886cfad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a53101cb-39af-4151-ad70-bc8a73ff41a7",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
