@@ -23,24 +23,22 @@ const authStatePath = path.join(authDir, authFileName);
 const baseURL = process.env.APP_BASE_URL ?? "http://127.0.0.1:4173";
 const waitForRedirectBackMs = 120_000;
 
-const baseOrigin = new URL(baseURL).origin;
-const baseHost = new URL(baseURL).host;
+const base = new URL(baseURL);
+const isLoopback = ["localhost", "127.0.0.1", "[::1]"].includes(base.hostname);
+if (base.protocol !== "https:" && (base.protocol !== "http:" || !isLoopback)) {
+  throw new Error("APP_BASE_URL must use HTTPS or a loopback HTTP address.");
+}
 const allowedOrigins = [
-  baseOrigin,
-  baseOrigin.startsWith("http:") ? `https://${baseHost}` : `http://${baseHost}`,
+  base.origin,
+  ...(base.protocol === "http:" ? [`https://${base.host}`] : []),
   "https://nucleum.21n.dev",
   "https://memotron.21n.dev",
   "https://pointron.21n.dev",
   "https://local.nucleum.app",
-  "http://local.nucleum.app",
   "https://local.memotron.app",
-  "http://local.memotron.app",
   "https://dev.memotron.to",
-  "http://dev.memotron.to",
   "https://local.pointron.app",
-  "http://local.pointron.app",
-  "https://dev.pointron.to",
-  "http://dev.pointron.to"
+  "https://dev.pointron.to"
 ];
 const allowedOriginsSet = new Set(allowedOrigins);
 

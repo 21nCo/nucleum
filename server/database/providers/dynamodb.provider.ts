@@ -89,7 +89,7 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
 
     const activityItem = {
       PK: `activity#${context.activity}`,
-      SK: `${timestampMs}#${Math.floor(Math.random() * 1000000)}`,
+      SK: `${timestampMs}#${crypto.randomUUID()}`,
       GSI1PK: userId,
       timestamp,
       context

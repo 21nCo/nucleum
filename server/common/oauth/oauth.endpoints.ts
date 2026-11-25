@@ -18,7 +18,8 @@ export async function handleOAuthRedirection(
 ) {
   let domain = "";
   try {
-    const domainPart = body.state.split(":")[1];
+    const domainPart = typeof body?.state === "string" ? body.state.split(":")[1] : undefined;
+    if (!domainPart) return { statusCode: 400, body: "Invalid OAuth state" };
     let isSchemeRedirect = false;
     if (domainPart) {
       if (domainPart.includes("localredirect")) {
@@ -32,8 +33,7 @@ export async function handleOAuthRedirection(
       }
     }
     const result = await processOAuthRedirection(body, provider, endpoint);
-    console.log({ result, domainPart, domain, body });
-    let redirectUrl = domain ?? "http://bla.ink";
+    let redirectUrl = domain;
     if (result?.token && domain) {
       redirectUrl = domain + "?token=" + result.token;
       if (!isSchemeRedirect) {
@@ -50,8 +50,8 @@ export async function handleOAuthRedirection(
       },
       body: ""
     };
-  } catch (e) {
-    console.error(e);
+  } catch {
+    if (!domain) return { statusCode: 400, body: "Invalid OAuth state" };
     return {
       statusCode: 302,
       headers: {
