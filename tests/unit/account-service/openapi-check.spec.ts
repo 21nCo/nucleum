@@ -44,8 +44,10 @@ function runOpenApiCheck(args: string[]) {
   const result = spawnSync("npm", ["run", "--silent", "openapi:check", "--", ...args], {
     cwd: serviceRoot,
     env,
-    encoding: "utf8"
+    encoding: "utf8",
+    timeout: CHECK_TIMEOUT_MS
   });
+  expect(result.error, "openapi:check did not finish").toBeUndefined();
   return { status: result.status, output: `${result.stdout}${result.stderr}` };
 }
 
@@ -70,6 +72,7 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
         expect(section).toContain(`Spec:     openapi/${app}.json`);
         expect(section).toContain("Drift:    none");
         expect(section).toContain("Base:     git ref HEAD");
+        expect(section).toContain("Versions: base 1.0.0, head 1.0.0");
       }
       expect(output).toContain("openapi:check memotron=pass pointron=pass nucleum=pass");
     },
@@ -97,7 +100,6 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
         expect(appSection(output, app)).toContain("apifn check: PASS");
       }
       expect(output).toContain("openapi:check memotron=fail(1) pointron=pass nucleum=pass");
-      // CI never repairs a spec: without --write the stale file is left as it was.
       expect(fs.readFileSync(staleFile, "utf8")).toBe(staleBytes);
     },
     CHECK_TIMEOUT_MS
@@ -111,7 +113,6 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
       const collection = base.paths["/v1/memotron/collections/{id}"];
       expect(collection?.get).toBeDefined();
       expect(collection.delete).toBeUndefined();
-      // The base has an operation the router no longer serves, so the head removes it.
       collection.delete = { ...collection.get, operationId: "deleteMemotronCollectionInBase" };
       const sameVersion = writeSpec(dir, "base-same-version.json", base);
       const olderMajor = writeSpec(dir, "base-older-major.json", {
@@ -132,14 +133,34 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
     CHECK_TIMEOUT_MS
   );
 
-  it("rejects an unknown app and the per-app options it owns before running apifn", () => {
-    for (const args of [["--app", "timear"], ["--spec", "openapi/memotron.json"], ["--config", "x.ts"]]) {
-      const { status, output } = runOpenApiCheck(args);
-      expect(status, args.join(" ")).toBe(2);
-      expect(output).toContain("openapi:check:");
-      expect(output).not.toContain("== apifn check:");
-    }
-  });
+  it(
+    "rejects arguments that would bind one app's run to another app's router, spec or report",
+    () => {
+      const committed = Object.fromEntries(apps.map((app) => [app, readCommittedSpec(app)]));
+      for (const args of [
+        ["--app", "timear"],
+        ["--spec", "openapi/memotron.json"],
+        ["--config", "x.ts"],
+        ["--app", "pointron", "src/api/memotron/router.ts"],
+        ["--app", "pointron", "--write", "src/api/memotron/router.ts"],
+        ["--report", "openapi/pointron.json"],
+        ["--report=report.md"],
+        ["--base-spec", "openapi/memotron.json"],
+        ["--app", "memotron", "--app", "pointron", "--base-spec", "openapi/memotron.json"],
+        ["--base", "--write"],
+        ["--write=true"],
+        ["--help"],
+        ["--", "src/api/memotron/router.ts"]
+      ]) {
+        const { status, output } = runOpenApiCheck(args);
+        expect(status, args.join(" ")).toBe(2);
+        expect(output).toContain("openapi:check:");
+        expect(output).not.toContain("== apifn check:");
+      }
+      for (const app of apps) expect(readCommittedSpec(app)).toEqual(committed[app]);
+    },
+    CHECK_TIMEOUT_MS
+  );
 
   it("runs in the Tests workflow on the base branch, never writing specs or allowing breaks", () => {
     const workflow = parse(fs.readFileSync(path.join(repoRoot, ".github/workflows/tests.yml"), "utf8"));
@@ -150,7 +171,6 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
     expect(job, "no Tests job runs openapi:check").toBeDefined();
     const step = job!.steps.find((candidate) => candidate.run?.includes("openapi:check"))!;
 
-    // apifn reads the base spec from git, so the job needs the base branch's history.
     expect(job!.steps.find((candidate) => candidate.uses?.startsWith("actions/checkout@"))?.with?.["fetch-depth"]).toBe(0);
     expect(step.run).toContain('--base "origin/${BASE_REF}"');
     expect(step.env?.BASE_REF).toBe("${{ github.base_ref || github.ref_name }}");
