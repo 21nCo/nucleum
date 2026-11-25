@@ -1,0 +1,35 @@
+services/account/src/api/router.adapter.test.ts
+  s_fe183828e73dc0::t_ccc650a1a7da5c 4-5,91-96,620,622,631,639-660,729-747
+services/account/src/api/router.test.ts
+  s_fe183828e73dc0::t_fd333d04b5cebf 8,873-896
+apps/e2e-playwright/tests/shared/settings/v1-access-token.spec.ts
+  s_8fee5428d1f1c5::t_a5a3bc5f04be69 158-159
+services/account/src/api/router.ts
+  s_8fee5428d1f1c5::t_5c9e5bd7bf15e2 3,751-753,755-761,763-769,877-878,893-895,924-925,960-961,1101-1103
+services/account/src/app.ts
+  s_8fee5428d1f1c5::t_462c743e54d373 3-8,135-138,237-241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e7e55ebea6ea3d360d47eef89bc853cc19c3999e",
+  "prompts": {},
+  "sessions": {
+    "s_8fee5428d1f1c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2dc73ead-201f-496f-9ba1-6aaf56c3201c",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_fe183828e73dc0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f160ab80-7d4a-402e-8701-dd49ef1ae6ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
