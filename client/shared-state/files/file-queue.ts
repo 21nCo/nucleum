@@ -36,6 +36,7 @@ const THUMBNAIL_PREFIX = "thumbnail-";
 const THUMBNAIL_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const RECORD_FILE = "record.json";
 const UPLOADED_FILE = "uploaded";
+const PUBLISHING_FILE = "publishing";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
@@ -727,12 +728,13 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * change `generation` (see toHold) replaces it. A deleted record
  * (`isDeleted`) gets its own mark. It writes none when the record copy
  * already covers the generation (a fence that lands after a verified copy of
- * its change), else the generation's mark, then, even when that failed and
- * unless the copy read again covers the generation by then, the plain mark
- * if absent and the generation's mark again. A deleted mark names the
- * generation, or none (also one present) when its read failed or it wrote no
- * generation mark (`generation` is optional). A stale mark is never replaced,
- * so an earlier build's ("") keeps telling nothing. It removes no mark.
+ * its change), else a plain deleted mark first (an earlier build reads only
+ * those), the generation's mark (or a new one's, which only a listing covers,
+ * when that failed), then, unless the copy read again covers the generation
+ * by then, the plain mark if absent and the generation's mark again. A deleted
+ * mark names the generation, or none (also one present) when its read failed
+ * or it wrote no generation mark (`generation` is optional). A stale mark is
+ * never replaced, so an earlier build's ("") keeps telling nothing.
  */
 export async function markQueuedFileStale(
   dir: string,
@@ -742,24 +744,29 @@ export async function markQueuedFileStale(
 ) {
   const name = toEntryName(fileId);
   const mark = isDeleted ? DELETED_FILE : STALE_FILE;
-  const marked = `${mark}.${generation}`;
   const isCovered = async () =>
     toCovered(await readQueuedRecord(dir, name)).includes(generation ?? "");
-  const writeMarked = async () => {
-    if (generation) await writeEntryFile(dir, name, marked, "");
+  const write = async (at = generation) => {
+    if (at) await writeEntryFile(dir, name, `${mark}.${at}`, "");
   };
   if (await isCovered()) return;
-  const failed = await writeMarked().catch((error: unknown) => ({ error }));
+  const was = await readEntryText(dir, name, mark, true).catch(() => null);
+  if (isDeleted && was === undefined)
+    await writeEntryFile(dir, name, mark, generation ?? "").catch(() => {});
+  const failed = await write().catch((error: unknown) => ({ error }));
+  const isMarked =
+    !!generation &&
+    (!failed || (await write(toChangeGeneration()).catch(() => 0)) !== 0);
   if (await isCovered()) return;
-  const was = await readEntryText(dir, name, mark, true).catch((error) => {
+  const now = await readEntryText(dir, name, mark, true).catch((error) => {
     if (isDeleted) return null;
     throw error;
   });
-  const isUnnamed = isDeleted && !!was && (!generation || !!failed);
-  const text = isDeleted ? (was !== null && generation) || "" : CHANGED_MARK;
-  if (was === undefined || was === null || isUnnamed) {
+  const isUnnamed = isDeleted && !!now && !isMarked;
+  const text = isDeleted ? (now !== null && generation) || "" : CHANGED_MARK;
+  if (now === undefined || now === null || isUnnamed) {
     await writeEntryFile(dir, name, mark, isUnnamed ? "" : text);
-    await writeMarked();
+    await write();
   } else if (failed) throw failed.error;
 }
 
@@ -4058,13 +4065,14 @@ async function sendAccountThumbnail(
 /**
  * Whether a local file can upload through the publisher's account: not yet
  * uploaded, with a current copy of its record, and unclaimed or claimed by
- * that account.
+ * that account, once an uploaded mark its publish left unverified is gone.
  */
 async function isPublishable(
   dir: string,
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
+  await settlePublishing(dir, entryName);
   const marks = [UPLOADED_FILE, ORPHANED_FILE, DISCARDED_FILE];
   for (const mark of marks)
     if ((await readEntryText(dir, entryName, mark, true)) !== undefined)
@@ -4095,7 +4103,7 @@ async function readUnheldRecord(
  * stale during the upload is left for the reconciliation of its record, and
  * so is one a hold, a pending change or a new copy reached after the publish's
  * last check: its uploaded mark is withdrawn, so the copy its guest pass
- * verifies publishes again.
+ * verifies publishes again (its publishing mark keeps one that failed).
  */
 async function publishEntry(
   dir: string,
@@ -4113,12 +4121,21 @@ async function publishEntry(
   const entry = { isCurrent, saved: saved.split("\n"), mark };
   if ((await publisher.publish(copy, uploaded, entry)) === false) return;
   if (!(await isCurrent())) return;
+  await writeEntryFile(dir, entryName, PUBLISHING_FILE, "");
   await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
   const now = await readUnheldRecord(dir, entryName, publisher).catch(
     () => undefined
   );
-  if (now && JSON.stringify(now) === JSON.stringify(record)) return;
-  await removeEntryFile(await getEntryDir(dir, entryName), UPLOADED_FILE);
+  const isSame = !!now && JSON.stringify(now) === JSON.stringify(record);
+  await settlePublishing(dir, entryName, isSame);
+}
+
+/** Clears a publishing mark; unless `isVerified`, its uploaded mark first. */
+async function settlePublishing(dir: string, name: string, isVerified = false) {
+  const entry = await getEntryDir(dir, name, true);
+  if (!(await readNames(entry)).includes(PUBLISHING_FILE)) return;
+  if (!isVerified) await removeEntryFile(entry, UPLOADED_FILE);
+  await removeEntryFile(entry, PUBLISHING_FILE);
 }
 
 async function claimEntry(

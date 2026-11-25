@@ -2621,6 +2621,58 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
+  it.each<[string, "removal" | "lookup"]>([
+    ["whose removal fails", "removal"],
+    ["after a reread and an entry lookup that fail", "lookup"]
+  ])(
+    "keeps a withdrawal of the uploaded mark a publish wrote after its last check %s for the next replay, which publishes the newer copy another tab renamed",
+    async (_, failure) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const entry = `queued_${record.fileId}`;
+      let isChanged = false;
+      let lookups = 0;
+      hookEntryFiles({
+        create: async (name) => {
+          if (name !== "uploaded" || isChanged) return;
+          isChanged = true;
+          await writeLocalEntryFile(record.fileId, "stale");
+          if (failure === "lookup") lookups = 2;
+        },
+        lookup: (name) => {
+          if (name !== entry || lookups <= 0) return;
+          lookups -= 1;
+          throw new DOMException("Unreadable", "NotReadableError");
+        }
+      });
+      if (failure === "removal") failEntryRemoval("uploaded", 1);
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      expect(isChanged).toBe(true);
+      expect((await readAnyRecord(record.id))?.name).toBe("photo.png");
+
+      await signOutToLocal();
+      await settleTasks();
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "receipt.png" }
+      } as never);
+      await settleTasks();
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png");
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
+    }
+  );
+
   it("keeps an account-side edit made after an outdated save over the guest change fenced during it", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
@@ -4641,6 +4693,96 @@ describe("files captured offline or by a local-only user", () => {
       expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
         true
       );
+    }
+  );
+
+  it("keeps a capture held at a locked settle that removes a deleted mark naming a covered delete while a later delete's fence fails to write its generation's mark", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const later = `${Date.now() + 1}-00000000-0000-4000-8000-000000000002`;
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", covered);
+    hookEntryFiles({
+      create(name) {
+        if (name === `deleted.${later}`) throw new Error("The disk is full");
+      }
+    });
+    let fence: Promise<unknown> | undefined;
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name === "deleted" && !fence) {
+              fence = markQueuedFileStale(LOCAL_QUEUE, fileId, true, later);
+              await fence.catch(() => undefined);
+            }
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(fence).toBeDefined();
+    await expect(fence).rejects.toThrow("The disk is full");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).toContain("deleted");
+  });
+
+  it.each([
+    ["sees it set once its generation's mark lands", false],
+    ["keeps it set when the fence stops after its generation's mark", true]
+  ])(
+    "writes a delete fence's plain deleted mark first, so an earlier build's tab that reads only plain marks %s",
+    async (_, isStopped) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const entry = `queued_${fileId}`;
+      const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      let isLanded = false;
+      let isPlainSeen = false;
+      hookEntryFiles({
+        create(name) {
+          if (name === `deleted.${generation}`) {
+            if (!isLanded)
+              isPlainSeen = opfs.list(LOCAL_QUEUE, entry).includes("deleted");
+            isLanded = true;
+          } else if (name === "deleted" && isLanded && isStopped)
+            throw new DOMException("The page closed", "AbortError");
+        }
+      });
+
+      await markQueuedFileStale(LOCAL_QUEUE, fileId, true, generation).catch(
+        () => undefined
+      );
+
+      expect(isLanded).toBe(true);
+      expect(isPlainSeen).toBe(true);
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+      const text = opfs.read(LOCAL_QUEUE, entry, "deleted");
+      expect(text && new TextDecoder().decode(text)).toBe(generation);
     }
   );
 
