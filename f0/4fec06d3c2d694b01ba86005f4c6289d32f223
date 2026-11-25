@@ -1,0 +1,33 @@
+ios/packages/NucleumNativeKit/Checks/NativeTrustChecks.swift
+  s_c2d6ef2e96fafa::t_99b8d627d848e4 1-52
+ios/packages/NucleumNativeKit/Checks/run.sh
+  s_c2d6ef2e96fafa::t_1492437b85b247 1-15
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/AppStore.swift
+  s_c2d6ef2e96fafa::t_314bcc7aa283d1 419-420,425-429
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/BaseView.swift
+  s_c2d6ef2e96fafa::t_331e896307d742 218-221,238-241
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/BaseViewForMac.swift
+  s_c2d6ef2e96fafa::t_698cf8fc56fb82 195-198,210-213
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/WebView/WebViewCommon.swift
+  s_c2d6ef2e96fafa::t_5346305121b854 188-304
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/WebView/WebViewForMac.swift
+  s_c2d6ef2e96fafa::t_35f6e0865ebe6e 249-268,327-330
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/WebView/WebViewTwo.swift
+  s_c2d6ef2e96fafa::t_fdbe56a0079e97 766-784,795-798
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f04fec06d3c2d694b01ba86005f4c6289d32f223",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

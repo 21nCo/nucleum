@@ -1,0 +1,35 @@
+apps/e2e-playwright/tests/shared/page-letters.spec.ts
+  s_e753f4ab224de9::t_35019c8236a812 1,4,12-26,48-68,71-79,82-86
+client/features/memory/node/node.store.ts
+  s_e753f4ab224de9::t_946030a9d785ff 1286,1296
+client/features/records/resource-action-keys.test.ts
+  s_e753f4ab224de9::t_be00f850546a97 2-6,8,36-98
+client/features/spaces/SpaceBody.svelte
+  s_e753f4ab224de9::t_56f84eef3db4e9 20,153
+client/shell/shortcuts/page-keys.ts
+  s_e753f4ab224de9::t_aa333bc1fae057 1,8,59-68
+client/surfaces/commandBar/ContextActionKeys.svelte
+  s_e753f4ab224de9::t_fbe98ffff04b9c 75
+client/surfaces/commandBar/super-bar-keys.test.ts
+  s_e753f4ab224de9::t_66676fa31a4b82 27-85
+client/ui/elements/contextMenu/ContextMenuItemBase.svelte
+  s_e753f4ab224de9::t_fb2666242bfd76 61-63
+client/ui/elements/contextMenu/ContextMenuToggleItem.svelte
+  s_e753f4ab224de9::t_7eb324cd140d46 75-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "91868b2d8057ea921572fa80edae5c235326207d",
+  "prompts": {},
+  "sessions": {
+    "s_e753f4ab224de9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9b413bb-78e4-461c-b7a1-7e3598c6e221",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

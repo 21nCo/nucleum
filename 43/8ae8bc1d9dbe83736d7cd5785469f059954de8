@@ -1,0 +1,43 @@
+client/surfaces/settings/appearance/AppearanceSettings.partial-family.test.ts
+  s_aa793b0a8d1ac8::t_66cfaeb4f9b066 1-146
+client/surfaces/settings/appearance/ColorSchemeFamilyPicker.test.ts
+  s_b66d0e9dd4fae0::t_20d9bc7ea4ae8e 280-294
+client/theme/colorscheme-catalog.test.ts
+  s_aa793b0a8d1ac8::t_3ba7dc08116726 12,225-226,262-403
+client/surfaces/settings/appearance/AppearanceSettings.svelte
+  s_f7895bdb82c82c::t_c7d61fcefe7aed 136-137,151-152
+client/theme/colorscheme-catalog.ts
+  s_f7895bdb82c82c::t_affc6983f4aa9e 142-156,162-165,167,169,202,209-212,216-219,222-223,227-230,236-237,244,246-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "438ae8bc1d9dbe83736d7cd5785469f059954de8",
+  "prompts": {},
+  "sessions": {
+    "s_aa793b0a8d1ac8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "027b6086-1840-4196-8460-0ca79d822514",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f7895bdb82c82c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a6b66533a1ea58f11",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

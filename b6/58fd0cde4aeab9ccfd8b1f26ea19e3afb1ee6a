@@ -1,0 +1,53 @@
+client/composition/package.json
+  s_f058f999ab46b7::t_c132876ae47b64 11
+client/datafn/datafn.store.ts
+  s_b66d0e9dd4fae0::t_4710d1edf8eaa0 435,442-447
+client/datafn/package.json
+  s_f058f999ab46b7::t_ec2a52d4f0b46f 8
+client/features/package.json
+  s_f058f999ab46b7::t_cf810a4d471586 158
+client/package.json
+  s_f058f999ab46b7::t_8257b968b403e7 14
+client/persistence/package.json
+  s_f058f999ab46b7::t_35a110e8cd6bc4 10
+client/products/package.json
+  s_f058f999ab46b7::t_fe82e74567b516 7
+client/shared-state/package.json
+  s_f058f999ab46b7::t_4bc7caf79151c1 20
+client/shell/package.json
+  s_f058f999ab46b7::t_4c9324ecc9854f 11
+client/surfaces/package.json
+  s_f058f999ab46b7::t_eebeb20814f9e6 12
+package.json
+  s_f058f999ab46b7::t_2684cd68af38fc 110
+services/account/package.json
+  s_f058f999ab46b7::t_cf77c8d29df9b5 64,78
+client/datafn/datafn-clone-up.datafn.test.ts
+  s_f058f999ab46b7::t_1ad927ce4e07ef 1-179
+package-lock.json
+  s_f058f999ab46b7::t_1d135608c703d8 2892,2939,2969,3008,3062,3078,3101,3121,3150,5150,5154-5165,13785-13787,33797,33811
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b658fd0cde4aeab9ccfd8b1f26ea19e3afb1ee6a",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

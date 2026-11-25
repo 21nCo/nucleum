@@ -1,0 +1,19 @@
+apps/e2e-playwright/playwright.config.ts
+  s_2ab6806e7371a1::t_7e715ab8024613 26-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3dbbd675313527f4693ae76ab88435548ee3317d",
+  "prompts": {},
+  "sessions": {
+    "s_2ab6806e7371a1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6e80531e-e637-4a8f-af1e-584d446c411d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+client/datafn/datafn-clone-up.datafn.test.ts
+  s_f058f999ab46b7::t_932088a5023b7f 92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0be9f97f67b5654db6760d2b1193f01863aa2c9d",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

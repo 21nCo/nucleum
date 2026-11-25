@@ -1,0 +1,41 @@
+apps/e2e-playwright/tests/memory/filefn-offline-capture.spec.ts
+  s_b66d0e9dd4fae0::t_4c598e9e0a68c5 1-210
+client/composition/configure-hosts.ts
+  s_b66d0e9dd4fae0::t_01838b188b1731 49,63,181,192-193
+client/persistence/migrations/device-file-bytes.migration.test.ts
+  s_b66d0e9dd4fae0::t_4a03e546a2c918 1-188
+client/persistence/migrations/device-file-bytes.migration.ts
+  s_b66d0e9dd4fae0::t_f9cf6b0ae925f6 1-133
+client/shared-state/files/device-file-queue.ts
+  s_b66d0e9dd4fae0::t_85655488bf474a 1-172
+client/shared-state/files/file-queue.test.ts
+  s_b66d0e9dd4fae0::t_eac79acfed2b71 1-309
+client/shared-state/files/file-queue.ts
+  s_b66d0e9dd4fae0::t_b285118f50517d 1-369
+client/shared-state/files/file-upload.queue.test.ts
+  s_b66d0e9dd4fae0::t_8de1df1230b3ef 1-332
+client/shared-state/files/file-upload.ts
+  s_b66d0e9dd4fae0::t_05f12805ac5283 26-34,111-112,153,235-244,246-247,274-284,287,292-301,303-349
+client/shared-state/files/file-url.ts
+  s_b66d0e9dd4fae0::t_33f0f251fae452 4,10,62-67,73-82
+client/shared-state/files/filefn-client.ts
+  s_b66d0e9dd4fae0::t_c4623229463087 19-23,246,259-319
+tests/fixtures/opfs.ts
+  s_b66d0e9dd4fae0::t_a5cf7d9bf6b5db 1-175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0efe9fdcb9ba59c1732657e96a963659d5b62ac1",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

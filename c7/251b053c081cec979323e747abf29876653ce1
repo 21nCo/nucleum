@@ -1,0 +1,23 @@
+client/surfaces/settings/data/BackupAndRestore.svelte
+  s_b66d0e9dd4fae0::t_6ebac781a99ae4 109
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_b66d0e9dd4fae0::t_8331fa93b497e3 113-131,281,309,342,356,380,400,424,430-469
+client/surfaces/settings/data/backup-and-restore.ts
+  s_b66d0e9dd4fae0::t_ebd9217c0c26d9 6,83-86,90,93,96-98,101-103,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c7251b053c081cec979323e747abf29876653ce1",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

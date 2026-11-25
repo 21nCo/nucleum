@@ -1,0 +1,33 @@
+client/shell/navigation/full-screen-minimize.test.ts
+  s_94f4fff6fd2332::t_acf65c522bfe17 5,7-11,156-200
+client/shell/navigation/navigation.ts
+  s_4fbb55d30f1a50::t_d3be75e59c0efd 764,767,873-876
+client/shell/topNav/contextZone/ContextZoneContent.svelte
+  s_94f4fff6fd2332::t_998110b5cf4eb9 4,35-49,54,57,60,63
+apps/e2e-playwright/tests/shared/maximize.spec.ts
+  s_94f4fff6fd2332::t_81db5ac4300095 1,9,18-80,164-233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "49fe47407892ca4647d3bbc0bb5cc14b7bc641f9",
+  "prompts": {},
+  "sessions": {
+    "s_4fbb55d30f1a50": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ad04946b01bfeb088",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_94f4fff6fd2332": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e7fc26f5-31bc-4c47-ba52-6d4b68a16036",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

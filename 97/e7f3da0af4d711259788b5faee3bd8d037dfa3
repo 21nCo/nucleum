@@ -1,0 +1,24 @@
+client/ui/elements/markdown/markdown.utils.ts
+  s_c2d6ef2e96fafa::t_847bd0358624be 103-104,106-109,114-115,117,122,124-125,127,147,162,164,198,203,214,217-218,228,238-241,243,264,271,273,275-277,280
+  s_c2d6ef2e96fafa::t_6902c283e95385 120-121,123,126,128-146,148,163,170,242,244-249,265,267,270,278
+  s_c2d6ef2e96fafa::t_c66ba1155749db 118,213,237,250-263,266,268-269,272,274,279,281
+  s_c2d6ef2e96fafa::t_3e33d3750d1c03 119,282
+client/ui/elements/markdown/markdown.utils.test.ts
+  s_c2d6ef2e96fafa::t_c66ba1155749db 192-206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "97e7f3da0af4d711259788b5faee3bd8d037dfa3",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

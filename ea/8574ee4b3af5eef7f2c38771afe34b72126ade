@@ -1,0 +1,23 @@
+client/features/calendar/CalendarLayout.svelte
+  s_0b0647615a23f7::t_5df6c7ef9a6017 168-200,206-207,212,214-219,457-458,494
+client/features/calendar/CalendarLayoutFullWidth.test.ts
+  s_0b0647615a23f7::t_efd9243dea79e5 1,60-69,116-120,178-216
+client/ui/actions/popover-rightstart.test.ts
+  s_0b0647615a23f7::t_bcad76c2674f4d 101-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ea8574ee4b3af5eef7f2c38771afe34b72126ade",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

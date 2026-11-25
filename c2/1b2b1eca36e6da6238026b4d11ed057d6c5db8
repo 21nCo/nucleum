@@ -1,0 +1,28 @@
+scripts/migration/legacy/snapshot.ts
+  s_f058f999ab46b7::t_86b4459b643945 1-125
+  s_f058f999ab46b7::t_ad369bf099e499 126-139
+scripts/migration/legacy/resources.ts
+  s_f058f999ab46b7::t_e9026b5f48f89e 1-75
+scripts/migration/legacy/dynamo-reader.ts
+  s_f058f999ab46b7::t_76aa3ff6dc2818 1-182
+  s_f058f999ab46b7::t_151be1631522e6 183-185
+scripts/migration/legacy/source.ts
+  s_f058f999ab46b7::t_83e911212c423a 1-160
+  s_f058f999ab46b7::t_e396cc1e692ff4 161-171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c21b2b1eca36e6da6238026b4d11ed057d6c5db8",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

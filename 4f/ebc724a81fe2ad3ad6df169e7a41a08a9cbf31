@@ -1,0 +1,19 @@
+client/features/memory/markdown/embed/EmbedContent.svelte
+  s_ed8fef588751d2::t_78ee5e796abf19 554
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4febc724a81fe2ad3ad6df169e7a41a08a9cbf31",
+  "prompts": {},
+  "sessions": {
+    "s_ed8fef588751d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aab4d627eccd948a8",
+        "model": "unknown"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

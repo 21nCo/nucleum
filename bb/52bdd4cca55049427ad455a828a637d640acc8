@@ -1,0 +1,21 @@
+client/shell/topNav/tabs/live-resource.test.ts
+  s_f058f999ab46b7::t_a16091b2e40dc0 4-8,13-14,16,52,77,83-89,93
+client/shell/topNav/tabs/live-resource.ts
+  s_f058f999ab46b7::t_e7a3a4da864a07 25-28,63-70,80-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bb52bdd4cca55049427ad455a828a637d640acc8",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

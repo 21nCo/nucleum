@@ -1,0 +1,37 @@
+client/ui/elements/button/EditModeCloseButton.svelte
+  s_f058f999ab46b7::t_8bf6b22c7d7379 1-45,48-50
+client/features/collections/Collection.svelte
+  s_f058f999ab46b7::t_e2bd3deb29f4ee 76,942-945
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_7e6621992ee092 352
+client/features/records/ResourcePanelSwitcher.svelte
+  s_f058f999ab46b7::t_b3662af101b8d0 23,138-141,145,179,261
+client/features/records/ResourceViewSwitcher.svelte
+  s_f058f999ab46b7::t_680638e2c54771 2,94-100,128-130
+client/features/spaces/SpaceBody.svelte
+  s_f058f999ab46b7::t_ee0282b906f7a3 3,177-179,302-308
+client/features/spaces/SpaceHeader.svelte
+  s_f058f999ab46b7::t_28a126d0d86d00 118,120
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_1fae255dec4dac 29,108-111
+client/shell/topNav/contextZone/ContextZoneContent.svelte
+  s_f058f999ab46b7::t_7bb683e0dcd095 21,43-44,83-85
+client/shell/topNav/contextZone/context-zone.ts
+  s_f058f999ab46b7::t_07063a61298806 60-64,404-407
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a7bf3d3fd08370f2bc81483aaf618e8ae9412e53",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

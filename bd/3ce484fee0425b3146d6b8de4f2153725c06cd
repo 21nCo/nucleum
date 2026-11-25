@@ -1,0 +1,21 @@
+.factory/settings.json
+  s_b66d0e9dd4fae0::t_ae7b0f5ef67b88 84-88
+AGENTS.md
+  s_b66d0e9dd4fae0::t_0f2c29333fa4cf 244,251
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bd3ce484fee0425b3146d6b8de4f2153725c06cd",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

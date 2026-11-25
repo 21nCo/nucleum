@@ -1,0 +1,21 @@
+client/features/focus/tasks/task.utils.test.ts
+  s_f058f999ab46b7::t_54b79c70a0b8f5 83-89
+client/features/focus/tasks/task.utils.ts
+  s_f058f999ab46b7::t_64899b6f7083d0 66-68,73-75,78-79,89-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ad457642975cfebc5838bab8f637794e20986284",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

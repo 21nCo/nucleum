@@ -1,0 +1,21 @@
+client/surfaces/account/account-upload-replay.test.ts
+  s_0aa4ca452eb5ee::t_23265d88c08a2c 1738-1814
+client/surfaces/account/account-upload-replay.ts
+  s_0aa4ca452eb5ee::t_d65d4bf8699846 17-18,37-39,43,47-53,66-68,77-84,122,155,197-199,215-218,222,224,235-244,253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c7d9c192631a57969d8d62506566b2ab45c363a8",
+  "prompts": {},
+  "sessions": {
+    "s_0aa4ca452eb5ee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31d4b0f4-b181-44d7-a15a-00daf9cdecb9",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

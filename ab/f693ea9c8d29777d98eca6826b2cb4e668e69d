@@ -1,0 +1,21 @@
+client/shell/layers/browser-layout.test.ts
+  s_3c1a90c9e9fb0b::t_42d577ef5b459f 1-85
+client/shell/layers/browser-layout.ts
+  s_3c1a90c9e9fb0b::t_a2324e42b24791 72,74-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "abf693ea9c8d29777d98eca6826b2cb4e668e69d",
+  "prompts": {},
+  "sessions": {
+    "s_3c1a90c9e9fb0b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b2abfe2-aa0a-4671-ad8c-2e339c374692",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

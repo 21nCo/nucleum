@@ -1,0 +1,59 @@
+client/features/calendar/CalendarLayout.svelte
+  s_f058f999ab46b7::t_2405cf66b1418e 124,205
+client/features/calendar/CalendarLayoutOverflowMenu.test.ts
+  s_aa793b0a8d1ac8::t_2d60e65cbf1e29 149,181-182
+client/features/calendar/birdView/BirdCalendar.svelte
+  s_f058f999ab46b7::t_589a1ee6687824 87-93
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_c9779f203036d2 47-50,94
+client/features/memory/node/content/NodeContent.svelte
+  s_f058f999ab46b7::t_0eed23d401aa35 75-81,578
+client/features/spaces/SpaceBody.svelte
+  s_aa793b0a8d1ac8::t_e7d3ebcfb2783f 16-18,188
+client/features/spaces/SpaceContextZone.svelte
+  s_aa793b0a8d1ac8::t_57d39472b75061 55,57-58
+client/features/spaces/SpaceResourceRenderer.svelte
+  s_aa793b0a8d1ac8::t_ddba391f1198d0 33-35
+client/features/spaces/SpaceSideNav.svelte
+  s_f058f999ab46b7::t_c79e7fc750a120 72-75,173-179
+client/shell/navigation/global-commands.ts
+  s_aa793b0a8d1ac8::t_f90de11fd7d98b 16
+client/shell/shortcuts/ShortcutRunner.svelte
+  s_aa793b0a8d1ac8::t_00565e3a9bb71b 24,39-43,93-102,109-146,199-201,204,207
+client/shell/topNav/contextZone/ContextZoneContent.svelte
+  s_f058f999ab46b7::t_46786fce16e73c 69-74,81-86,105,108,111,114,117,120,123
+client/shell/topNav/contextZone/context-zone-sub-views.test.ts
+  s_f058f999ab46b7::t_3c56445c555ab0 66-68,74
+client/shell/topNav/contextZone/context-zone.ts
+  s_f058f999ab46b7::t_2ad5bccd0af541 294-298,313-314,322,327-331,485,496
+client/surfaces/library/Library.svelte
+  s_f058f999ab46b7::t_8c738e8f8e7a18 10-13
+client/ui/elements/input/TextInput.svelte
+  s_f058f999ab46b7::t_dd8cbb4a6ffa03 557,568
+tools/check/type-ownership.mjs
+  s_f058f999ab46b7::t_bc36bd7d486269 71-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d605e149acb66bd6426d083f052b8e06183be1b5",
+  "prompts": {},
+  "sessions": {
+    "s_aa793b0a8d1ac8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "027b6086-1840-4196-8460-0ca79d822514",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

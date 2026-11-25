@@ -1,0 +1,19 @@
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_f058f999ab46b7::t_a44df59d1fd9d2 380-382
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e49b375a1eeae7510b950adaddc62465df5c5bc6",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

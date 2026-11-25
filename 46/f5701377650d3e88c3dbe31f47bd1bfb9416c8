@@ -1,0 +1,25 @@
+client/shell/shortcuts/ChordRunner.svelte
+  s_ace82070dcb8c7::t_d7852756998c3f 39-40,51-58
+client/shell/shortcuts/ShortcutRunner.chord-ending.test.ts
+  s_ace82070dcb8c7::t_e672fb5a178223 113-127
+client/surfaces/commandBar/ContextActionKeys.async.test.ts
+  s_ace82070dcb8c7::t_4f83a489942c8a 17,19,141-167
+client/surfaces/commandBar/ContextActionKeys.svelte
+  s_ace82070dcb8c7::t_5ce4a3133365e6 40-41,70-76,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "46f5701377650d3e88c3dbe31f47bd1bfb9416c8",
+  "prompts": {},
+  "sessions": {
+    "s_ace82070dcb8c7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32377d70-4569-4b72-b877-f60e4a5990c1",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

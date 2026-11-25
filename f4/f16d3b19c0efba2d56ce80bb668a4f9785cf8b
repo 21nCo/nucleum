@@ -1,0 +1,23 @@
+client/shared-state/files/file-queue.ts
+  s_b15184ae60b291::t_a1124e03e9f632 46,56-57,59-67,69-70,586-589,592,600-625,628-638,642-643,647-667,761,764-767,780-782,789-796,803-809,826,828,837,845-858,860-862,864,868,870,875,962-968,970-974,976-979,1006,1008,1049-1050
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_b15184ae60b291::t_1447add7b4cf2e 172,275-317,1273,1290,1297,1309-1310,1669,1723-1726,1731,1895-1897,2027,2047-2318
+client/surfaces/settings/data/backup-and-restore.ts
+  s_b15184ae60b291::t_3139af42cc2b2a 7,107-113,144-152,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f4f16d3b19c0efba2d56ce80bb668a4f9785cf8b",
+  "prompts": {},
+  "sessions": {
+    "s_b15184ae60b291": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd21c743-8ca1-4896-ad7b-a3b81c2516fb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

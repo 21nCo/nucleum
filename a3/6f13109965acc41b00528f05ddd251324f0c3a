@@ -1,0 +1,53 @@
+client/shared-state/appearance/appearance-profiles.test.ts
+  s_f058f999ab46b7::t_b79c9f8ddc6ffa 3,36-37,45,68-80
+client/shared-state/appearance/appearance-profiles.ts
+  s_179a9d12230a60::t_2e2e265ffdec16 5,59,126,137
+client/shared-state/appearance/appearance.store.ts
+  s_179a9d12230a60::t_061f113a947c23 5,44,77,130,257-265
+client/shared-state/appearance/appearance.type.ts
+  s_179a9d12230a60::t_c71424d346f511 3,22-23
+client/shared-state/preferences/user-preferences.store.ts
+  s_179a9d12230a60::t_db1b991d894201 3,50
+client/shared-state/preferences/user-preferences.type.ts
+  s_179a9d12230a60::t_733d6198f0ce9b 3,75,97-98
+client/shell/layers/themeLayer/ThemeLayer.svelte
+  s_179a9d12230a60::t_3163a0922fb223 12,18,105-106,308-311
+client/surfaces/settings/appearance/AppearanceSettings.svelte
+  s_179a9d12230a60::t_a9cacad134e76e 20-21,76-84,197,256-257,271
+client/theme/appearance.type.ts
+  s_179a9d12230a60::t_f56993c6dde28f 25-29
+client/theme/colorschemes.json
+  s_179a9d12230a60::t_8cc26242055843 170
+client/theme/frame-palette.js
+  s_179a9d12230a60::t_510bf8989ce6e4 65-111,145-147,151-164,178-184,186-187,190-198
+client/theme/frame-palette.test.ts
+  s_f058f999ab46b7::t_bde48400e57d9b 7-8,12-13,29,32-40,103-133,142-171,186-200
+client/theme/frame-tone.ts
+  s_f058f999ab46b7::t_bd4268d239e083 1-20
+client/theme/tidigit.tailwind.js
+  s_179a9d12230a60::t_4603233917bcfa 7-11,49-67,69-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a36f13109965acc41b00528f05ddd251324f0c3a",
+  "prompts": {},
+  "sessions": {
+    "s_179a9d12230a60": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5eaed816-f976-463b-bd15-e1a5c27d06f7",
+        "model": "unknown"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

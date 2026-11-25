@@ -1,0 +1,23 @@
+package-lock.json
+  s_f058f999ab46b7::t_1279adca652e42 39-41,3886,3900,4993,5024,5044,5068,5096,5119,17011,18211,18604,18618,19159,19269,19427,20574,21722,22338,22427,22576,22590,23368,23714,23786,23827,23837,24843,24853,25354,25709,27707,27861,28192,28467,28670,29827,30366,30382,30392,31051,31428,32213,32260,32307,33469,33479
+package.json
+  s_f058f999ab46b7::t_33685ffab816f8 34-36
+scripts/dev/legacy-file-signer.mjs
+  s_f058f999ab46b7::t_8c41748f95a69f 12-15,73-81,84-86,88-94,99-103,113-115,126-127,132-141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "69e944bfcf91270848a6d06a40eb840b3bc8b959",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

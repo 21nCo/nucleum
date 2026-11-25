@@ -1,0 +1,19 @@
+client/ui/elements/input/TextInput.svelte
+  s_a763d6bce2b15c::t_33feb3701f3738 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ec64c4d85b71b00695bdb6a7143076f027f9aa84",
+  "prompts": {},
+  "sessions": {
+    "s_a763d6bce2b15c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a91e46dd9abcccba2",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

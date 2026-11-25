@@ -1,0 +1,24 @@
+client/surfaces/settings/appearance/AppearanceSettings.svelte
+  s_f058f999ab46b7::t_3d66e7e6936103 141
+  s_f058f999ab46b7::t_5c447ffe21c887 138-140
+  s_f058f999ab46b7::t_c05a61a4ec9a1b 142-144
+  s_f058f999ab46b7::t_0c7f5fcb2fd73f 34,134-135,137,145-149
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_f058f999ab46b7::t_0fa20bbec3253c 30,59-63,66-67,74,230,232,234-235,237-239,241,268,278,323-324,343-346,379
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d00439dccee60fa76b6575f33df3c0d8e1194928",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

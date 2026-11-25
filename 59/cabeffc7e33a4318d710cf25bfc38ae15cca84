@@ -1,0 +1,33 @@
+services/file-processing/src/container-config.d.ts
+  s_aa08287dac90d8::t_5fa070fdb7d19c 1-9
+services/file-processing/src/container-config.mjs
+  s_b66d0e9dd4fae0::t_aa4d577cdd475d 1-11
+services/file-processing/src/container.mjs
+  s_aa08287dac90d8::t_c0bf0a9e1670f4 10,18-19,22
+tests/unit/file-processing/container-config.spec.ts
+  s_b66d0e9dd4fae0::t_f08fbfe36150d6 1-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59cabeffc7e33a4318d710cf25bfc38ae15cca84",
+  "prompts": {},
+  "sessions": {
+    "s_aa08287dac90d8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f5d1395-3c1c-4db1-a183-a46687bd4112",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

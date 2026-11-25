@@ -1,0 +1,21 @@
+client/ui/elements/switcher/BoxSwitcher.measure.test.ts
+  s_b66d0e9dd4fae0::t_57c85ee82d669e 1,69-164
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_b66d0e9dd4fae0::t_98dc787d89d4fc 62-65,129-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7a4a132a262767b99a48296486232c365b727102",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

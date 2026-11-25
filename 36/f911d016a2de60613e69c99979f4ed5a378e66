@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/shared/settings/settings.spec.ts
+  s_f058f999ab46b7::t_736fd3a24ba4b1 322-323,340-343
+client/surfaces/settings/appearance/AppearanceSettings.svelte
+  s_f058f999ab46b7::t_007a2e547cc0cd 164,178-247,249-258,261-262,266,269,271-278,280-286
+client/surfaces/settings/appearance/ColorSchemeFamilyList.svelte
+  s_f058f999ab46b7::t_291ef494049271 23-25,75,89-92
+client/surfaces/settings/appearance/ColorSchemeFamilyPicker.svelte
+  s_f058f999ab46b7::t_5cf7235cf70d6e 38-61,63-71
+client/surfaces/settings/appearance/ColorSchemeSelectorItem.svelte
+  s_f058f999ab46b7::t_a1586a05eb49cd 30-31
+client/surfaces/settings/appearance/InterfaceSettings.svelte
+  s_f058f999ab46b7::t_31b152e1d0f4fa 3-4,8-11,42-60
+client/surfaces/settings/appearance/TypefaceDropdown.svelte
+  s_f058f999ab46b7::t_1aa4b6eea8689b 24-27,29-30,42-43,51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "36f911d016a2de60613e69c99979f4ed5a378e66",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

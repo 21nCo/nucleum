@@ -1,0 +1,45 @@
+client/shared-state/appearance/appearance-mode.test.ts
+  s_f058f999ab46b7::t_96f26f5e93dc6e 1-40
+client/shared-state/appearance/appearance-mode.ts
+  s_f058f999ab46b7::t_e86eadd53078ec 1-46
+client/shared-state/appearance/appearance-profiles.test.ts
+  s_f058f999ab46b7::t_3165f904f5f8dc 46-48,52-67
+client/shared-state/appearance/appearance-profiles.ts
+  s_f058f999ab46b7::t_d84b861c022d16 6-9,60-62,127,138-139
+client/shared-state/appearance/appearance.store.ts
+  s_f058f999ab46b7::t_2775dc27be12e9 6-9,45-46,56,78-79,131-132,245-256
+client/shared-state/appearance/appearance.type.ts
+  s_f058f999ab46b7::t_e558bda46c65a7 24-25
+client/shared-state/preferences/user-preferences.store.ts
+  s_f058f999ab46b7::t_03c50eb91c6401 51-53
+client/shared-state/preferences/user-preferences.type.ts
+  s_f058f999ab46b7::t_992749336e3c15 76-77,99-102
+client/shell/layers/themeLayer/ThemeLayer.svelte
+  s_f058f999ab46b7::t_776da65bb30131 6,13-17,57-60,62-72,76-78,90,107-109,115
+client/surfaces/settings/appearance/AppearanceProfileCard.svelte
+  s_f058f999ab46b7::t_7ee0f47f25cf5f 57-59
+client/surfaces/settings/appearance/AppearanceSettings.svelte
+  s_f058f999ab46b7::t_42449a7ae1c08a 32,39-42,92-95,100-103,165,194,204,217-223,225-243,245-248,250-251
+client/surfaces/settings/appearance/appearance-profile-summary.test.ts
+  s_f058f999ab46b7::t_8ef0224ae82282 28-40
+client/surfaces/settings/appearance/appearance-profile-summary.ts
+  s_f058f999ab46b7::t_2bf9dcdf61f5f8 14-17,19-21,27,29,33-36,38-40
+client/ui/icons/icons.map.ts
+  s_f058f999ab46b7::t_1bf01cc2c259dc 872-881
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "449e845bd2241bbbe9338bb55fd863450f88cc5f",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

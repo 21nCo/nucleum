@@ -1,0 +1,35 @@
+client/shell/navigation/components/ResourceInlineCloseButton.test.ts
+  s_f058f999ab46b7::t_7f1558473b481b 1-28
+apps/e2e-playwright/tests/shared/maximize.spec.ts
+  s_f058f999ab46b7::t_cf1512d67fa0d5 2-5,15-22
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_dfd670599d847d 51,81,187-191,384-388
+client/features/spaces/SpaceSideNav.close.test.ts
+  s_f058f999ab46b7::t_b09d516e9dfce6 1-88
+client/shell/navigation/components/ResourceInlineCloseButton.svelte
+  s_f058f999ab46b7::t_78d49eca23a24b 5-8,17-18,24-28,34,49-50
+client/shell/navigation/full-screen-minimize.test.ts
+  s_f058f999ab46b7::t_768246e0a86060 1-128
+client/shell/navigation/navigation.ts
+  s_f058f999ab46b7::t_877315be50ed15 738,843-850,1103-1104,1106,1110-1114,1117-1119,1122-1130
+client/shell/navigation/top-layer-minimize.test.ts
+  s_f058f999ab46b7::t_f634ff6734cbab 8,50,58,64
+client/shell/navigation/top-layer.ts
+  s_f058f999ab46b7::t_dd561e90574143 114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b0311c8b02a78775f02c80bc6f793c51717c919",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

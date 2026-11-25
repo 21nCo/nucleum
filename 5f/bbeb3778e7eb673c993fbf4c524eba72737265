@@ -1,0 +1,23 @@
+client/shell/shortcuts/ChordRunner.svelte
+  s_0b0647615a23f7::t_48db268586375b 11,14,73-76,93
+client/shell/shortcuts/ShortcutRunner.chords.test.ts
+  s_0b0647615a23f7::t_db4632afb7a7de 9,41-43,49,53-54,56,86-113
+client/shell/shortcuts/chord-keys.ts
+  s_0b0647615a23f7::t_81bba34125edeb 21-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5fbbeb3778e7eb673c993fbf4c524eba72737265",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

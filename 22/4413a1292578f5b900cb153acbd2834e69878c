@@ -1,0 +1,21 @@
+client/shared-state/files/file-queue.ts
+  s_b15184ae60b291::t_70f79a9672a184 491-493,501-502,514,522,525,612-613,615-621,625-626,630-634,1033-1038,1052-1056,1078-1082,1112-1113,1571-1574,1993-1996,2014-2016,2049-2051,2063,2067-2071,2180-2181,2200,2208-2214,2224-2226,2229-2230,2240-2241
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_b15184ae60b291::t_67ca2ee4382d59 379-381,387,448-449,4192-4359
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "224413a1292578f5b900cb153acbd2834e69878c",
+  "prompts": {},
+  "sessions": {
+    "s_b15184ae60b291": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd21c743-8ca1-4896-ad7b-a3b81c2516fb",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+client/features/memory/capture/offline-cloud-capture.test.ts
+  s_eae9e4c3b31023::t_7ffe24883b2d5b 1-194
+client/features/memory/markdown/Block.svelte
+  s_eae9e4c3b31023::t_ee31c2fbb0c1fb 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4ae1eee0e927f85da3690fbb5dde480228e7fa78",
+  "prompts": {},
+  "sessions": {
+    "s_eae9e4c3b31023": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_eae9e4c3b31023",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

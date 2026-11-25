@@ -1,0 +1,19 @@
+client/features/calendar/classic/CalendarHeader.svelte
+  s_b66d0e9dd4fae0::t_e876a8c26385fb 101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9fc65e0b88c53dbafdf1f83d89dc2461ee123b4c",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

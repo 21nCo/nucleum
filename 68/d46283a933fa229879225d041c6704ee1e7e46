@@ -1,0 +1,51 @@
+apps/e2e-playwright/tests/shared/list-view-keys.spec.ts
+  s_b66d0e9dd4fae0::t_fe561944686a2d 1-56
+client/composition/global-commands.ts
+  s_b66d0e9dd4fae0::t_837760151cf988 108-109
+client/composition/shortcuts.config.ts
+  s_b66d0e9dd4fae0::t_0dec6cc4da74ad 84-93
+client/config/action.enum.ts
+  s_b66d0e9dd4fae0::t_b9cdac74633d43 67-68
+client/features/spaces/SpaceNavItem.svelte
+  s_b66d0e9dd4fae0::t_3652a0b289520f 141
+client/features/spaces/SpaceSideNav.svelte
+  s_f058f999ab46b7::t_5193bd02ca99c6 28,170-184,187
+client/shell/navigation/global-commands.ts
+  s_b66d0e9dd4fae0::t_4c21f12f8bff66 126-149
+client/shell/topNav/contextZone/context-zone-list-views.test.ts
+  s_b66d0e9dd4fae0::t_0f3d38299029f2 1-82
+client/shell/topNav/contextZone/context-zone-sub-views.svelte.ts
+  s_b66d0e9dd4fae0::t_db17f44a63a9cb 4,10-13,17-18,23-31
+client/shell/topNav/contextZone/context-zone.ts
+  s_b66d0e9dd4fae0::t_8f2cb824468bd6 201-214,221-227,245-246,248-254,358-359,362-365,373,376-377,384,387-388
+client/surfaces/library/Library.svelte
+  s_b66d0e9dd4fae0::t_024f8af4a11aa7 11,103-107
+client/surfaces/settings/SettingsAsModal.svelte
+  s_f058f999ab46b7::t_b75e1054686754 32,105-126,200-201
+tools/check/type-ownership.mjs
+  s_b66d0e9dd4fae0::t_fdc7c5ad657bc7 229-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "68d46283a933fa229879225d041c6704ee1e7e46",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

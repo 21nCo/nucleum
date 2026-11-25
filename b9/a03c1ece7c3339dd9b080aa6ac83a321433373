@@ -1,0 +1,23 @@
+client/datafn/datafn.store.ts
+  s_f058f999ab46b7::t_95ee80a3b235f5 204-210
+client/datafn/runtime-policy.test.ts
+  s_f058f999ab46b7::t_d5143c87ee0e3d 1-66
+client/datafn/runtime-policy.ts
+  s_f058f999ab46b7::t_8045424076f9fa 9-13,54-64,69-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b9a03c1ece7c3339dd9b080aa6ac83a321433373",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

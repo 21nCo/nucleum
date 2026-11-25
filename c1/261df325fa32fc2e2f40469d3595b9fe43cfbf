@@ -1,0 +1,25 @@
+client/shared-state/files/file-queue.ts
+  s_b66d0e9dd4fae0::t_f906e6aadc9efc 488-491,497-507,720,922,929-946
+client/surfaces/settings/data/BackupAndRestore.svelte
+  s_b66d0e9dd4fae0::t_4e8641f90782fd 105,107
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_b66d0e9dd4fae0::t_a2c64571815c89 40,63-65,80-84,99-102,114-116,242-246,300,303-304,325,360,377,397,419,440-441,445-453,456,466,488,514-644
+client/surfaces/settings/data/backup-and-restore.ts
+  s_b66d0e9dd4fae0::t_1a73817fb86cf1 19-25,29-36,38-44,48-49,51,54-55,58-59,82-83,85-87,94-96,98-103,106,109,111-112,121,131-141,144-158,160,163,165-170,172-173,176-265,267-280,282,284-303,305-314,317,321,323
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c1261df325fa32fc2e2f40469d3595b9fe43cfbf",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

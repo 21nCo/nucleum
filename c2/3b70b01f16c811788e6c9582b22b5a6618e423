@@ -1,0 +1,27 @@
+client/features/memory/node/content/web/social/SocialPostContent.svelte
+  s_a4a9279b38a3d6::t_9d749d9d0d67fa 13,46,93-94
+  s_a4a9279b38a3d6::t_97b92e1bdcf972 95-97
+client/features/memory/node/content/web/social/SocialPostContentFallback.svelte
+  s_a4a9279b38a3d6::t_97b92e1bdcf972 233-244
+client/features/memory/node/content/web/social/social-widgets.test.ts
+  s_a4a9279b38a3d6::t_bbd546e4dc5884 1-31,33-35
+  s_a4a9279b38a3d6::t_3ee889e595d9d3 32
+client/features/memory/node/content/web/social/social-widgets.ts
+  s_a4a9279b38a3d6::t_9d749d9d0d67fa 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c23b70b01f16c811788e6c9582b22b5a6618e423",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

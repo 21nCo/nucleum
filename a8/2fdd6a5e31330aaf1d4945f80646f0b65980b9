@@ -1,0 +1,21 @@
+client/features/focus/goals/GoalPanelSwitcher.svelte
+  s_f058f999ab46b7::t_28b4571de15019 4
+client/features/memory/node/rightPanel/NodeDefaultRightPane.svelte
+  s_f058f999ab46b7::t_d79c167180b52e 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a82fdd6a5e31330aaf1d4945f80646f0b65980b9",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

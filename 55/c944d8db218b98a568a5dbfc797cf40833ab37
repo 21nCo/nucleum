@@ -1,0 +1,19 @@
+client/ui/elements/markdown/markdown.utils.ts
+  s_c2d6ef2e96fafa::t_865bff589d5675 151,192-196,355-356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "55c944d8db218b98a568a5dbfc797cf40833ab37",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

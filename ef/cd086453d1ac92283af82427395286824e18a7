@@ -1,0 +1,21 @@
+services/frontend/scripts/frontend-config.mjs
+  s_c2d6ef2e96fafa::t_79aca21fe8e85b 244-268,272-277
+tests/unit/frontend/security-headers.spec.ts
+  s_c2d6ef2e96fafa::t_5d53e36dfa88e8 40-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "efcd086453d1ac92283af82427395286824e18a7",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

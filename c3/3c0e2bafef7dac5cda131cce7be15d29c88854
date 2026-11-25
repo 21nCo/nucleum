@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/shared/page-letters.spec.ts
+  s_f35b422006faeb::t_e1ba8561207389 278,299-301,304-314,316-318,321,328-344
+client/features/memory/markdown/NodularMarkdown.svelte
+  s_f35b422006faeb::t_cc1ed7ae8240da 27-32,411-422
+client/features/memory/markdown/note-editor-focus.ts
+  s_f35b422006faeb::t_dcd5a79a7299fb 27-32,34-39,41-55,59-60,62-71
+client/features/memory/node/floatingBar/NodePanelSwitcher.svelte
+  s_f35b422006faeb::t_a97f5457aaffd6 73-78,123-124
+client/features/memory/node/node.store.ts
+  s_f35b422006faeb::t_823b4087367b4f 27,1072-1075,1077,1085,1100-1101,1303-1308
+client/features/records/resource-action-keys.test.ts
+  s_f35b422006faeb::t_f39066cd38fec4 94,100
+client/features/records/resource-open-keys.test.ts
+  s_f35b422006faeb::t_c538a2fd060427 31-34,295,297-298,416-434,467-541
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c33c0e2bafef7dac5cda131cce7be15d29c88854",
+  "prompts": {},
+  "sessions": {
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

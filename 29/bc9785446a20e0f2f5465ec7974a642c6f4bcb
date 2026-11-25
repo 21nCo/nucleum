@@ -1,0 +1,21 @@
+client/shared-state/files/file-upload.filefn.test.ts
+  s_d782a7e8ab6d0b::t_74e3e8af7541a0 402-416,445,473
+client/shared-state/files/file-upload.ts
+  s_d782a7e8ab6d0b::t_f56e1c9234b86d 29,125-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "29bc9785446a20e0f2f5465ec7974a642c6f4bcb",
+  "prompts": {},
+  "sessions": {
+    "s_d782a7e8ab6d0b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_d782a7e8ab6d0b",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
