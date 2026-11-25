@@ -9,7 +9,7 @@ import {
   wafExceptionDefinitions
 } from './frontend-config.mjs';
 import { cloudflare, resolveZoneIdForRouteZone } from './cloudflare-sync.mjs';
-import { syncWafExceptions } from '../../../tools/cloudflare/sync-waf-exceptions.mjs';
+import { printWafExceptionPreview, syncWafExceptions } from '../../../tools/cloudflare/sync-waf-exceptions.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = readConfig(serviceRoot);
@@ -30,12 +30,7 @@ const token = process.env.CLOUDFLARE_WAF_TOKEN
 
 if (!token) {
   if (dryRun) {
-    for (const [zoneName, exceptions] of exceptionsByZone) {
-      console.log(`dry-run ${zoneName}`);
-      for (const exception of exceptions) {
-        console.log(JSON.stringify(exception.rule, null, 2));
-      }
-    }
+    printWafExceptionPreview(exceptionsByZone);
     process.exit(0);
   }
 

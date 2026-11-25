@@ -2,9 +2,20 @@ import { isDeepStrictEqual } from 'node:util';
 
 const managedFirewallPhase = 'http_request_firewall_managed';
 
+/** Prints desired exceptions without requesting the current Cloudflare ruleset. */
+export function printWafExceptionPreview(exceptionsByZone) {
+  for (const [zoneName, exceptions] of exceptionsByZone) {
+    console.log(`dry-run ${zoneName}`);
+    for (const rule of desiredRulesByRef(exceptions).values()) {
+      console.log(JSON.stringify(rule, null, 2));
+    }
+  }
+}
+
 /** Applies each zone's managed WAF exception plan or prints its changes in dry-run mode. */
 export async function syncWafExceptions({ exceptionsByZone, dryRun, token, cloudflare, resolveZoneId }) {
   for (const [zoneName, exceptions] of exceptionsByZone) {
+    const desiredByRef = desiredRulesByRef(exceptions);
     const zoneId = await resolveZoneId(zoneName, token, exceptions[0]?.zoneId);
     const entrypoint = await readManagedRulesEntrypoint(zoneId, token, cloudflare);
     if (!entrypoint) {
@@ -12,7 +23,7 @@ export async function syncWafExceptions({ exceptionsByZone, dryRun, token, cloud
     }
 
     const currentRules = (entrypoint.rules ?? []).map(toWritableRule);
-    const nextRules = upsertExceptionRules(currentRules, exceptions.map((exception) => exception.rule));
+    const nextRules = upsertExceptionRules(currentRules, desiredByRef);
     const changed = !isDeepStrictEqual(nextRules, currentRules);
 
     if (!changed) {
@@ -22,8 +33,8 @@ export async function syncWafExceptions({ exceptionsByZone, dryRun, token, cloud
 
     if (dryRun) {
       console.log(`would update WAF exceptions for ${zoneName}`);
-      for (const exception of exceptions) {
-        console.log(`${exception.rule.ref}: ${exception.rule.expression}`);
+      for (const rule of desiredByRef.values()) {
+        console.log(`${rule.ref}: ${rule.expression}`);
       }
       continue;
     }
@@ -48,18 +59,21 @@ async function readManagedRulesEntrypoint(zoneId, token, cloudflare) {
   }
 }
 
-/** Preserves rules already ahead of the managed rules and inserts missing or late exceptions. */
-function upsertExceptionRules(existingRules, exceptionRules) {
-  const desiredByRef = new Map();
-  for (const rule of exceptionRules) {
-    const desired = toWritableRule(rule);
-    const previous = desiredByRef.get(desired.ref);
-    if (previous && !isDeepStrictEqual(previous, desired)) {
-      throw new Error(`Conflicting WAF exception definitions for ${desired.ref}`);
+/** Collapses duplicate references and rejects conflicting definitions before syncing a zone. */
+function desiredRulesByRef(exceptions) {
+  const byRef = new Map();
+  for (const { rule } of exceptions) {
+    const previous = byRef.get(rule.ref);
+    if (previous && !isDeepStrictEqual(previous, rule)) {
+      throw new Error(`Conflicting WAF exception definitions for ${rule.ref}`);
     }
-    desiredByRef.set(desired.ref, desired);
+    byRef.set(rule.ref, rule);
   }
+  return byRef;
+}
 
+/** Preserves rules already ahead of the managed rules and inserts missing or late exceptions. */
+function upsertExceptionRules(existingRules, desiredByRef) {
   const firstExecuteIndex = existingRules.findIndex((rule) =>
     rule.action === 'execute' && !desiredByRef.has(rule.ref)
   );

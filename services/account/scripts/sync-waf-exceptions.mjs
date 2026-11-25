@@ -8,7 +8,7 @@ import {
   readAccountConfig,
   resolveZoneIdForRouteZone
 } from './cloudflare-sync.mjs';
-import { syncWafExceptions } from '../../../tools/cloudflare/sync-waf-exceptions.mjs';
+import { printWafExceptionPreview, syncWafExceptions } from '../../../tools/cloudflare/sync-waf-exceptions.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = readAccountConfig(serviceRoot);
@@ -31,12 +31,7 @@ const token = process.env.CLOUDFLARE_WAF_TOKEN
 
 if (!token) {
   if (dryRun) {
-    for (const [zoneName, exceptions] of groupByZoneName(wafExceptionDefinitions(config, environment, regions, productDomains))) {
-      console.log(`dry-run ${zoneName}`);
-      for (const exception of exceptions) {
-        console.log(JSON.stringify(exception.rule, null, 2));
-      }
-    }
+    printWafExceptionPreview(groupByZoneName(wafExceptionDefinitions(config, environment, regions, productDomains)));
     process.exit(0);
   }
 
