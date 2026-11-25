@@ -552,12 +552,13 @@ export async function listQueuedFileMarks(dir: string, fileId: string) {
  * of a generation the copy covers first, then a plain mark only when a rescan
  * finds no generation mark of its kind and `isHeld` then finds no pending
  * change the copy does not cover, and it was `listed` before a locked reread
- * that verified the copy, or is a deleted mark beside a generation mark it
- * cleared (a fence's; an earlier build's and a restored one have none). A
+ * that verified the copy, or is a deleted mark beside a covered generation's
+ * mark (a fence's; an earlier build's and a restored one have none), which it
+ * keeps until the plain mark is cleared, so a retry can still clear it. A
  * plain stale mark has no owner (an earlier build's fence finds it set and
  * writes none), so only a listing clears it. It then sets a plain mark again
  * (an earlier build's tab reads only those) while an uncovered generation's
- * mark holds.
+ * mark holds, also when that covered mark's removal failed.
  */
 async function settleMarks(
   dir: string,
@@ -576,16 +577,29 @@ async function settleMarks(
   const isPending = () => !!copy && isHeld?.(copy as QueuedFileRecord) === true;
   const isOpen = (name: string) =>
     !covered.includes(String(toMarkGeneration(name)));
+  const owners = kinds.map((kind) =>
+    kind !== STALE_FILE && names.includes(kind)
+      ? ofKind(names, kind).find((name) => !isOpen(name))
+      : undefined
+  );
   for (const kind of kinds)
     for (const name of ofKind(names, kind))
-      if (!isOpen(name)) await removeMark(entry, name);
+      if (!isOpen(name) && !owners.includes(name))
+        await removeMark(entry, name);
   const now = await readNames(entry);
-  for (const kind of kinds) {
-    const isOwned =
-      listed.includes(kind) ||
-      (kind !== STALE_FILE && !!ofKind(names, kind)[0]);
-    const isClear = !ofKind(now, kind)[0] && !isPending();
-    if (now.includes(kind) && isOwned && isClear) await removeMark(entry, kind);
+  let failed: { error: unknown } | void = undefined;
+  for (const [index, kind] of kinds.entries()) {
+    const owner = owners[index];
+    const isClear =
+      ofKind(now, kind).every((name) => name === owner) && !isPending();
+    if (!now.includes(kind) || !(listed.includes(kind) || owner) || !isClear)
+      continue;
+    await removeMark(entry, kind);
+    if (owner)
+      failed =
+        (await removeMark(entry, owner).catch((error: unknown) => ({
+          error
+        }))) || failed;
   }
   const after = await readNames(entry);
   for (const kind of kinds)
@@ -598,6 +612,7 @@ async function settleMarks(
       );
       after.push(kind);
     }
+  if (failed) throw failed.error;
   return toHoldMarks(after);
 }
 

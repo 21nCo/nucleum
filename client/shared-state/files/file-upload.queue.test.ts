@@ -5385,6 +5385,39 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
+  it("keeps a fence's covered generation mark until its settle clears the deleted mark, so a settle retried after a failed removal releases the capture", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", "");
+    await writeLocalEntryFile(fileId, `deleted.${covered}`);
+    const getDirectory = navigator.storage.getDirectory;
+    failEntryRemoval("deleted", 1);
+
+    await expect(settleQueuedFileMarks(LOCAL_QUEUE, fileId)).rejects.toThrow();
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).toContain(
+      `deleted.${covered}`
+    );
+    navigator.storage.getDirectory = getDirectory;
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks.filter((name) => name.startsWith("deleted"))).toEqual([]);
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+      false
+    );
+  });
+
   it("rejects a strict listing whose publishing mark of an uploaded capture cannot be read, instead of counting it uploaded", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
