@@ -39,6 +39,7 @@
     "secrets:sync:pre": "node scripts/sync-secrets-store.mjs pre",
     "secrets:sync:live": "node scripts/sync-secrets-store.mjs live",
     "openapi:v1": "node src/api/generate-openapi.mjs",
+    "openapi:check": "node src/api/check-openapi.mjs",
     "openapi:account": "NODE_OPTIONS=\"${NODE_OPTIONS:-} --preserve-symlinks\" apifn import openapi http://127.0.0.1:${PORT:-8787}/openapi.json --output ./.apifn/generated --base-url http://127.0.0.1:${PORT:-8787} --env local --force",
     "test:e2e:apifn:memory": "NODE_OPTIONS=\"${NODE_OPTIONS:-} --preserve-symlinks\" tsx src/testing/run-apifn-memory.ts",
     "test:e2e:apifn:multiregion": "NODE_OPTIONS=\"${NODE_OPTIONS:-} --preserve-symlinks\" tsx src/testing/run-apifn-multiregion.ts",
@@ -90,7 +91,7 @@
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
-    "@apifn/cli": "0.0.2",
+    "@apifn/cli": "0.1.0",
     "@cloudflare/workers-types": "^4.20260423.0",
     "@datafn/cli": "0.1.4",
     "@superfunctions/cli": "0.2.0",
