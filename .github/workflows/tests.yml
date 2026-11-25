@@ -41,9 +41,6 @@ jobs:
         run: npm run check:type-ownership && npm run check:no-legacy-runtime && npm run check:no-fixed-test-waits
       - name: Run app checks
         run: npm run check:apps
-      # Each app's committed spec must match its router, be valid, and bump info.version for a
-      # breaking change against the base branch. Fix drift locally with
-      # `npm --workspace @21n/account-service run openapi:check -- --write` and commit the spec.
       - name: Check committed OpenAPI specs (apifn check for memotron, pointron, nucleum)
         env:
           BASE_REF: ${{ github.base_ref || github.ref_name }}

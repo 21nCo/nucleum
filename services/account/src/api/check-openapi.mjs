@@ -12,7 +12,8 @@
  * config, router and spec, so only the apifn options listed in
  * forwardedOptions are passed on; positional arguments, --spec, --config,
  * --report and any other option are rejected with exit code 2 before apifn
- * runs, and --base-spec needs exactly one --app. All selected apps are
+ * runs (--format too: the runner's per-app text would corrupt its output),
+ * and --base-spec needs exactly one --app. All selected apps are
  * checked; the exit code is the highest one apifn returned (0 pass, 1 drift,
  * invalid spec or an unversioned breaking change, 2 usage or load error). A
  * relative --spec-dir is read from the directory npm ran from; a relative
@@ -31,7 +32,6 @@ const cli = path.join(path.dirname(createRequire(import.meta.url).resolve('@apif
 const forwardedOptions = new Map([
   ['--base', true],
   ['--base-spec', true],
-  ['--format', true],
   ['--allow-breaking', false],
   ['--write', false],
   ['--verbose', false],

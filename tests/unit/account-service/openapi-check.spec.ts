@@ -25,6 +25,27 @@ function readCommittedSpec(app: (typeof apps)[number]): OpenApiSpec {
   return JSON.parse(fs.readFileSync(path.join(serviceRoot, "openapi", `${app}.json`), "utf8"));
 }
 
+/** The app's spec as committed at the git ref HEAD, the base the first test checks against. */
+function readSpecAtHead(app: (typeof apps)[number]): OpenApiSpec {
+  const result = spawnSync("git", ["show", `HEAD:services/account/openapi/${app}.json`], {
+    cwd: repoRoot,
+    encoding: "utf8"
+  });
+  expect(result.status, result.stderr).toBe(0);
+  return JSON.parse(result.stdout);
+}
+
+/**
+ * A contract version below `version` that apifn accepts as the bump for a
+ * breaking change: a lower major, or a lower minor while the major is 0.
+ */
+function olderContractVersion(version: string): string {
+  const [major, minor] = version.split(".").map(Number);
+  if (major > 0) return `${major - 1}.0.0`;
+  expect(minor, `no older contract version below ${version}`).toBeGreaterThan(0);
+  return `0.${minor - 1}.0`;
+}
+
 function makeTempDir(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "openapi-check-"));
   tempDirs.push(dir);
@@ -72,7 +93,9 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
         expect(section).toContain(`Spec:     openapi/${app}.json`);
         expect(section).toContain("Drift:    none");
         expect(section).toContain("Base:     git ref HEAD");
-        expect(section).toContain("Versions: base 1.0.0, head 1.0.0");
+        const baseVersion = readSpecAtHead(app).info.version;
+        const headVersion = readCommittedSpec(app).info.version;
+        expect(section).toContain(`Versions: base ${baseVersion}, head ${headVersion}`);
       }
       expect(output).toContain("openapi:check memotron=pass pointron=pass nucleum=pass");
     },
@@ -106,7 +129,7 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
   );
 
   it(
-    "fails a breaking change unless the base's major version is lower",
+    "fails a breaking change unless the head's contract version is a bump over the base's",
     () => {
       const dir = makeTempDir();
       const base = readCommittedSpec("memotron");
@@ -115,9 +138,11 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
       expect(collection.delete).toBeUndefined();
       collection.delete = { ...collection.get, operationId: "deleteMemotronCollectionInBase" };
       const sameVersion = writeSpec(dir, "base-same-version.json", base);
-      const olderMajor = writeSpec(dir, "base-older-major.json", {
+      const headVersion = readCommittedSpec("memotron").info.version;
+      const baseVersion = olderContractVersion(headVersion);
+      const olderVersion = writeSpec(dir, "base-older-version.json", {
         ...base,
-        info: { ...base.info, version: "0.9.0" }
+        info: { ...base.info, version: baseVersion }
       });
 
       const unversioned = runOpenApiCheck(["--app", "memotron", "--base-spec", sameVersion]);
@@ -126,9 +151,9 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
       expect(unversioned.output).toContain("Breaking changes: 1");
       expect(unversioned.output).not.toContain("== apifn check: pointron ==");
 
-      const versioned = runOpenApiCheck(["--app", "memotron", "--base-spec", olderMajor]);
+      const versioned = runOpenApiCheck(["--app", "memotron", "--base-spec", olderVersion]);
       expect(versioned.status, versioned.output).toBe(0);
-      expect(versioned.output).toContain("Versions: base 0.9.0, head 1.0.0");
+      expect(versioned.output).toContain(`Versions: base ${baseVersion}, head ${headVersion}`);
     },
     CHECK_TIMEOUT_MS
   );
@@ -149,6 +174,7 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
         ["--app", "memotron", "--app", "pointron", "--base-spec", "openapi/memotron.json"],
         ["--base", "--write"],
         ["--write=true"],
+        ["--format", "json"],
         ["--help"],
         ["--", "src/api/memotron/router.ts"]
       ]) {
