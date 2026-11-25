@@ -283,7 +283,7 @@ async function reconcileLocalFile(
   if (!entry.isCommitted && !isAbandoned(entry)) return false;
   if (entry.claim && !entry.isUploaded) {
     // Its lookups came after the changes it read and the marks listed.
-    await markQueuedFileOrphaned(dir, fileId, read.map(toToken), entry.marks);
+    await markQueuedFileOrphaned(dir, fileId, entry.marks);
   } else if (globalThis.navigator?.locks) {
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));

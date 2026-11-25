@@ -544,20 +544,19 @@ async function removeMark(
 
 /**
  * Marks a local file orphaned: it does not publish until its copy is
- * rewritten. Clears the stale marks `listed` before its record's lookups,
- * but those of a change generation not in `covered` (see clearMarks).
+ * rewritten. Clears the stale marks `listed` before its record's lookups
+ * (see clearMarks), which those lookups cover.
  */
 export async function markQueuedFileOrphaned(
   dir: string,
   fileId: string,
-  covered: string[] = [],
   listed: string[] = []
 ) {
   const name = toEntryName(fileId);
   await writeEntryFile(dir, name, ORPHANED_FILE, "");
   const entry = await getEntryDir(dir, name, true);
   const marked = listed.flatMap((mark) => toMarkGeneration(mark) ?? []);
-  await clearMarks(entry, [STALE_FILE], listed, [...covered, ...marked]);
+  await clearMarks(entry, [STALE_FILE], listed, marked);
 }
 
 /** A new change generation: `<ms>-<uuid>` (its time is never compared). */
@@ -569,7 +568,8 @@ const GENERATION = /^\d+-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i;
 
 /** The generation of a stale or deleted mark (`<mark>.<generation>`). */
 function toMarkGeneration(name: string) {
-  const [mark, generation = ""] = name.split(/\.(.*)/);
+  const dot = name.indexOf(".");
+  const [mark, generation] = [name.slice(0, dot), name.slice(dot + 1)];
   const isMark = [STALE_FILE, DELETED_FILE].includes(mark);
   return isMark && GENERATION.test(generation) ? generation : undefined;
 }
@@ -660,10 +660,12 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * not be read again: the file does not upload until a copy that covers the
  * change `generation` (see toHold) replaces it. A deleted record
  * (`isDeleted`) gets its own mark. Writes the plain mark, then that of the
- * generation, and removes none; a stale mark is never replaced, so an
- * earlier build's ("") keeps telling nothing. Writes none when the record
- * copy already covers the generation (a fence that lands after a verified
- * copy of its change). Resolves the generation.
+ * generation; a stale mark is never replaced, so an earlier build's ("")
+ * keeps telling nothing. Writes none when the record copy already covers the
+ * generation (a fence that lands after a verified copy of its change), and
+ * removes the plain mark it created once a reread finds a copy that covers
+ * the generation (one verified meanwhile), as no later pass may run (its tab
+ * signed in); it removes no other mark. Resolves the generation.
  */
 export async function markQueuedFileStale(
   dir: string,
@@ -673,11 +675,18 @@ export async function markQueuedFileStale(
 ) {
   const name = toEntryName(fileId);
   const mark = isDeleted ? DELETED_FILE : STALE_FILE;
-  const copy = await readQueuedRecord(dir, name);
-  if (toCovered(copy).includes(generation)) return generation;
-  if (isDeleted || (await readEntryText(dir, name, mark, true)) === undefined)
+  const isCovered = async () =>
+    toCovered(await readQueuedRecord(dir, name)).includes(generation);
+  if (await isCovered()) return generation;
+  const was = await readEntryText(dir, name, mark, true).catch((error) => {
+    if (isDeleted) return ""; // Written all the same, and never removed.
+    throw error;
+  });
+  if (isDeleted || was === undefined)
     await writeEntryFile(dir, name, mark, isDeleted ? "" : CHANGED_MARK);
   await writeEntryFile(dir, name, `${mark}.${generation}`, "");
+  if (was === undefined && (await isCovered()))
+    await removeMark(await getEntryDir(dir, name, true), mark);
   return generation;
 }
 

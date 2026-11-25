@@ -2999,7 +2999,7 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
-  it("holds a capture by a stale mark written beside a covered generation's mark, as a raced fence or an earlier build's beside a leftover leaves it, until the following pass verifies its copy", async () => {
+  it("holds a capture by a stale mark written beside a covered generation's mark, as an earlier build's or a stopped fence's beside a leftover leaves it, until the following pass verifies its copy", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
@@ -3541,6 +3541,61 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
+  it("publishes, once its tab signs in, a capture whose fence read the copy before another tab's pass verified a copy covering its change and wrote its marks after", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // A tab records a change, and its fence reads the copy, then pauses
+    // before its first mark while another tab's pass of a later rename reads
+    // that change, then copies and verifies the record.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, record.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-pending:${key.join(":")}`,
+      `change:${generation}`
+    );
+    const paused = deferred<void>();
+    const resume = deferred<void>();
+    let isPaused = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "stale" || isPaused) return;
+        isPaused = true;
+        paused.resolve();
+        await resume.promise;
+      }
+    });
+    const lateFence = markQueuedFileStale(
+      LOCAL_QUEUE,
+      record.fileId,
+      false,
+      generation
+    );
+    await paused.promise;
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "renamed.png" }
+    } as never);
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.covered).toContain(generation);
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("stale");
+    resume.resolve();
+    await lateFence;
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("stale");
+
+    // The fence's tab signs in before any other guest pass runs.
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("renamed.png")
+    );
+  });
+
   it("keeps an account record the account trashed itself after a partial first save applied the insert and not the trash, when the guest record is then deleted", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
@@ -3636,32 +3691,6 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
-  /** Runs `run` once, after the first removal of a queued file's `name`. */
-  function afterEntryRemoval(name: string, run: () => Promise<unknown>) {
-    let isRun = false;
-    const getDirectory = navigator.storage.getDirectory;
-    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
-      new Proxy(dir, {
-        get(target, key) {
-          if (key === "getDirectoryHandle")
-            return async (dirName: string, options?: { create?: boolean }) =>
-              wrap(await target.getDirectoryHandle(dirName, options));
-          if (key !== "removeEntry") return Reflect.get(target, key);
-          return async (entryName: string) => {
-            try {
-              return await target.removeEntry(entryName);
-            } finally {
-              if (entryName === name && !isRun) {
-                isRun = true;
-                await run();
-              }
-            }
-          };
-        }
-      });
-    navigator.storage.getDirectory = async () => wrap(await getDirectory());
-  }
-
   it.each([
     ["fence, pass", false, false],
     ["pass, fence", false, true],
@@ -3671,7 +3700,13 @@ describe("files captured offline or by a local-only user", () => {
     ["fence, pass stopped before it verifies", true, true],
     ["fence, pass stopped while it clears", false, false],
     ["stopped fence, pass", false, false],
-    ["pass, stopped fence", true, true]
+    ["pass, stopped fence", true, true],
+    ["fence reads the copy, pass, fence writes", false, true],
+    [
+      "pass lists, stale mark, fence, pass verifies before its last mark",
+      true,
+      true
+    ]
   ])(
     "holds a capture by a fence's marks until a verified copy that listed them or read its change clears them: %s",
     async (order, isHeldIfRead, isHeldIfUnread) => {
@@ -3713,6 +3748,24 @@ describe("files captured offline or by a local-only user", () => {
           await list();
           await verify();
         };
+        // A fence that runs `step` just before it writes the mark `name`.
+        const lateFence = async (
+          name: string,
+          step: () => Promise<unknown>
+        ) => {
+          const getDirectory = navigator.storage.getDirectory;
+          let isRun = false;
+          hookEntryFiles({
+            async create(created) {
+              if (created !== name || isRun) return;
+              isRun = true;
+              await step();
+            }
+          });
+          await fence().finally(() => {
+            navigator.storage.getDirectory = getDirectory;
+          });
+        };
         const stoppedClear = async () => {
           await list();
           failEntryRemoval(`stale.${generation}`, 1);
@@ -3731,7 +3784,16 @@ describe("files captured offline or by a local-only user", () => {
           "fence, pass stopped before it verifies": [fence, list],
           "fence, pass stopped while it clears": [fence, stoppedClear],
           "stopped fence, pass": [staleMark, pass],
-          "pass, stopped fence": [pass, staleMark]
+          "pass, stopped fence": [pass, staleMark],
+          "fence reads the copy, pass, fence writes": [
+            () => lateFence("stale", pass)
+          ],
+          // The fence finds the stale mark set, so does not remove it.
+          "pass lists, stale mark, fence, pass verifies before its last mark": [
+            list,
+            staleMark,
+            () => lateFence(`stale.${generation}`, verify)
+          ]
         };
         for (const step of steps[order]) await step();
         expect(await isListedStale()).toBe(
@@ -3955,13 +4017,13 @@ describe("files captured offline or by a local-only user", () => {
         { name: `stale.${uncovered}`, text: "" }
       ]
     };
-    const malformed = { name: "stale.", text: "" };
-    await expect(
-      restoreLocalQueuedFiles(
-        [{ ...restored, marks: [...restored.marks, malformed] }],
-        () => false
-      )
-    ).rejects.toThrow();
+    for (const name of ["stale.", `stale.${covered}\nstale`])
+      await expect(
+        restoreLocalQueuedFiles(
+          [{ ...restored, marks: [...restored.marks, { name, text: "" }] }],
+          () => false
+        )
+      ).rejects.toThrow();
     const root = await opfs.getDirectory();
     const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
     await queue.removeEntry(`queued_${record.fileId}`, { recursive: true });
