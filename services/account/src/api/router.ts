@@ -892,7 +892,7 @@ async function createRecord(
       // A replayed create whose record is gone meanwhile has nothing to answer with.
       if (row === null) throw result.deduped === true ? idempotencyConflict() : notVisible(contract, id);
       await indexWritten(caller, contract.resource, row);
-      return respond(project(contract, row), result.deduped === true);
+      return respond(project(contract, await withScopedItems(app, caller, contract.resource, row)), result.deduped === true);
     }
     if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
     const stored = await matchKeyedRecord(app, contract, caller, id, body);
@@ -958,7 +958,7 @@ async function updateRecord(
     // The row left this token's view in the same transaction: nothing to answer with or index.
     if (row === null) throw notVisible(contract, id);
     await indexWritten(caller, contract.resource, row);
-    return respond(project(contract, row), result.deduped === true);
+    return respond(project(contract, await withScopedItems(app, caller, contract.resource, row)), result.deduped === true);
   });
 }
 
@@ -1129,15 +1129,15 @@ async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<
   if (!result.ok) return { result, row: null };
   // DataFn runs every successful transact mutation, a replay included, in one transaction.
   if (!inTransaction.checked) throw new Error('v1 write finished without its in-transaction check');
-  // A space's items are those of the committed revision; which of them the
-  // app sees is decided after the commit, as a DataFn read decides it, so
-  // those lookups never run while the write holds its row.
-  return { result, row: inTransaction.row && await withScopedItems(app, caller, resource, inTransaction.row) };
+  return { result, row: inTransaction.row };
 }
 
 /**
  * A row with a space's items filtered as this token's DataFn read filters
- * them. Other resources come back unchanged.
+ * them. Other resources come back unchanged. A write's answer takes the
+ * committed revision's items, filtered after the commit (and after the
+ * index update, which a failed lookup here must not skip), so those
+ * lookups never run while the write holds its row.
  */
 async function withScopedItems(
   app: InterfaceApp,

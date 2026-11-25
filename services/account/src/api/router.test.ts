@@ -967,6 +967,29 @@ describe('v1 writes on the real DataFn executor', () => {
     expect((updated.items as Body[]).map((item) => item.id)).toEqual(['item-second']);
   });
 
+  it('indexes a committed space update even when filtering its items for the answer fails', async () => {
+    const id = 'space:index-before-filter';
+    await seed(insert('space', id, { label: 'Before', view: 'sidenav', items: [
+      { id: 'item-collection', type: 'resource', resourceType: 'collection', resourceId: 'collection:notes', label: 'Notes' }
+    ] }));
+    const upserts: Body[] = [];
+    const router = createInterfaceApiRouter('memotron', {
+      authenticate: (request) => harness.services.auth.provider.authenticate(request),
+      getSyncServer: () => harness.services.getSyncServer(),
+      readStored: harness.services.readSyncRecord,
+      inWriteTransaction: harness.services.inSyncWriteTransaction,
+      findStored: async () => { throw new Error('lookup failed'); },
+      getSearchIndex: () => ({ provider: { updateIndices: async (update) => { upserts.push(...update.records as Body[]); } } }),
+      logError: () => undefined
+    });
+    const response = await router.handle(new Request(`${base}/v1/memotron/spaces/${id}`, {
+      method: 'PATCH', headers: { 'content-type': 'application/json', ...actors.memotronWrite }, body: JSON.stringify({ label: 'After' })
+    }));
+    expect(response.status).toBe(500);
+    expect(upserts).toEqual([expect.objectContaining({ id, label: 'After' })]);
+    expect(await stored('space', id)).toMatchObject({ label: 'After' });
+  });
+
   it('answers a space update with only the items the app may see', async () => {
     const memotron = await json(await call('/v1/memotron/spaces/space:mixed', actors.memotronWrite, {
       method: 'PATCH', body: { isStarred: true }
