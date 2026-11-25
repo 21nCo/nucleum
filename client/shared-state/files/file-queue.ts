@@ -582,12 +582,14 @@ async function settleMarks(
       ? ofKind(names, kind).find((name) => !isOpen(name))
       : undefined
   );
+  for (const kind of kinds)
+    for (const name of ofKind(names, kind))
+      if (!isOpen(name) && !owners.includes(name))
+        await removeMark(entry, name);
+  const now = await readNames(entry);
   let failed: { error: unknown } | void = undefined;
   for (const [index, kind] of kinds.entries()) {
     const owner = owners[index];
-    const now = await readNames(entry);
-    for (const name of ofKind(now, kind))
-      if (!isOpen(name) && name !== owner) await removeMark(entry, name);
     const isClear = !ofKind(now, kind).some(isOpen) && !isPending();
     if (!now.includes(kind) || !(listed.includes(kind) || owner) || !isClear)
       continue;
@@ -1520,16 +1522,13 @@ export async function restoreLocalQueuedFiles(
           });
           const write = writeEntryFile.bind(null, dir, entryName);
           const covered = toCovered(copy.record);
-          const marks = (copy.marks ?? []).map(({ name }) => name);
           for (const { name, text } of copy.marks ?? []) {
             const at = toMarkGeneration(name);
             if (!at || !covered.includes(at))
               await write(name, name === DELETED_FILE ? "" : text);
+            if (HOLD_MARKS.includes(name))
+              await write(`${name}.${toChangeGeneration()}`, "");
           }
-          const open = toHold(marks.filter(toMarkGeneration), copy.record);
-          for (const [index, kind] of HOLD_MARKS.entries())
-            if (marks.includes(kind) && !Object.values(open)[index])
-              await write(`${kind}.${toChangeGeneration()}`, "");
           if (copy.claim) await write(CLAIM_FILE, JSON.stringify(copy.claim));
           const { thumbnail } = copy;
           if (thumbnail && THUMBNAIL_TYPES.has(thumbnail.type)) {

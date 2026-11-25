@@ -5424,6 +5424,71 @@ describe("files captured offline or by a local-only user", () => {
     ).toBeUndefined();
   });
 
+  it("keeps a listed plain stale mark when a newer generation's mark lands while the settle removes a covered one, even if setting the plain mark again fails", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const newer = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "stale", "changed");
+    await writeLocalEntryFile(fileId, `stale.${covered}`);
+    hookEntryRemovalOnce(`stale.${covered}`, () =>
+      writeLocalEntryFile(fileId, `stale.${newer}`)
+    );
+    hookEntryFiles({
+      create(name) {
+        if (name === "stale")
+          throw new DOMException("Disk full", "QuotaExceededError");
+      }
+    });
+
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: ["stale", `stale.${covered}`] }
+    ).catch(() => undefined);
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks).toContain(`stale.${newer}`);
+    expect(marks).toContain("stale");
+  });
+
+  it("releases a verified delete once signed in whose fence wrote its plain and covered generation's marks during an earlier settle", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const deleted = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [earlier, deleted], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, `stale.${earlier}`);
+    hookEntryRemovalOnce(`stale.${earlier}`, async () => {
+      await writeLocalEntryFile(fileId, "deleted");
+      await writeLocalEntryFile(fileId, `deleted.${deleted}`);
+    });
+
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).not.toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+      false
+    );
+  });
+
   it("withdraws the upload of a publish whose copy another tab fenced while its publishing mark was removed, so the next replay publishes the newer copy", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
