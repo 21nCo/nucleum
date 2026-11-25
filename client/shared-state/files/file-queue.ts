@@ -4172,7 +4172,9 @@ async function verifyCopy(dir: string, name: string, by: QueuedFilePublisher) {
   if (await isCopy()) {
     await removeEntryFile(entry, PUBLISHING_FILE);
     if (await isCopy().catch(() => false)) return;
-    await writeEntryFile(dir, name, PUBLISHING_FILE, copy).catch(String);
+    await removeEntryFile(entry, UPLOADED_FILE).catch(() =>
+      writeEntryFile(dir, name, PUBLISHING_FILE, copy).catch(String)
+    );
   }
   await removeEntryFile(entry, UPLOADED_FILE);
   await removeEntryFile(entry, PUBLISHING_FILE);

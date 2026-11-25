@@ -5489,40 +5489,55 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
-  it("withdraws the upload of a publish whose copy another tab fenced while its publishing mark was removed, so the next replay publishes the newer copy", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
-    const entry = `queued_${record.fileId}`;
-    let isFenced = false;
-    hookEntryRemovalOnce("publishing", async () => {
-      isFenced = true;
-      await writeLocalEntryFile(record.fileId, "stale");
-    });
+  it.each([
+    ["", false],
+    [" and the first withdrawal and the publishing mark's rewrite fail", true]
+  ])(
+    "withdraws the upload of a publish whose copy another tab fenced while its publishing mark was removed%s, so the next replay publishes the newer copy",
+    async (_, isFailing) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const entry = `queued_${record.fileId}`;
+      let isFenced = false;
+      hookEntryRemovalOnce("publishing", async () => {
+        isFenced = true;
+        await writeLocalEntryFile(record.fileId, "stale");
+      });
+      if (isFailing) {
+        failEntryRemoval("uploaded", 1);
+        hookEntryFiles({
+          create(name) {
+            if (name === "publishing" && isFenced)
+              throw new DOMException("Disk full", "QuotaExceededError");
+          }
+        });
+      }
 
-    await signInToCloud("user-a");
-    await replayLocalQueue();
-    await settleTasks();
-    expect(isFenced).toBe(true);
-    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      expect(isFenced).toBe(true);
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
 
-    await signOutToLocal();
-    await settleTasks();
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleTasks();
-    await signInToCloud("user-a");
-    await replayLocalQueue();
-    await settleTasks();
+      await signOutToLocal();
+      await settleTasks();
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "receipt.png" }
+      } as never);
+      await settleTasks();
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
 
-    expect((await readAnyRecord(record.id))?.name).toBe("receipt.png");
-    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
-    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
-  });
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png");
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
+    }
+  );
 
   it.each(["listing", "changes-only export"])(
     "reset evidence: %s treats a provisional upload with a delivery log as unverified",
