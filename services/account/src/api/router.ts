@@ -1,5 +1,6 @@
 import { createRouter, type Route, type RouteContext, type Router } from '@superfunctions/http';
 import { DatafnExecutorError, type DatafnExecutor, type SearchProvider } from '@datafn/server';
+import { stripNullsForNonNullableFields, type DatafnResourceSchema } from '@datafn/core';
 import { AuthFnError, type AuthFnSession } from 'authfn';
 import type { ConditionalKVStoreAdapter } from '@superfunctions/db';
 import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
@@ -747,11 +748,25 @@ function referenceFields(contract: InterfaceResourceContract): string[] {
 }
 
 /**
- * A record read back in a write's transact call, with the reference fields
- * DataFn leaves out of that read taken from the write and the earlier read.
+ * A record a write read back, with its reference fields taken from the write
+ * and the earlier read (which the answer must keep consistent with), and a
+ * space's items taken from the earlier read.
  */
-function withReferences(contract: InterfaceResourceContract, row: Row, written: Row, before: Row = {}): Row {
+function withReferences(
+  app: InterfaceApp,
+  contract: InterfaceResourceContract,
+  row: Row,
+  written: Row,
+  before: Row = {}
+): Row {
   const complete = { ...row };
+  // A space's items are filtered to the app only by DataFn's read, so they
+  // come from the earlier read (writes never set them) and not from storage.
+  const shared = resolveInterfaceSharedFilter(app, contract.resource as InterfaceExposedResource);
+  if (shared?.kind === 'items') {
+    if (shared.field in before) complete[shared.field] = before[shared.field];
+    else delete complete[shared.field];
+  }
   for (const name of referenceFields(contract)) {
     const value = name in written ? written[name] : before[name];
     if (value !== undefined) complete[name] = value;
@@ -838,7 +853,6 @@ async function createRecord(
   collectionPath: string
 ): Promise<Response> {
   const body = validateWriteBody(contract, 'create', await readBody(ctx));
-  await refuseEncrypted(caller);
   const visible = sharedFieldConstraint(app, contract);
   if (visible && !visible.includes(String(body.resource))) {
     throw validationProblem([{ pointer: '/resource', detail: `resource must be one of ${visible.join(', ')}.` }]);
@@ -860,6 +874,8 @@ async function createRecord(
   // A create still in progress under this key needs no wait: its id is
   // taken, so this insert either replays it or fails the body match.
   return keyed.write(async (committed) => {
+    // After a finished key replays, and before anything is stored.
+    await refuseEncrypted(caller);
     const record = { ...body };
     applyDerivedFields(contract, record);
     const { result, row } = await mutateChecked(app, contract, caller, body, {
@@ -874,8 +890,9 @@ async function createRecord(
       await committed();
       // A replayed create whose record is gone meanwhile has nothing to answer with.
       if (row === null && result.deduped === true) throw idempotencyConflict();
-      const stored = withReferences(contract, row ?? { ...record, id }, record);
-      await indexWritten(caller, contract.resource, stored);
+      const stored = withReferences(app, contract, row ?? { ...record, id }, record);
+      // A row built from the write could overwrite a newer write's index entry.
+      if (row !== undefined) await indexWritten(caller, contract.resource, stored);
       return respond(project(contract, stored), result.deduped === true);
     }
     if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
@@ -893,7 +910,6 @@ async function updateRecord(
   request: Request
 ): Promise<Response> {
   const body = validateWriteBody(contract, 'update', await readBody(ctx));
-  await refuseEncrypted(caller);
   const id = ctx.params.id;
   const before = await getRecord(app, contract, caller, id);
   const keyed = await idempotency(app, request, caller, body, ['update', contract.resource, id]);
@@ -905,6 +921,8 @@ async function updateRecord(
   // time, so the later one waits for the first instead of writing.
   if (keyed.state === 'in_progress') throw idempotencyInProgress();
   return keyed.write(async (committed) => {
+    // After a finished key replays, and before anything is stored.
+    await refuseEncrypted(caller);
     const record = { ...body };
     applyDerivedFields(contract, record);
     let written: Written;
@@ -939,8 +957,8 @@ async function updateRecord(
     }
     await committed();
     if (row === null && result.deduped === true) throw notVisible(contract, id);
-    const stored = withReferences(contract, row ?? { ...before, ...record }, record, before);
-    await indexWritten(caller, contract.resource, stored);
+    const stored = withReferences(app, contract, row ?? { ...before, ...record }, record, before);
+    if (row !== undefined) await indexWritten(caller, contract.resource, stored);
     return respond(project(contract, stored), result.deduped === true);
   });
 }
@@ -1080,7 +1098,9 @@ async function readCommitted(app: InterfaceApp, caller: Caller, resource: string
   const shared = resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource);
   const visible = resolveInterfaceVisibleTypes(app);
   if (shared?.kind === 'field' && visible !== 'all' && !visible.includes(String(row.resource))) return null;
-  return row;
+  // As a DataFn read does: an unset optional field the schema keeps non-null reads as absent.
+  const schema = nucleumDatafnSchema.resources.find((entry) => entry.name === resource) as DatafnResourceSchema | undefined;
+  return stripNullsForNonNullableFields(row, schema);
 }
 
 /**

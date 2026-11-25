@@ -5,6 +5,7 @@ import { DatafnExecutorError } from '@datafn/server';
 import { interfaceApps, interfaceContract, interfaceResources, type InterfaceApp } from '@nucleum/schema/interfaces';
 import type { SyncContext, SyncServer } from '../datafn/server.js';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
+import { resolveAccountUserNamespace } from '../datafn/namespace.js';
 import { createInterfaceApiRouter, keyedCreateId } from './router.js';
 import { resourceSegment } from './resources.js';
 
@@ -868,5 +869,29 @@ describe('v1 writes on the real DataFn executor', () => {
     expect(await json(await call(`/v1/pointron/tasks/${id}`, actors.pointronWrite, {
       method: 'PATCH', body: { label: 'Writable again' }
     }), 200)).toMatchObject({ label: 'Writable again' });
+  });
+
+  it('answers a space update with only the items the app may see', async () => {
+    const memotron = await json(await call('/v1/memotron/spaces/space:mixed', actors.memotronWrite, {
+      method: 'PATCH', body: { isStarred: true }
+    }), 200);
+    expect((memotron.items as Body[]).map((item) => item.id)).toEqual(['item-node']);
+    const nucleum = await json(await call('/v1/nucleum/spaces/space:mixed', actors.nucleumWrite, {
+      method: 'PATCH', body: { isStarred: false }
+    }), 200);
+    expect((nucleum.items as Body[]).map((item) => item.id)).toEqual(['item-node', 'item-goal']);
+  });
+
+  it('reads a write back only within the caller\'s namespace', async () => {
+    const other = await signUpActor('v1-api-namespace@example.test');
+    const id = 'task:namespaced';
+    const seeded = await call('/datafn/mutation', other.cookie, {
+      body: [insert('task', id, { label: 'Namespaced', dateUnix: 1_700_000_000_000 })]
+    });
+    expect(seeded.status, await seeded.clone().text()).toBe(200);
+    const own = await harness.services.readSyncRecord('task', id, resolveAccountUserNamespace(other.actorId));
+    expect(own).toMatchObject({ id, label: 'Namespaced' });
+    expect(own).not.toHaveProperty('__ns');
+    expect(await harness.services.readSyncRecord('task', id, resolveAccountUserNamespace('another-account'))).toBeNull();
   });
 });

@@ -1,6 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import type { Adapter, ConditionalKVStoreAdapter, RuntimeStores } from "@superfunctions/db";
+import {
+  wrapWithRowLevelNamespace,
+  type Adapter,
+  type ConditionalKVStoreAdapter,
+  type RuntimeStores
+} from "@superfunctions/db";
 import type { SuperfunctionObservability } from "@superfunctions/observability";
 import type {
   AuthFnDeliveryMessageResolver,
@@ -127,9 +132,10 @@ export interface AccountServices {
    */
   getSyncSearchIndex?: () => { provider: SearchProvider; regionId?: string } | undefined;
   /**
-   * Reads one row of a namespace by id from the sync server's database: a
-   * single lookup bounded by the id, outside DataFn's authorization and rate
-   * limits, for callers that already authorized the access.
+   * Reads one row of a namespace by id from the sync server's database,
+   * scoped to that namespace as DataFn scopes its own reads: a single lookup
+   * bounded by the id, outside DataFn's authorization, rate limits and
+   * response hooks, for callers that already authorized the access.
    */
   readSyncRecord: (
     resource: string,
@@ -228,7 +234,11 @@ export function buildAccountServices(
   const getSyncServer = () => {
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
       .then((syncDatabase) => {
-        syncDatabaseAdapter = syncDatabase;
+        syncDatabaseAdapter = wrapWithRowLevelNamespace(syncDatabase, {
+          enabled: true,
+          columnName: "__ns",
+          mandatory: true
+        });
         // Resolved here, as the sync server would, so the v1 API indexes its
         // writes with the same provider instance.
         syncSearchProvider =

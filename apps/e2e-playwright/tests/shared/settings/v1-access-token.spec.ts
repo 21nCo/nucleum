@@ -153,10 +153,10 @@ test.describe("settings - personal access token on the v1 API @settings @auth", 
 
       const refused = await listWithToken(accountBaseUrl, secretValue, target.path);
       expect(refused.status, `problem code ${refused.code ?? "none"}`).toBe(401);
-      // Only a refused call proves the server revoked it; until then cleanup revokes it.
-      revoked = true;
       expect(refused.contentType).toContain("application/problem+json");
       expect({ status: refused.problemStatus, code: refused.code }).toEqual({ status: 401, code: "unauthenticated" });
+      // Only the API's own refusal proves the server revoked it; until then cleanup revokes it.
+      revoked = true;
 
       // The section also shows no rows when its list fails to load, so the
       // token counts as gone only once the reloaded list arrived intact.

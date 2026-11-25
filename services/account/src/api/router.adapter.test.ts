@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DatafnExecutorError } from '@datafn/server';
 import { createMemoryRuntimeStores } from '@superfunctions/db/adapters/memory';
+import { stripNullsForNonNullableFields, type DatafnResourceSchema } from '@datafn/core';
+import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import type { AuthFnSession } from 'authfn';
 import type { SyncServer } from '../datafn/server.js';
 import { resolveAccountUserNamespace } from '../datafn/namespace.js';
@@ -86,7 +88,12 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
     const sorted = sortRows(selected, (payload.sort as string[] | undefined) ?? ['id']);
     const limit = payload.limit as number | undefined;
     if (limit !== undefined && limit > 100) throw new DatafnExecutorError({ code: 'DFQL_INVALID', message: 'limit' }, 400);
-    return { data: (limit === undefined ? sorted : sorted.slice(0, limit)).map(({ resource: _, ...row }) => row) };
+    // DataFn reads leave out unset non-nullable fields stored as null.
+    const schema = nucleumDatafnSchema.resources.find((entry) => entry.name === payload.resource) as DatafnResourceSchema | undefined;
+    return {
+      data: (limit === undefined ? sorted : sorted.slice(0, limit))
+        .map(({ resource: _, ...row }) => stripNullsForNonNullableFields(row, schema))
+    };
   };
   const write = async (payload: Row) => {
     mutations.push(payload);
@@ -610,8 +617,9 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       expect(record).toMatchObject({ ...write.body, updatedAt: stored.updatedAt });
     });
 
-    it.each(writes)('answers a stored $method from the write when the readback fails, logging no content', async (write) => {
+    it.each(writes)('answers a stored $method from the write when the readback fails, indexing and logging nothing of it', async (write) => {
       const logError = vi.fn();
+      const updateIndices = vi.fn(async () => undefined);
       const rows = [task('task:a', null)];
       const base = createPostgresLikeServices(rows, { logError });
       const services: InterfaceApiServices = {
@@ -620,15 +628,36 @@ describe('v1 routes on PostgreSQL-like storage', () => {
           if (resource === 'task') throw Object.assign(new Error('read failed near sentinel-note-body'), { code: '57014' });
           return base.services.readStored(resource, id, namespace);
         },
-        getSearchIndex: () => ({ provider: { updateIndices: async () => { throw new Error('index refused sentinel-note-body'); } } })
+        getSearchIndex: () => ({ provider: { updateIndices } })
       };
       const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
       expect(response.status).toBe(write.status);
       expect(await response.json()).toMatchObject(write.body);
       expect(rows.filter((row) => row.label === write.body.label)).toHaveLength(1);
       expect(logError).toHaveBeenCalledWith(expect.any(String), { name: 'Error', code: '57014' });
-      expect(logError).toHaveBeenCalledWith(expect.any(String), { name: 'Error' });
       expect(JSON.stringify(logError.mock.calls)).not.toContain('sentinel-note-body');
+      // A row built from the write could overwrite a newer write's index entry.
+      expect(updateIndices).not.toHaveBeenCalled();
+    });
+
+    it('answers a create as a DataFn read does, leaving out unset non-nullable columns stored as null', async () => {
+      const base = createPostgresLikeServices([]);
+      const services: InterfaceApiServices = {
+        ...base.services,
+        readStored: async (resource, id, namespace) => {
+          const row = await base.services.readStored(resource, id, namespace);
+          // PostgreSQL returns every column, unset ones as null.
+          return row && resource === 'task' ? { minutes: null, completedAtUnix: null, ...row } : row;
+        }
+      };
+      const response = await send(services, '/v1/pointron/tasks', {
+        method: 'POST', body: JSON.stringify({ label: 'No minutes', dateUnix: 900 })
+      });
+      const record = await response.json() as Row;
+      expect(response.status, JSON.stringify(record)).toBe(201);
+      expect(record).not.toHaveProperty('minutes');
+      // A nullable field keeps its null.
+      expect(record).toHaveProperty('completedAtUnix', null);
     });
 
     it('logs no stored content when a write fails inside DataFn', async () => {
@@ -695,6 +724,25 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
       expect(response.status).toBeLessThan(300);
       expect(storedReads).toContainEqual({ resource: 'kv', id: 'kv:nucleum:e2ee', namespace: resolveAccountUserNamespace('user-1') });
+    });
+
+    it.each(writes)('replays a finished keyed $method after encryption is turned on, and refuses a new one', async (write) => {
+      const rows = [task('task:a', null)];
+      const { services, mutations } = createPostgresLikeServices(rows, {
+        idempotencyStore: createMemoryRuntimeStores().atomicKv
+      });
+      const init = { method: write.method, headers: { 'idempotency-key': 'before-encryption' }, body: JSON.stringify(write.body) };
+      const first = await send(services, write.path, init);
+      expect(first.status).toBeLessThan(300);
+      rows.push(settingsRow({ version: 1, enabled: true, updatedAt: 1 }));
+      const retry = await send(services, write.path, init);
+      expect(retry.status).toBe(first.status);
+      expect(retry.headers.get('idempotent-replayed')).toBe('true');
+      expect(retry.headers.get('location')).toBe(first.headers.get('location'));
+      const fresh = await send(services, write.path, { ...init, headers: { 'idempotency-key': 'after-encryption' } });
+      expect(fresh.status).toBe(409);
+      expect(await fresh.json()).toMatchObject({ code: 'end_to_end_encrypted' });
+      expect(mutations).toHaveLength(1);
     });
 
     it('answers a 500 and writes nothing when the setting cannot be read', async () => {
