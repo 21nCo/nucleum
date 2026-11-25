@@ -5507,10 +5507,12 @@ describe("files captured offline or by a local-only user", () => {
       });
       if (isFailing) {
         failEntryRemoval("uploaded", 1);
+        let isRewriteFailed = false;
         hookEntryFiles({
           create(name) {
-            if (name === "publishing" && isFenced)
-              throw new DOMException("Disk full", "QuotaExceededError");
+            if (name !== "publishing" || !isFenced || isRewriteFailed) return;
+            isRewriteFailed = true;
+            throw new DOMException("Disk full", "QuotaExceededError");
           }
         });
       }
