@@ -13,13 +13,18 @@
  * forwardedOptions are passed on; positional arguments, --spec, --config,
  * --report and any other option are rejected with exit code 2 before apifn
  * runs (--format too: the runner's per-app text would corrupt its output),
- * and --base-spec needs exactly one --app. All selected apps are
- * checked; the exit code is the highest one apifn returned (0 pass, 1 drift,
- * invalid spec or an unversioned breaking change, 2 usage or load error). A
+ * and --base-spec needs exactly one --app. apifn reads a .json spec with a
+ * YAML-tolerant parser, so after each run the spec file must also parse with
+ * JSON.parse, or that app fails with exit code 1 (apifn --write leaves a
+ * semantically current file as it is, so regenerate it with
+ * npm run openapi:v1). All selected apps are checked; the exit code is
+ * the highest one (0 pass, 1 drift, invalid spec, spec not valid JSON or an
+ * unversioned breaking change, 2 usage or load error). A
  * relative --spec-dir is read from the directory npm ran from; a relative
  * --base-spec is read from services/account.
  */
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -103,6 +108,29 @@ function specPath(app, specDir) {
   return path.join(path.resolve(process.env.INIT_CWD ?? process.cwd(), specDir), `${app}.json`);
 }
 
+/**
+ * The JSON check for one app's spec file: the apifn status, raised to 1 when
+ * the file is not valid JSON and to 2 when it cannot be read.
+ */
+function jsonStatus(app, spec, status) {
+  let text;
+  try {
+    text = readFileSync(path.resolve(serviceRoot, spec), 'utf8');
+  } catch (error) {
+    console.error(`openapi:check: ${app}: cannot read ${spec}: ${error.message}`);
+    return Math.max(status, 2);
+  }
+  try {
+    JSON.parse(text);
+    return status;
+  } catch (error) {
+    console.error(
+      `openapi:check: ${app}: ${spec} is not valid JSON (${error.message}); regenerate it with npm run openapi:v1`
+    );
+    return Math.max(status, 1);
+  }
+}
+
 const { selected, specDir, forwarded } = parseArgs(process.argv.slice(2));
 const env = {
   ...process.env,
@@ -111,13 +139,14 @@ const env = {
 const results = [];
 for (const app of selected) {
   console.log(`\n== apifn check: ${app} ==`);
+  const spec = specPath(app, specDir);
   const run = spawnSync(
     process.execPath,
-    [cli, 'check', '--config', `src/api/${app}/apifn.config.ts`, '--spec', specPath(app, specDir), ...forwarded],
+    [cli, 'check', '--config', `src/api/${app}/apifn.config.ts`, '--spec', spec, ...forwarded],
     { cwd: serviceRoot, env, stdio: 'inherit' }
   );
   if (run.error) console.error(`openapi:check: ${app}: ${run.error.message}`);
-  const status = typeof run.status === 'number' ? run.status : 2;
+  const status = jsonStatus(app, spec, typeof run.status === 'number' ? run.status : 2);
   results.push({ app, status });
 }
 console.log(

@@ -129,6 +129,31 @@ describe("openapi:check (apifn check gate for the committed /v1 specs)", () => {
   );
 
   it(
+    "fails a spec that apifn's YAML-tolerant reader accepts but is not valid JSON",
+    () => {
+      const dir = makeTempDir();
+      for (const app of apps) writeSpec(dir, `${app}.json`, readCommittedSpec(app));
+      const malformedFile = path.join(dir, "memotron.json");
+      const json = fs.readFileSync(malformedFile, "utf8").trimEnd();
+      const malformed = `# yaml comment\n${json.slice(0, -1).trimEnd()},\n}\n`;
+      fs.writeFileSync(malformedFile, malformed);
+      expect(() => JSON.parse(malformed)).toThrow();
+
+      const { status, output } = runOpenApiCheck(["--spec-dir", dir]);
+
+      expect(status, output).toBe(1);
+      expect(output).toContain(`openapi:check: memotron: ${malformedFile} is not valid JSON`);
+      for (const app of ["pointron", "nucleum"]) {
+        expect(appSection(output, app)).toContain("apifn check: PASS");
+        expect(output).not.toContain(`openapi:check: ${app}:`);
+      }
+      expect(output).toContain("openapi:check memotron=fail(1) pointron=pass nucleum=pass");
+      expect(fs.readFileSync(malformedFile, "utf8")).toBe(malformed);
+    },
+    CHECK_TIMEOUT_MS
+  );
+
+  it(
     "fails a breaking change unless the head's contract version is a bump over the base's",
     () => {
       const dir = makeTempDir();
