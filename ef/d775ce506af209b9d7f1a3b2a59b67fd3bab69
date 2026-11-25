@@ -1,0 +1,21 @@
+services/account/src/api/check-openapi.mjs
+  s_20e59dd6c64205::t_d2b34a6785181b 11-19,30-41,44-46,50-55,59,62-83,85-86,89-103,107-110,116,123-125
+tests/unit/account-service/openapi-check.spec.ts
+  s_20e59dd6c64205::t_1c1f4022b35d2c 47-48,50,75,136-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "efd775ce506af209b9d7f1a3b2a59b67fd3bab69",
+  "prompts": {},
+  "sessions": {
+    "s_20e59dd6c64205": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a211b0-8c37-7b63-8f91-222b058dcfea",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
