@@ -1551,9 +1551,9 @@ describe("files captured offline or by a local-only user", () => {
 
     const entry = `queued_${record.fileId}`;
     const marks = opfs.list(LOCAL_QUEUE, entry);
-    expect(marks.filter((name) => name.startsWith("deleted"))).toEqual([
-      "deleted"
-    ]);
+    const deleted = marks.filter((name) => name.startsWith("deleted"));
+    expect(deleted).toContain("deleted");
+    expect(deleted).toHaveLength(2);
     expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
   });
 
@@ -3600,13 +3600,14 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
-  it("holds nothing of a verified copy whose clear stops between removing its stale mark and its generation mark", async () => {
+  it("holds a verified copy by its plain stale mark alone while its clear stops between removing its generation mark and its stale mark, and nothing once the clear ends", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
     await settleLocalFileRecords();
-    // The clear of the rename's pass stops after it removed one of the
-    // rename's stale mark and its generation mark, before the other.
+    // The clear of the rename's pass stops after it removed the rename's
+    // generation mark, before its stale mark (removed last, so an earlier
+    // build's tab still sees the hold).
     const stop = deferred<void>();
     let isStopped = false;
     let removed = 0;
@@ -3636,10 +3637,15 @@ describe("files captured offline or by a local-only user", () => {
     await vi.waitFor(() => expect(isStopped).toBe(true));
 
     const [listed] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(opfs.list(LOCAL_QUEUE, `queued_${record.fileId}`)).toContain(
+      "stale"
+    );
+    expect(listed?.stale).toBe("changed");
     stop.resolve();
     await settleTasks();
-    expect(listed?.stale).toBeUndefined();
-    expect(listed?.isDeleted).toBe(false);
+    const [cleared] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(cleared?.stale).toBeUndefined();
+    expect(cleared?.isDeleted).toBe(false);
   });
 
   it("keeps a capture held by another tab's fence that wrote its stale mark and not its generation's", async () => {
@@ -3830,10 +3836,9 @@ describe("files captured offline or by a local-only user", () => {
     resume.resolve();
     await otherFence;
 
-    // Its stale mark lands late, beside its covered generation's mark again.
-    expect(opfs.list(LOCAL_QUEUE, entry)).toEqual(
-      expect.arrayContaining(["stale", `stale.${generation}`])
-    );
+    // Its stale mark lands late; it never writes its covered generation's
+    // mark again.
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
     await signInToCloud("user-a");
     await replayLocalQueue();
     await settleTasks();
@@ -4010,7 +4015,9 @@ describe("files captured offline or by a local-only user", () => {
     ["pass lists, stopped fence, pass verifies", [true, true], [true, true]],
     ["stale mark, pass, generation mark", [false, false], [true, true]],
     ["fence, pass stopped before it verifies", [true, true], [true, true]],
-    ["fence, pass stopped while it clears", [false, false], [false, false]],
+    // Its clear removes the stale mark last, so the stop keeps it (held
+    // until the next guest pass, like an interrupted pass's).
+    ["fence, pass stopped while it clears", [true, true], [true, true]],
     ["stopped fence, pass", [false, false], [false, false]],
     ["pass, stopped fence", [true, true], [true, true]],
     ["fence reads the copy, pass, fence writes", [false, false], [true, true]],
@@ -4200,7 +4207,7 @@ describe("files captured offline or by a local-only user", () => {
     ["a local storage wipe", true],
     ["its earlier build's tab's failed pending entry", false]
   ])(
-    "keeps a capture held, once its tab signs in after %s, by the stale mark an earlier build's fence found set beside a covered generation's mark",
+    "keeps a capture held, once its tab signs in after %s, by the stale mark an earlier build's fence found set after a pass covered a late fence's generation",
     async (_case, isStored) => {
       await bootData(localAccount);
       uninstall = installDeviceFileQueue();
@@ -4218,7 +4225,7 @@ describe("files captured offline or by a local-only user", () => {
       // Then an earlier build's tab renames the record, and its fence finds
       // that stale mark set, so writes none.
       let isPassed = false;
-      let isEarlier = false;
+      const getDirectory = navigator.storage.getDirectory;
       hookEntryFiles({
         async create(name) {
           if (name === "stale" && !isPassed) {
@@ -4236,26 +4243,23 @@ describe("files captured offline or by a local-only user", () => {
                 })
               )
             );
-            return;
           }
-          if (isEarlier || !isPassed || name !== `stale.${late}`) return;
-          isEarlier = true;
-          await datafn.file.mutate({
-            operation: "merge",
-            id: record.id,
-            record: { id: record.id, name: "earlier.png" },
-            silent: true
-          } as never);
-          if (!isStored) return;
-          const key = [namespace, record.id].map(encodeURIComponent).join(":");
-          localStorage.setItem(`${LOCAL_QUEUE}-pending:${key}`, "change:t");
         }
       });
       await markQueuedFileStale(LOCAL_QUEUE, fileId, false, late);
-      expect(isEarlier).toBe(true);
-      expect(opfs.list(LOCAL_QUEUE, entry)).toEqual(
-        expect.arrayContaining(["stale", `stale.${late}`])
-      );
+      navigator.storage.getDirectory = getDirectory;
+      expect(isPassed).toBe(true);
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "earlier.png" },
+        silent: true
+      } as never);
+      if (isStored) {
+        const key = [namespace, record.id].map(encodeURIComponent).join(":");
+        localStorage.setItem(`${LOCAL_QUEUE}-pending:${key}`, "change:t");
+      }
       localStorage.clear();
 
       await signInToCloud("user-a");
@@ -4740,11 +4744,12 @@ describe("files captured offline or by a local-only user", () => {
     });
     await markQueuedFileStale(LOCAL_QUEUE, fileId, true, generation);
     expect(isVerified).toBe(true);
-    const text = opfs.read(LOCAL_QUEUE, entry, "deleted");
-    expect(text && new TextDecoder().decode(text)).toBe(generation);
+    expect(opfs.list(LOCAL_QUEUE, entry)).toEqual(
+      expect.arrayContaining(["deleted", `deleted.${generation}`])
+    );
     expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
 
-    // A deleted mark that names a covered delete is the fence's own.
+    // A deleted mark beside its covered generation's mark is the fence's own.
     await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
 
     expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("deleted");
@@ -4800,55 +4805,72 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
-  it("keeps a capture held at a locked settle that removes a deleted mark naming a covered delete while a later delete's fence fails to write its generation's mark", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
-    uninstall?.();
-    uninstall = undefined;
-    const { fileId } = record;
-    const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
-    const later = `${Date.now() + 1}-00000000-0000-4000-8000-000000000002`;
-    await writeQueuedFileRecord(
-      LOCAL_QUEUE,
-      fileId,
-      readLocalCopy(fileId) as never,
-      { covered: [covered], listed: [] }
-    );
-    await writeLocalEntryFile(fileId, "deleted", covered);
-    hookEntryFiles({
-      create(name) {
-        if (name === `deleted.${later}`) throw new Error("The disk is full");
-      }
-    });
-    let fence: Promise<unknown> | undefined;
-    const getDirectory = navigator.storage.getDirectory;
-    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
-      new Proxy(dir, {
-        get(target, key) {
-          if (key === "getDirectoryHandle")
-            return async (name: string, options?: { create?: boolean }) =>
-              wrap(await target.getDirectoryHandle(name, options));
-          if (key !== "removeEntry") return Reflect.get(target, key);
-          return async (name: string) => {
-            if (name === "deleted" && !fence) {
-              fence = markQueuedFileStale(LOCAL_QUEUE, fileId, true, later);
-              await fence.catch(() => undefined);
-            }
-            return target.removeEntry(name);
-          };
+  it.each([
+    ["whose first write of it fails", false],
+    ["that cannot write it, while its pending change holds", true]
+  ])(
+    "keeps a capture held at a locked settle that removes a fence's covered deleted marks while a later delete's fence %s",
+    async (_, isFailed) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      const later = `${Date.now() + 1}-00000000-0000-4000-8000-000000000002`;
+      await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: [] }
+      );
+      await writeLocalEntryFile(fileId, "deleted", "");
+      await writeLocalEntryFile(fileId, `deleted.${covered}`);
+      let failures = 0;
+      hookEntryFiles({
+        create(name) {
+          if (name === `deleted.${later}` && (isFailed || !failures++))
+            throw new Error("The disk is full");
         }
       });
-    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+      let fence: Promise<unknown> | undefined;
+      const at = isFailed ? `deleted.${covered}` : "deleted";
+      const getDirectory = navigator.storage.getDirectory;
+      const wrap = (
+        dir: FileSystemDirectoryHandle
+      ): FileSystemDirectoryHandle =>
+        new Proxy(dir, {
+          get(target, key) {
+            if (key === "getDirectoryHandle")
+              return async (name: string, options?: { create?: boolean }) =>
+                wrap(await target.getDirectoryHandle(name, options));
+            if (key !== "removeEntry") return Reflect.get(target, key);
+            return async (name: string) => {
+              if (name === at && !fence) {
+                fence = markQueuedFileStale(LOCAL_QUEUE, fileId, true, later);
+                await fence.catch(() => undefined);
+              }
+              return target.removeEntry(name);
+            };
+          }
+        });
+      navigator.storage.getDirectory = async () => wrap(await getDirectory());
 
-    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+      await settleQueuedFileMarks(LOCAL_QUEUE, fileId, () => !!fence);
 
-    expect(fence).toBeDefined();
-    await expect(fence).rejects.toThrow("The disk is full");
-    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
-    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).toContain("deleted");
-  });
+      expect(fence).toBeDefined();
+      if (isFailed) await expect(fence).rejects.toThrow("The disk is full");
+      else await fence;
+      const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+      expect(marks).toContain("deleted");
+      expect(marks).not.toContain(`deleted.${covered}`);
+      expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+        true
+      );
+    }
+  );
 
   it("leaves no mark of a fence whose generation's mark fails after a pass verified a copy covering its change", async () => {
     await bootData(localAccount);
@@ -4948,8 +4970,6 @@ describe("files captured offline or by a local-only user", () => {
       expect(isLanded).toBe(true);
       expect(isPlainSeen).toBe(true);
       expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
-      const text = opfs.read(LOCAL_QUEUE, entry, "deleted");
-      expect(text && new TextDecoder().decode(text)).toBe(generation);
     }
   );
 
@@ -5197,6 +5217,173 @@ describe("files captured offline or by a local-only user", () => {
     const [listedEntry] = await listQueuedFiles(LOCAL_QUEUE, true);
     expect(listedEntry?.stale).toBeUndefined();
   });
+
+  it("reset evidence: an older fence cannot erase a newer unnamed delete hold", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const older = "1800000000000-00000000-0000-4000-8000-000000000001";
+    let ranNewerFence = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "deleted" || ranNewerFence) return;
+        ranNewerFence = true;
+        await markQueuedFileStale(LOCAL_QUEUE, fileId, true);
+      }
+    });
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, true, older);
+    expect(ranNewerFence).toBe(true);
+
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [older], listed: [] }
+    );
+
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).toContain("deleted");
+  });
+
+  it("reset evidence: an interrupted settle keeps a newer generation visible to a plain-mark reader", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const later = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "deleted", covered);
+    await writeLocalEntryFile(fileId, `deleted.${covered}`);
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name === `deleted.${covered}`) {
+              await writeLocalEntryFile(fileId, `deleted.${later}`);
+              throw new DOMException("Interrupted settle", "NotReadableError");
+            }
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await expect(
+      writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: ["deleted", `deleted.${covered}`] }
+      )
+    ).rejects.toThrow("Interrupted settle");
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks).toContain(`deleted.${later}`);
+    expect(marks).toContain("deleted");
+  });
+
+  it("reset evidence: a verified copy written during the fallback releases the capture", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const deleted = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "deleted", earlier);
+    let attempts = 0;
+    let savedCopy = false;
+    hookEntryFiles({
+      async create(name) {
+        if (!name.startsWith("deleted.")) return;
+        attempts += 1;
+        if (attempts === 1)
+          throw new DOMException("Disk full", "QuotaExceededError");
+        if (savedCopy) return;
+        savedCopy = true;
+        await writeLocalEntryFile(
+          fileId,
+          "record.json",
+          JSON.stringify({
+            ...readLocalCopy(fileId),
+            covered: [earlier, deleted]
+          })
+        );
+      }
+    });
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, true, deleted).catch(
+      (error) => {
+        if (
+          !(error instanceof DOMException) ||
+          error.name !== "QuotaExceededError"
+        )
+          throw error;
+      }
+    );
+    expect(savedCopy).toBe(true);
+
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+      false
+    );
+  });
+
+  it.each(["listing", "changes-only export"])(
+    "reset evidence: %s treats a provisional upload with a delivery log as unverified",
+    async (consumer) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const { fileId } = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+
+      await writeLocalEntryFile(fileId, "uploaded", "test-version");
+      await writeLocalEntryFile(fileId, "publishing", "{}");
+      await writeLocalEntryFile(fileId, "sent-thumbnail");
+      const root = await opfs.getDirectory();
+      const log = await root.getDirectoryHandle(`${LOCAL_QUEUE}.uploads`, {
+        create: true
+      });
+      const row = await log.getFileHandle(encodeURIComponent(fileId), {
+        create: true
+      });
+      const writer = await row.createWritable();
+      await writer.write(
+        JSON.stringify({ versionId: "test-version", at: Date.now() })
+      );
+      await writer.close();
+
+      if (consumer === "listing") {
+        const entry = (await listQueuedFiles(LOCAL_QUEUE, true)).find(
+          (item) => item.fileId === fileId
+        );
+        expect(entry?.isUploaded).toBe(false);
+      } else {
+        const { files } = await exportQueuedFiles(
+          LOCAL_QUEUE,
+          async () => null,
+          false
+        );
+        expect(files.map((file) => file.fileId)).toContain(fileId);
+      }
+    }
+  );
 
   it("restores no capture unheld whose backup holds the forced deleted mark beside a leftover covered generation's", async () => {
     await bootData(localAccount);
