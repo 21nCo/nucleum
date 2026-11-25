@@ -538,6 +538,13 @@ function toHoldMarks(names: string[]) {
   );
 }
 
+/** The names of a local file's stale and deleted marks, read strictly. */
+export async function listQueuedFileMarks(dir: string, fileId: string) {
+  return toHoldMarks(
+    await readNames(await getEntryDir(dir, toEntryName(fileId), true))
+  );
+}
+
 /**
  * Settles the marks of `kinds` of a local file under the queue's lock, by
  * its record `copy`. It decides before it removes any: it keeps a plain

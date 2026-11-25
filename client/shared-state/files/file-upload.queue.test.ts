@@ -4191,6 +4191,145 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
+  it.each([
+    ["publishes it once its tab signs in", false],
+    [
+      "keeps it held once an earlier build's tab then stores a later change under that entry",
+      true
+    ]
+  ])(
+    "covers a change another tab stores under its record's last-write entry too, once a pass verified a copy after that change's fence, and %s",
+    async (_, isRewritten) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const namespace = String(readLocalCopy(record.fileId)?.namespace);
+      const generation = `${Date.now() + 60_000}-00000000-0000-4000-8000-000000000001`;
+      const key = [namespace, record.id].map(encodeURIComponent).join(":");
+      const lastWrite = `${LOCAL_QUEUE}-pending:${key}`;
+      // After the pass of this tab's rename read its pending changes, another
+      // tab renames the record again, stores both its entries and fences the
+      // rename before the pass reads the record and lists the marks.
+      fileCalls.beforeQuery = async (args) => {
+        const { filters } = args as { filters?: { id?: string } };
+        if (filters?.id !== record.id) return;
+        fileCalls.beforeQuery = null;
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "second.png" },
+          silent: true
+        } as never);
+        localStorage.setItem(lastWrite, `change:${generation}`);
+        localStorage.setItem(
+          `${LOCAL_QUEUE}-write:${key}:${encodeURIComponent(generation)}`,
+          `change:${generation}`
+        );
+        await markQueuedFileStale(
+          LOCAL_QUEUE,
+          record.fileId,
+          false,
+          generation
+        );
+      };
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "first.png" }
+      } as never);
+      await settleLocalFileRecords();
+      expect(fileCalls.beforeQuery).toBeNull();
+      expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+      expect(localStorage.getItem(lastWrite)).toBe(`change:${generation}`);
+      if (isRewritten) {
+        // An earlier build's tab renames it again: it rewrites that entry with
+        // a value of its own, and its fence finds no stale mark yet to write.
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "third.png" },
+          silent: true
+        } as never);
+        localStorage.setItem(lastWrite, "change:earlier-build-write");
+      }
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      if (isRewritten) {
+        expect(sdk.started).toEqual([]);
+        expect(await readAnyRecord(record.id)).toBeUndefined();
+      } else {
+        await vi.waitFor(async () =>
+          expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+        );
+      }
+    }
+  );
+
+  it("settles an orphaned capture once signed in whose orphaning pass read another guest record's change when that change's fence lands while the pass reconciles the other record's file", async () => {
+    const orphan = await captureThenSignOutDuringUpload();
+    const other = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(orphan.fileId)?.namespace);
+    // The capture's entry is listed after the other record's file, as an
+    // entry written later is.
+    const name = `queued_${orphan.fileId}`;
+    const files = opfs.list(LOCAL_QUEUE, name).map((file) => {
+      const bytes = opfs.read(LOCAL_QUEUE, name, file);
+      if (!bytes) throw new Error(`${file} is not a file`);
+      return [file, bytes] as const;
+    });
+    const queue = await (
+      await opfs.getDirectory()
+    ).getDirectoryHandle(LOCAL_QUEUE);
+    await queue.removeEntry(name, { recursive: true });
+    const moved = await queue.getDirectoryHandle(name, { create: true });
+    for (const [file, bytes] of files) {
+      const handle = await moved.getFileHandle(file, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(bytes);
+      await writable.close();
+    }
+    expect(opfs.list(LOCAL_QUEUE).indexOf(name)).toBeGreaterThan(
+      opfs.list(LOCAL_QUEUE).indexOf(`queued_${other.fileId}`)
+    );
+    // Another tab records a change of the other record; the pass of this
+    // tab's delete reads it and lists the local files; the other tab's
+    // fence, which marks orphaned and deleted files, lands while the pass
+    // looks the other record up, before it reaches the capture.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, other.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+    let isFenced = false;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (isFenced || filters?.id !== other.id) return;
+      isFenced = true;
+      await markQueuedFileStale(LOCAL_QUEUE, orphan.fileId, false, generation);
+    };
+    await datafn.file.mutate({ operation: "delete", id: orphan.id } as never);
+    await settleLocalFileRecords();
+    fileCalls.beforeQuery = null;
+    expect(isFenced).toBe(true);
+    const [entry] = (await listQueuedFiles(LOCAL_QUEUE, true)).filter(
+      (queued) => queued.fileId === orphan.fileId
+    );
+    expect(entry?.isOrphaned).toBe(true);
+    expect(entry?.stale).toBeUndefined();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.deletes).toEqual([orphan.fileId]);
+  });
+
   it("keeps the cover of a record copy whose prior copy a copy write cannot read", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();

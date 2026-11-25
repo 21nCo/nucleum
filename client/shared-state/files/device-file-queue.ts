@@ -8,6 +8,7 @@ import {
   dequeueFile,
   isAppOffline,
   isFileQueueSupported,
+  listQueuedFileMarks,
   listQueuedFiles,
   LOCAL_FILE_QUEUE_DIR,
   markQueuedFileCommitted,
@@ -248,8 +249,8 @@ function isAbandoned(entry: QueuedFileEntry) {
  * committed file no record references any more, or one never committed and
  * abandoned, is removed under Web Locks; one claimed and not uploaded is
  * marked orphaned, covering every change `read` lists and the marks listed
- * (its lookups came after them, and none took it over), for the claiming
- * account to settle (see settleOrphanedLocalFiles).
+ * just before its lookups (none took it over), for the claiming account to
+ * settle (see settleOrphanedLocalFiles).
  * Resolves false for a file left as it was: one staged, whose record is not
  * saved yet.
  */
@@ -260,6 +261,7 @@ async function reconcileLocalFile(
 ): Promise<boolean> {
   const dir = LOCAL_FILE_QUEUE_DIR;
   const { fileId } = entry;
+  const marks = await listQueuedFileMarks(dir, fileId); // Before the lookups.
   const byId = entry.recordId
     ? await readFileRecord(namespace, { id: entry.recordId })
     : undefined;
@@ -286,7 +288,7 @@ async function reconcileLocalFile(
   if (!entry.isCommitted && !isAbandoned(entry)) return false;
   if (entry.claim && !entry.isUploaded) {
     const covered = read.flatMap(toTokens);
-    await markQueuedFileOrphaned(dir, fileId, entry.marks, covered);
+    await markQueuedFileOrphaned(dir, fileId, marks, covered);
   } else if (globalThis.navigator?.locks) {
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));
@@ -537,7 +539,7 @@ async function settleOrphanedLocalFiles(
     entry.claim?.userId === userId &&
     entry.claim.baseUrl === baseUrl &&
     !readPendingChanges(String(entry.namespace)).some(
-      (c) => c.action !== "delete" && !entry.covered.includes(toToken(c))
+      (c) => c.action !== "delete" && !isCovered(c, entry.covered)
     );
   const orphans = (await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)).filter(
     isOrphanOf
@@ -620,17 +622,12 @@ type PendingChange = {
 };
 
 /**
- * A pending change's generation; an earlier build's key and value (it
- * reuses the key for each write to a record, with a new value).
+ * A pending change's tokens: its generation (an earlier build's key and
+ * value: it reuses the key for each write to a record, with a new value) and
+ * the generation its value names.
  */
-const toToken = (change: PendingChange) =>
-  change.at ?? `${change.key} ${change.value}`;
-
-/** A pending change's tokens (see toToken) and the generation its value names. */
-const toTokens = (change: PendingChange) =>
-  [toToken(change), change.value.slice(change.action.length + 1)].filter(
-    Boolean
-  );
+const toTokens = ({ at, key, value, action }: PendingChange) =>
+  [at ?? `${key} ${value}`, value.slice(action.length + 1)].filter(Boolean);
 
 function pendingKey(namespace: string, id: string) {
   return PENDING_PREFIX + [namespace, id].map(encodeURIComponent).join(":");
@@ -701,9 +698,13 @@ function isHeld(record: QueuedFileRecord) {
   if (typeof record.namespace !== "string") return false;
   const covered = toCovered(record);
   return readPendingChanges(record.namespace).some(
-    (change) => change.id === record.id && !covered.includes(toToken(change))
+    (change) => change.id === record.id && !isCovered(change, covered)
   );
 }
+
+/** Whether `covered` holds a token of a change (see toTokens). */
+const isCovered = (change: PendingChange, covered: string[]) =>
+  toTokens(change).some((token) => covered.includes(token));
 
 /**
  * Keeps each local file's record copy current: a change to a local-only
