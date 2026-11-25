@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { applyCloudflareCredentialAliases } from '../../../tools/cloudflare/credential-aliases.mjs';
 import { missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
 
@@ -39,6 +40,7 @@ if (credentialsEnv && !applyCloudflareCredentialAliases(credentialsEnv)) {
   process.exit(1);
 }
 const wranglerConfig = renderWranglerConfig(serviceRoot, config, environment);
+const wrangler = createRequire(import.meta.url).resolve('wrangler/bin/wrangler.js');
 const children = [];
 
 for (const regionId of regions) {
@@ -52,11 +54,10 @@ for (const regionId of regions) {
     continue;
   }
   const port = String(region.localPort);
-  const child = spawn('wrangler', ['dev', '--config', wranglerConfig, '--env', regionalEnv, '--port', port, '--remote'], {
+  const child = spawn(process.execPath, [wrangler, 'dev', '--config', wranglerConfig, '--env', regionalEnv, '--port', port, '--remote'], {
     cwd: serviceRoot,
     stdio: 'inherit',
-    env: process.env,
-    shell: process.platform === 'win32'
+    env: process.env
   });
   children.push(child);
 }

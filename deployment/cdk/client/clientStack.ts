@@ -30,6 +30,7 @@ export class ClientStack extends Stack {
     const siteBucket = new s3.Bucket(this, "SiteBucket", {
       bucketName: siteDomain,
       publicReadAccess: false,
+      enforceSSL: true,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY, //TODO - check if needed for production
       autoDeleteObjects: true,
