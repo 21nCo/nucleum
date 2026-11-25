@@ -1487,6 +1487,76 @@ describe("files captured offline or by a local-only user", () => {
     expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined();
   });
 
+  it.each([
+    ["an unclaimed", false],
+    ["a claimed, stale", true]
+  ])(
+    "keeps the same marks of %s capture deleted in a guest namespace that retired, held, across replays and guest passes",
+    async (_, isClaimed) => {
+      const record = isClaimed
+        ? await captureThenSignOutDuringUpload()
+        : (await bootData(localAccount),
+          (uninstall = installDeviceFileQueue()),
+          await capturePhoto());
+      await settleTasks();
+      const entry = `queued_${record.fileId}`;
+      // An earlier build's tab fences the claimed capture.
+      if (isClaimed) await writeLocalEntryFile(record.fileId, "stale");
+      // The delete's pass cannot take the queue's lock; its fence marks it.
+      failQueueLockOnce();
+      await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+      await settleLocalFileRecords();
+      expect(opfs.read(LOCAL_QUEUE, entry, "deleted")).toBeDefined();
+      await signOutToLocal(true);
+      await settleLocalFileRecords();
+      const marks = opfs.list(LOCAL_QUEUE, entry).sort();
+
+      for (let run = 0; run < 3; run++) {
+        await signInToCloud("user-a");
+        await replayLocalQueue();
+        await settleTasks();
+        await signOutToLocal();
+        await settleLocalFileRecords();
+        expect(opfs.list(LOCAL_QUEUE, entry).sort()).toEqual(marks);
+      }
+
+      const [listed] = await listQueuedFiles(LOCAL_QUEUE, true);
+      expect(listed?.isDeleted).toBe(true);
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+    }
+  );
+
+  it("marks a capture deleted by an earlier build's tab with no generation no change names, when its pass cannot reconcile it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // An earlier build's tab deletes the guest record and stores the delete
+    // under the record's entry, with no generation.
+    await datafn.file.mutate({
+      operation: "delete",
+      id: record.id,
+      silent: true
+    } as never);
+    const key = [namespace, record.id].map(encodeURIComponent).join(":");
+    localStorage.setItem(`${LOCAL_QUEUE}-pending:${key}`, "delete");
+    fileCalls.beforeQuery = async () => {
+      fileCalls.beforeQuery = null;
+      throw new Error("The guest records cannot be read");
+    };
+
+    await openData();
+    await settleLocalFileRecords();
+
+    const entry = `queued_${record.fileId}`;
+    const marks = opfs.list(LOCAL_QUEUE, entry);
+    expect(marks.filter((name) => name.startsWith("deleted"))).toEqual([
+      "deleted"
+    ]);
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+  });
+
   it("deletes nothing and publishes the takeover when another tab's guest record takes over an orphaned capture while its settle writes the discard mark", async () => {
     const record = await captureThenSignOutDuringUpload();
     const namespace = String(readLocalCopy(record.fileId)?.namespace);
@@ -3369,8 +3439,9 @@ describe("files captured offline or by a local-only user", () => {
           throw new DOMException("The storage is full", "QuotaExceededError");
       }
     });
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
     await expect(
-      markQueuedFileStale(LOCAL_QUEUE, record.fileId)
+      markQueuedFileStale(LOCAL_QUEUE, record.fileId, false, generation)
     ).rejects.toThrow();
 
     await signInToCloud("user-a");

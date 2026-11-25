@@ -574,7 +574,7 @@ async function settleMarks(
   const open = (names: string[], kind: string) =>
     ofKind(names, kind).find((generation) => !covered.includes(generation));
   const names = await readNames(entry);
-  const isPending = isHeld?.(copy as QueuedFileRecord) === true;
+  const isPending = !!copy && isHeld?.(copy as QueuedFileRecord) === true;
   for (const kind of kinds) {
     if (!names.includes(kind) || isPending || open(names, kind)) continue;
     const text = await readEntryText(dir, entryName, kind, true);
@@ -732,35 +732,35 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * if absent (a deleted one names the generation; one whose read failed is
  * written naming none) and the generation's mark again. A stale mark is
  * never replaced, so an earlier build's ("") keeps telling nothing, and it
- * removes no mark: only a locked settle does (see settleMarks). Resolves the
- * generation.
+ * removes no mark: only a locked settle does (see settleMarks). Without a
+ * `generation` (no change names one) it writes only the plain mark if absent.
  */
 export async function markQueuedFileStale(
   dir: string,
   fileId: string,
   isDeleted = false,
-  generation = toChangeGeneration()
+  generation?: string
 ) {
   const name = toEntryName(fileId);
   const mark = isDeleted ? DELETED_FILE : STALE_FILE;
   const marked = `${mark}.${generation}`;
   const isCovered = async () =>
-    toCovered(await readQueuedRecord(dir, name)).includes(generation);
-  if (await isCovered()) return generation;
-  const failed = await writeEntryFile(dir, name, marked, "")
-    .then(() => undefined)
-    .catch((error: unknown) => ({ error }));
-  if (await isCovered()) return generation;
+    toCovered(await readQueuedRecord(dir, name)).includes(generation ?? "");
+  const writeMarked = async () => {
+    if (generation) await writeEntryFile(dir, name, marked, "");
+  };
+  if (await isCovered()) return;
+  const failed = await writeMarked().catch((error: unknown) => ({ error }));
+  if (await isCovered()) return;
   const was = await readEntryText(dir, name, mark, true).catch((error) => {
     if (isDeleted) return null;
     throw error;
   });
-  const text = isDeleted ? (was === null ? "" : generation) : CHANGED_MARK;
+  const text = isDeleted ? (was !== null && generation) || "" : CHANGED_MARK;
   if (was === undefined || was === null) {
     await writeEntryFile(dir, name, mark, text);
-    await writeEntryFile(dir, name, marked, "");
+    await writeMarked();
   } else if (failed) throw failed.error;
-  return generation;
 }
 
 /** Lists the files of a queue whose staging finished. */
