@@ -1,0 +1,25 @@
+services/account/src/api/router.adapter.test.ts
+  s_732e194f51fb63::t_5c77c056d66ff9 1,10,20-24,85-95,149-152,155,161-174,191-192,201,648-653,657-662,664-667,669-681,685-715,718-722,791-819
+services/account/src/api/router.test.ts
+  s_732e194f51fb63::t_6cc38f2d6e7177 1,714-715,723,727,747,878-898
+services/account/src/api/router.ts
+  s_732e194f51fb63::t_f6fe9cadd8918e 33-35,57-58,61-67,761-762,764,898-900,964-967,1022-1032,1041,1048,1051-1052,1060-1067,1070-1078,1081-1087,1089-1112,1118,1122-1123,1125
+services/account/src/app.ts
+  s_732e194f51fb63::t_ea1d4df2e4420e 1,8-9,142-153,163-213,293,297,308,360-361,363,485
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "675e86e20723b235d06e169912e51eebe788a3ed",
+  "prompts": {},
+  "sessions": {
+    "s_732e194f51fb63": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "677180b8-0eb9-4bcf-bed7-55c09c90beb3",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
