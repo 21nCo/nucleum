@@ -282,8 +282,10 @@ async function reconcileLocalFile(
   }
   if (!entry.isCommitted && !isAbandoned(entry)) return false;
   if (entry.claim && !entry.isUploaded) {
-    // Its lookups came after the changes it read and the marks listed.
-    await markQueuedFileOrphaned(dir, fileId, entry.marks);
+    // Its lookups came after the changes it read and the marks listed: none
+    // of those changes took it over.
+    const covered = read.map(toToken);
+    await markQueuedFileOrphaned(dir, fileId, entry.marks, covered);
   } else if (globalThis.navigator?.locks) {
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));
@@ -531,7 +533,7 @@ async function settleOrphanedLocalFiles(
     entry.claim?.userId === userId &&
     entry.claim.baseUrl === baseUrl &&
     !readPendingChanges(String(entry.namespace)).some(
-      ({ action }) => action !== "delete"
+      (c) => c.action !== "delete" && !entry.covered.includes(toToken(c))
     );
   const orphans = (await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)).filter(
     isOrphanOf
@@ -589,14 +591,19 @@ function logOrphanError(error: unknown) {
 
 /**
  * Guest changes not yet copied to their local files: one local-storage entry
- * per write, `<PENDING_PREFIX><namespace>:<record ID>:<generation>`, valued
+ * per write, `<WRITE_PREFIX><namespace>:<record ID>:<generation>`, valued
  * `<action>:<generation>`, so a reload and other tabs keep them, and a pass
  * removes only the writes it read; also in page memory, so this tab's pass
  * copies them after another tab's sign-out cleared local storage. Each holds
  * its file until a verified copy covers its generation (see isHeld), as its
- * stale mark does (see fenceChanges).
+ * stale mark does (see fenceChanges). A record's last write is also under
+ * `<PENDING_PREFIX><namespace>:<record ID>`, the entry an earlier build's tab
+ * holds the file by (and writes, with a new value each time).
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
+const WRITE_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-write:`;
+const toPrefix = (key: string) =>
+  [PENDING_PREFIX, WRITE_PREFIX].find((prefix) => key.startsWith(prefix));
 const memoryPending = new Map<string, string>();
 
 type PendingChange = {
@@ -626,15 +633,14 @@ function readPendingChanges(namespace?: string): PendingChange[] {
     const storage = globalThis.localStorage;
     for (let index = 0; index < (storage?.length ?? 0); index++) {
       const key = storage.key(index);
-      if (key?.startsWith(PENDING_PREFIX))
-        found.push([key, storage.getItem(key) ?? ""]);
+      if (key && toPrefix(key)) found.push([key, storage.getItem(key) ?? ""]);
     }
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
   }
   const changes = found.map(([key, value]) => {
     const [owner = "", id = "", at] = key
-      .slice(PENDING_PREFIX.length)
+      .slice(toPrefix(key)?.length)
       .split(":")
       .map(decodeURIComponent);
     const action = value.split(":")[0];
@@ -656,11 +662,13 @@ function addPendingChange(
   action = "change",
   generation = toChangeGeneration()
 ) {
-  const key = `${pendingKey(namespace, id)}:${generation}`;
+  const mirror = pendingKey(namespace, id);
+  const key = `${WRITE_PREFIX}${mirror.slice(PENDING_PREFIX.length)}:${generation}`;
   const isDeleted = isPendingDelete(namespace, id);
   const value = `${isDeleted ? "delete" : action}:${generation}`;
   memoryPending.set(key, value);
   try {
+    globalThis.localStorage?.setItem(mirror, value);
     globalThis.localStorage?.setItem(key, value);
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
