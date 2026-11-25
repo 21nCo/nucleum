@@ -1,0 +1,21 @@
+services/account/src/api/router.test.ts
+  s_8fee5428d1f1c5::t_f3e2fd2deb4773 883-884
+services/account/src/api/router.ts
+  s_8fee5428d1f1c5::t_e0067f1b32565b 767-768,770
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da2f9317d9dba8167be2352b5c385d42b8b8953f",
+  "prompts": {},
+  "sessions": {
+    "s_8fee5428d1f1c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2dc73ead-201f-496f-9ba1-6aaf56c3201c",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
