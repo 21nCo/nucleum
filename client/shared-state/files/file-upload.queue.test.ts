@@ -2557,6 +2557,70 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
+  it.each<[string, "stale" | "pending", { name?: string; trashed?: boolean }]>([
+    ["a rename it fences", "stale", { name: "receipt.png" }],
+    ["a trash it fences", "stale", { trashed: true }],
+    ["a rename it only records pending", "pending", { name: "receipt.png" }]
+  ])(
+    "withdraws the uploaded mark a publish writes after its last check once another tab makes %s, and publishes the newer copy at the next replay",
+    async (_, hold, expected) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const namespace = String(readLocalCopy(record.fileId)?.namespace);
+      const entry = `queued_${record.fileId}`;
+      const key = [namespace, record.id].map(encodeURIComponent).join(":");
+      const pendingKey = `${LOCAL_QUEUE}-pending:${key}`;
+      // A guest tab changes the record after the publish saved it and found
+      // its copy current, just before it marks the file uploaded.
+      let isChanged = false;
+      hookEntryFiles({
+        create: async (name) => {
+          if (name !== "uploaded" || isChanged) return;
+          isChanged = true;
+          if (hold === "stale")
+            await writeLocalEntryFile(record.fileId, "stale");
+          // Its fence has not landed yet: only its pending change holds.
+          else localStorage.setItem(pendingKey, "change:t");
+        }
+      });
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      expect(isChanged).toBe(true);
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+      if (hold === "stale")
+        expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined();
+      expect((await readAnyRecord(record.id))?.name).toBe("photo.png");
+
+      await signOutToLocal();
+      await settleTasks();
+      await datafn.file.mutate(
+        (expected.name !== undefined
+          ? {
+              operation: "merge",
+              id: record.id,
+              record: { id: record.id, name: expected.name }
+            }
+          : { operation: "trash", id: record.id }) as never
+      );
+      await settleTasks();
+      await signInToCloud("user-a");
+      await vi.waitFor(() =>
+        expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined()
+      );
+      const published = await readAnyRecord(record.id);
+      expect(published?.fileId).toBe(record.fileId);
+      if (expected.name !== undefined) {
+        expect(published?.name).toBe(expected.name);
+      } else {
+        expect((published?.trashedAt ?? null) !== null).toBe(true);
+      }
+    }
+  );
+
   it("keeps an account-side edit made after an outdated save over the guest change fenced during it", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();

@@ -4069,18 +4069,33 @@ async function isPublishable(
   for (const mark of marks)
     if ((await readEntryText(dir, entryName, mark, true)) !== undefined)
       return false;
-  const record = await readQueuedRecord(dir, entryName, true);
-  const hold = await readHoldMarks(dir, entryName, record, true);
-  if (hold.stale !== undefined || hold.isDeleted) return false;
-  if (!record || publisher.isHeld?.(record)) return false;
+  if (!(await readUnheldRecord(dir, entryName, publisher))) return false;
   const claim = await readClaim(dir, entryName, true);
   return !claim || isSameClaim(claim, publisher.owner);
 }
 
 /**
+ * A local file's record copy, read strictly, unless a hold mark or a pending
+ * change holds it.
+ */
+async function readUnheldRecord(
+  dir: string,
+  entryName: string,
+  publisher: QueuedFilePublisher
+) {
+  const record = await readQueuedRecord(dir, entryName, true);
+  const hold = await readHoldMarks(dir, entryName, record, true);
+  if (hold.stale !== undefined || hold.isDeleted) return undefined;
+  return record && !publisher.isHeld?.(record) ? record : undefined;
+}
+
+/**
  * Publishes the record of a local file that uploaded, as its copy is now,
  * then marks the file uploaded. A file whose record was removed or marked
- * stale during the upload is left for the reconciliation of its record.
+ * stale during the upload is left for the reconciliation of its record, and
+ * so is one a hold, a pending change or a new copy reached after the publish's
+ * last check: its uploaded mark is withdrawn, so the copy its guest pass
+ * verifies publishes again.
  */
 async function publishEntry(
   dir: string,
@@ -4099,6 +4114,11 @@ async function publishEntry(
   if ((await publisher.publish(copy, uploaded, entry)) === false) return;
   if (!(await isCurrent())) return;
   await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
+  const now = await readUnheldRecord(dir, entryName, publisher).catch(
+    () => undefined
+  );
+  if (now && JSON.stringify(now) === JSON.stringify(record)) return;
+  await removeEntryFile(await getEntryDir(dir, entryName), UPLOADED_FILE);
 }
 
 async function claimEntry(
