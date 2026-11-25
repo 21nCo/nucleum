@@ -16,6 +16,7 @@ import {
   markQueuedFileStale,
   onAccountQueueReplay,
   replayFileQueue,
+  settleQueuedFileMarks,
   toChangeGeneration,
   toCovered,
   UNCOMMITTED_GRACE_MS,
@@ -241,12 +242,14 @@ function isAbandoned(entry: QueuedFileEntry) {
  * the record as it is now (another record that took over its `fileId` when
  * the first one was deleted, too) and is marked committed. A copy a reread
  * confirms covers the changes `read` lists of its record and the marks
- * listed before that reread, and clears those marks, which hold it until
- * then (see writeQueuedFileRecord); one the reread does
- * not confirm gets a new stale mark, for a later pass. A committed file
- * no record references any more, or one never committed and abandoned, is
- * removed under Web Locks; one claimed and not uploaded is marked orphaned,
- * for the claiming account to settle (see settleOrphanedLocalFiles).
+ * listed before that reread (their changes came before it), and settles its
+ * marks, which hold it until then (see writeQueuedFileRecord); one the
+ * reread does not confirm gets a new stale mark, for a later pass. A
+ * committed file no record references any more, or one never committed and
+ * abandoned, is removed under Web Locks; one claimed and not uploaded is
+ * marked orphaned, covering every change `read` lists and the marks listed
+ * (its lookups came after them, and none took it over), for the claiming
+ * account to settle (see settleOrphanedLocalFiles).
  * Resolves false for a file left as it was: one staged, whose record is not
  * saved yet.
  */
@@ -267,14 +270,14 @@ async function reconcileLocalFile(
   if (record) {
     const copy = toQueuedFileRecord(record, namespace);
     const ids = [copy.id, entry.recordId];
-    const covered = read.filter((c) => ids.includes(c.id)).map(toToken);
+    const covered = read.filter((c) => ids.includes(c.id)).flatMap(toTokens);
     if (entry.isOrphaned) await markQueuedFileStale(dir, fileId);
-    // The marks it lists, before its reread, are of changes that reread sees.
     const listed = await writeQueuedFileRecord(dir, fileId, copy, "unverified");
+    const cover = { covered, listed, isHeld };
     const now = await readFileRecord(namespace, { id: copy.id });
     if (!now || toState(toQueuedFileRecord(now, namespace)) !== toState(copy))
       await markQueuedFileStale(dir, fileId, !now);
-    else await writeQueuedFileRecord(dir, fileId, copy, { covered, listed });
+    else await writeQueuedFileRecord(dir, fileId, copy, cover);
     if (!entry.isCommitted) {
       await markQueuedFileCommitted(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     }
@@ -282,9 +285,7 @@ async function reconcileLocalFile(
   }
   if (!entry.isCommitted && !isAbandoned(entry)) return false;
   if (entry.claim && !entry.isUploaded) {
-    // Its lookups came after the changes it read and the marks listed: none
-    // of those changes took it over.
-    const covered = read.map(toToken);
+    const covered = read.flatMap(toTokens);
     await markQueuedFileOrphaned(dir, fileId, entry.marks, covered);
   } else if (globalThis.navigator?.locks) {
     const isUnused = async () =>
@@ -487,18 +488,19 @@ function scheduleChangePass(namespace: string, isFull = false) {
  * Uploads the device's local files (a local-only user's) through the signed-in
  * cloud account's client and publishes their records in the account, so the
  * account holds a record of each file it receives (see replayFileQueue),
- * once retired guest namespaces are released and the account's orphaned
- * files settled (see settleOrphanedLocalFiles).
+ * once retired guest namespaces are released, the local files' marks
+ * settled (see settleQueuedFileMarks) and the account's orphaned files
+ * settled (see settleOrphanedLocalFiles).
  */
 export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
   if (!globalThis.navigator?.locks) return;
   await settleLocalFileRecords();
   if (uploader.signal.aborted) return;
-  await withQueueLock(
-    LOCAL_FILE_QUEUE_DIR,
-    uploader.signal,
-    releaseRetiredNamespaces
-  ).catch(logReleaseError);
+  await withQueueLock(LOCAL_FILE_QUEUE_DIR, uploader.signal, async () => {
+    await releaseRetiredNamespaces().catch(logReleaseError);
+    for (const { fileId } of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR))
+      await settleQueuedFileMarks(LOCAL_FILE_QUEUE_DIR, fileId, isHeld);
+  }).catch(logReleaseError);
   const publisher = createLocalFilePublisher(uploader);
   await settleOrphanedLocalFiles(uploader, publisher).catch(logOrphanError);
   await replayFileQueue(
@@ -621,6 +623,12 @@ type PendingChange = {
  */
 const toToken = (change: PendingChange) =>
   change.at ?? `${change.key} ${change.value}`;
+
+/** A pending change's tokens (see toToken) and the generation its value names. */
+const toTokens = (change: PendingChange) =>
+  [toToken(change), change.value.slice(change.action.length + 1)].filter(
+    Boolean
+  );
 
 function pendingKey(namespace: string, id: string) {
   return PENDING_PREFIX + [namespace, id].map(encodeURIComponent).join(":");

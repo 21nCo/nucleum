@@ -466,21 +466,26 @@ export async function markQueuedFileCommitted(
 /**
  * What a local file's record copy write covers once a locked reread verified
  * it: the changes `covered` lists and those of the marks `listed` before
- * that reread (see clearMarks).
+ * that reread; `isHeld` tells whether its record has a pending change the
+ * copy does not cover (see settleMarks).
  */
-export type QueuedFileCover = { covered: string[]; listed: string[] };
+export type QueuedFileCover = {
+  covered: string[];
+  listed: string[];
+  isHeld?: (copy: QueuedFileRecord) => boolean;
+};
 
 /**
  * Replaces the copy of a local file's record with the record as it is now,
  * which its upload publishes, clears its orphaned mark and resolves the
  * names of its stale and deleted marks. The copy covers the changes the copy
  * it replaces covered (see withCover) and those of a verified `cover`, whose
- * marks it then clears, then sets the plain mark of a kind still held. An
- * "unverified" write clears none; one without `cover` clears the plain marks,
- * as an earlier build's does. A prior copy it cannot read fails it, keeping
- * that copy's cover. The cover is not capped (one token per change of its
- * record while the file is local): another tab's memory of a change it
- * dropped would hold the file again.
+ * marks it then settles (see settleMarks). An "unverified" write clears
+ * none; one without `cover` clears the plain marks, as an earlier build's
+ * does. A prior copy it cannot read fails it, keeping that copy's cover. The
+ * cover is not capped (one token per change of its record while the file is
+ * local): another tab's memory of a change it dropped would hold the file
+ * again.
  */
 export async function writeQueuedFileRecord(
   dir: string,
@@ -497,23 +502,22 @@ export async function writeQueuedFileRecord(
   await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(copy));
   const entry = await getEntryDir(dir, entryName, true);
   await removeMark(entry, ORPHANED_FILE);
-  const cleared = cover === undefined ? HOLD_MARKS : listed;
   if (cover === "unverified") return toHoldMarks(await readNames(entry));
-  await clearMarks(entry, HOLD_MARKS, cleared, copy.covered);
-  // An earlier build's tab reads only plain marks: one holds while an
-  // uncovered generation's mark does (written after a fence found it set).
-  const names = await readNames(entry);
-  const hold = toHold(names, copy);
-  for (const [mark, isHeld] of [
-    [STALE_FILE, hold.isStale],
-    [DELETED_FILE, hold.isDeleted]
-  ] as const)
-    if (verified && isHeld && !names.includes(mark))
-      await writeEntryFile(dir, entryName, mark, PLAIN_TEXT[mark]);
-  return toHoldMarks(names);
+  if (verified) return settleMarks(dir, entryName, HOLD_MARKS, copy, verified);
+  for (const mark of HOLD_MARKS) await removeMark(entry, mark);
+  return [];
 }
 
-const PLAIN_TEXT = { [STALE_FILE]: CHANGED_MARK, [DELETED_FILE]: "" };
+/** Settles a local file's marks by its copy (see settleMarks), in any namespace. */
+export async function settleQueuedFileMarks(
+  dir: string,
+  fileId: string,
+  isHeld?: QueuedFileCover["isHeld"]
+) {
+  const entryName = toEntryName(fileId);
+  const copy = await readQueuedRecord(dir, entryName, true);
+  await settleMarks(dir, entryName, HOLD_MARKS, copy, { listed: [], isHeld });
+}
 
 /**
  * A record copy covering the changes its prior copy `was` covered (another
@@ -535,24 +539,60 @@ function toHoldMarks(names: string[]) {
 }
 
 /**
- * Clears the marks of `kinds` a local file `listed` before a locked reread
- * that verified its copy, its plain marks first, then those of a generation
- * `covered` covers: a plain mark (an earlier build's, a backup's or a
- * fence's) is cleared only so, and one written after that listing holds.
+ * Settles the marks of `kinds` of a local file under the queue's lock, by
+ * its record `copy`: it clears a plain mark `listed` before a locked reread
+ * that verified the copy, or one a covered change explains while no mark of
+ * a generation it does not cover remains, then those of a generation the
+ * copy covers (an interrupted clear leaves only those). A covered change
+ * explains a plain stale mark beside a mark of its generation (one a fence
+ * wrote after a verified copy of its change), and a plain deleted mark that
+ * names it (a fence's; an earlier build's and a backup's name none). It sets the plain mark of a kind again (an earlier
+ * build's tab reads only those) while a mark of a generation the copy does
+ * not cover holds, or, once it cleared it, while `isHeld` finds a pending
+ * change the copy does not cover (an earlier build's fence finds a stale
+ * mark set and writes none).
  */
-async function clearMarks(
-  entry: FileSystemDirectoryHandle | null,
+async function settleMarks(
+  dir: string,
+  entryName: string,
   kinds: string[],
-  listed: string[],
-  covered: string[]
+  copy: unknown,
+  { listed, isHeld }: Pick<QueuedFileCover, "listed" | "isHeld">
 ) {
-  const isCovered = (name: string) =>
-    covered.includes(toMarkGeneration(name) ?? "");
-  const plain = listed.filter((name) => kinds.includes(name));
-  const marked = listed.filter(
-    (name) => kinds.includes(name.split(".")[0]) && isCovered(name)
-  );
-  for (const name of [...plain, ...marked]) await removeMark(entry, name);
+  const entry = await getEntryDir(dir, entryName, true);
+  const covered = toCovered(copy);
+  const ofKind = (names: string[], kind: string) =>
+    names.flatMap((name) =>
+      name.startsWith(`${kind}.`) ? (toMarkGeneration(name) ?? []) : []
+    );
+  const open = (names: string[], kind: string) =>
+    ofKind(names, kind).find((generation) => !covered.includes(generation));
+  const names = await readNames(entry);
+  const cleared: string[] = [];
+  for (const kind of kinds) {
+    if (!names.includes(kind)) continue;
+    const text = await readEntryText(dir, entryName, kind, true);
+    const isExplained =
+      kind === STALE_FILE
+        ? ofKind(names, kind).some((at) => covered.includes(at))
+        : covered.includes(text ?? "");
+    const isFree = isExplained && open(names, kind) === undefined;
+    if (listed.includes(kind) || isFree) cleared.push(kind);
+  }
+  for (const kind of cleared) await removeMark(entry, kind);
+  for (const kind of kinds)
+    for (const at of ofKind(names, kind))
+      if (covered.includes(at)) await removeMark(entry, `${kind}.${at}`);
+  const now = await readNames(entry);
+  const isPending = cleared.length > 0 && isHeld?.(copy as QueuedFileRecord);
+  for (const kind of kinds) {
+    const at = open(now, kind);
+    const isHolding = at || (isPending && cleared.includes(kind));
+    const text = kind === STALE_FILE ? CHANGED_MARK : (at ?? "");
+    if (isHolding && !now.includes(kind))
+      await writeEntryFile(dir, entryName, kind, text);
+  }
+  return toHoldMarks(now);
 }
 
 async function removeMark(
@@ -567,8 +607,8 @@ async function removeMark(
 /**
  * Marks a local file orphaned: it does not publish until its copy is
  * rewritten. Its copy covers the changes `covered` lists and those of the
- * marks `listed`, all before its record's lookups, and it clears those stale
- * marks (see clearMarks).
+ * marks `listed`, all before its record's lookups, and its stale marks are
+ * settled (see settleMarks).
  */
 export async function markQueuedFileOrphaned(
   dir: string,
@@ -579,13 +619,11 @@ export async function markQueuedFileOrphaned(
   const name = toEntryName(fileId);
   const marked = listed.flatMap((mark) => toMarkGeneration(mark) ?? []);
   const was = await readQueuedRecord(dir, name, true);
-  if (was && covered.length + marked.length) {
-    const copy = withCover(was, was, covered, marked);
+  const copy = was && withCover(was, was, covered, marked);
+  if (copy && covered.length + marked.length)
     await writeEntryFile(dir, name, RECORD_FILE, JSON.stringify(copy));
-  }
   await writeEntryFile(dir, name, ORPHANED_FILE, "");
-  const entry = await getEntryDir(dir, name, true);
-  await clearMarks(entry, [STALE_FILE], listed, marked);
+  await settleMarks(dir, name, [STALE_FILE], copy, { listed });
 }
 
 /** A new change generation: `<ms>-<uuid>` (its time is never compared). */
@@ -614,8 +652,8 @@ export function toCovered(record: unknown): string[] {
 /**
  * Whether a local file's marks hold it stale or deleted: a local file's one
  * hold rule (its listing, its publish, its backup's restore). Marks of a kind
- * hold while its plain mark is set (only a verified copy clears it; see
- * clearMarks) or one is of a change generation its record copy does not cover.
+ * hold while its plain mark is set (only a locked settle clears it; see
+ * settleMarks) or one is of a change generation its record copy does not cover.
  */
 function toHold(names: string[], record: unknown) {
   const covered = toCovered(record);
@@ -688,14 +726,15 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * Marks a local file's record copy stale, when its record changed but could
  * not be read again: the file does not upload until a copy that covers the
  * change `generation` (see toHold) replaces it. A deleted record
- * (`isDeleted`) gets its own mark. Writes the plain mark if absent (a failed
- * read of a deleted mark writes it all the same), then the generation's; a
- * stale mark is never replaced, so an earlier build's ("") keeps telling
- * nothing. Writes none when the record copy already covers the generation (a
- * fence that lands after a verified copy of its change), and removes the
- * plain mark it created, even when it fails, once a reread finds a copy that
- * covers the generation (one verified meanwhile), as no later pass may run
- * (its tab signed in); it removes no other mark. Resolves the generation.
+ * (`isDeleted`) gets its own mark. It writes none when the record copy
+ * already covers the generation (a fence that lands after a verified copy of
+ * its change), else the generation's mark, then, even when that failed, the
+ * plain mark if absent (a deleted one names the generation; one whose read
+ * failed is written naming none) and the generation's mark again, which
+ * explains the plain mark it wrote once a copy covers the generation (see
+ * settleMarks). A stale mark is never replaced, so an earlier build's ("")
+ * keeps telling nothing, and it removes no mark: only a locked settle does.
+ * Resolves the generation.
  */
 export async function markQueuedFileStale(
   dir: string,
@@ -705,21 +744,21 @@ export async function markQueuedFileStale(
 ) {
   const name = toEntryName(fileId);
   const mark = isDeleted ? DELETED_FILE : STALE_FILE;
-  const isCovered = async () =>
-    toCovered(await readQueuedRecord(dir, name)).includes(generation);
-  if (await isCovered()) return generation;
+  const marked = `${mark}.${generation}`;
+  const copy = await readQueuedRecord(dir, name);
+  if (toCovered(copy).includes(generation)) return generation;
+  const failed = await writeEntryFile(dir, name, marked, "")
+    .then(() => undefined)
+    .catch((error: unknown) => ({ error }));
   const was = await readEntryText(dir, name, mark, true).catch((error) => {
-    if (isDeleted) return null; // Written all the same, and never removed.
+    if (isDeleted) return null;
     throw error;
   });
-  try {
-    if (was === undefined || was === null)
-      await writeEntryFile(dir, name, mark, PLAIN_TEXT[mark]);
-    await writeEntryFile(dir, name, `${mark}.${generation}`, "");
-  } finally {
-    if (was === undefined && (await isCovered().catch(() => false)))
-      await removeMark(await getEntryDir(dir, name, true), mark);
-  }
+  const text = isDeleted ? (was === null ? "" : generation) : CHANGED_MARK;
+  if (was === undefined || was === null) {
+    await writeEntryFile(dir, name, mark, text);
+    await writeEntryFile(dir, name, marked, "");
+  } else if (failed) throw failed.error;
   return generation;
 }
 
