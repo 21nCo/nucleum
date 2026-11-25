@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { describe, expect, it, vi } from 'vitest';
 import { DatafnExecutorError } from '@datafn/server';
 import { createMemoryRuntimeStores } from '@superfunctions/db/adapters/memory';
@@ -6,7 +7,7 @@ import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import type { AuthFnSession } from 'authfn';
 import type { SyncServer } from '../datafn/server.js';
 import { resolveAccountUserNamespace } from '../datafn/namespace.js';
-import { createInterfaceApiRouter, type InterfaceApiServices } from './router.js';
+import { createInterfaceApiRouter, type InterfaceApiServices, type StoredReader } from './router.js';
 
 /**
  * Routes against an executor that behaves like DataFn on PostgreSQL: numeric
@@ -16,9 +17,11 @@ import { createInterfaceApiRouter, type InterfaceApiServices } from './router.js
  * after an interruption between the insert and saving it). A transact call
  * runs its mutation (checking an update's `if` guard on the stored row, and
  * failing a merge on a missing row as DataFn's strict adapters do) and sets
- * `updatedAt` as DataFn's timestamps capability does; the router reads the
- * committed row back by id from storage (`readStored`), outside the counted
- * queries, never with a query step in the transact call.
+ * `updatedAt` as DataFn's timestamps capability does. Like a database
+ * transaction, a transact call runs the router's in-transaction check
+ * (`inWriteTransaction`) after its mutation and undoes the mutation when the
+ * check throws; the check reads rows by id, outside the counted queries,
+ * never with a query step in the transact call.
  */
 
 type Row = Record<string, unknown>;
@@ -79,6 +82,17 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
   let gate: (() => Promise<void>) | null = null;
   /** Runs before each query, when set; it may change rows or throw. */
   let beforeQuery: ((count: number) => void) | null = null;
+  /** Runs once after a transact call commits and before it returns, when set. */
+  let afterCommit: (() => Promise<void>) | null = null;
+  /** The in-transaction check of the write running in the current async context. */
+  const checks = new AsyncLocalStorage<(read: StoredReader) => Promise<void>>();
+  const readRow: StoredReader = async (resource, id, namespace) => {
+    storedReads.push({ resource, id, namespace });
+    const found = rows.find((row) => row.resource === resource && row.id === id);
+    if (!found) return null;
+    const { resource: _, ...row } = found;
+    return { ...row };
+  };
   /** A query's rows; DataFn's query path, unlike a transact read, hides trashed rows. */
   const select = (payload: Row, hideTrashed: boolean) => {
     const filters = (payload.filters ?? {}) as Row;
@@ -132,14 +146,32 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
       const [step] = payload.steps;
       // DataFn loads every row of the resource for a transact query step.
       if (payload.steps.length !== 1 || !step?.mutation) throw new Error('the router transacts one mutation and no query');
+      const check = checks.getStore();
+      const mutation = step.mutation;
+      const index = rows.findIndex((row) => row.resource === mutation.resource && row.id === mutation.id);
+      const prior = index === -1 ? undefined : structuredClone(rows[index]);
       let result: Row;
       try {
-        result = await write(step.mutation);
+        result = await write(mutation);
       } catch (error) {
         // In a transact call a step's conflict comes back as a failed step.
         if (!(error instanceof DatafnExecutorError) || error.code !== 'CONFLICT') throw error;
         result = { ok: false, errors: [{ code: 'CONFLICT', message: error.message, path: 'id' }] };
       }
+      if (result.ok === true && check) {
+        try {
+          await check(readRow);
+        } catch {
+          // The transaction rolls back: only this mutation's change is undone.
+          const at = rows.findIndex((row) => row.resource === mutation.resource && row.id === mutation.id);
+          if (prior === undefined) rows.splice(at, 1);
+          else rows.splice(at, 1, prior);
+          throw new DatafnExecutorError({ code: 'INTERNAL', message: 'Transaction failed' }, 400);
+        }
+      }
+      const next = afterCommit;
+      afterCommit = null;
+      await next?.();
       return { ok: result.ok === true, results: [result] };
     },
     async search() {
@@ -156,13 +188,8 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
   const services: InterfaceApiServices = {
     authenticate: () => session as unknown as AuthFnSession,
     getSyncServer: async () => ({ executor }) as unknown as SyncServer,
-    readStored: async (resource, id, namespace) => {
-      storedReads.push({ resource, id, namespace });
-      const found = rows.find((row) => row.resource === resource && row.id === id);
-      if (!found) return null;
-      const { resource: _, ...row } = found;
-      return { ...row };
-    },
+    readStored: readRow,
+    inWriteTransaction: (check, write) => checks.run(check, write),
     ...overrides
   };
   return {
@@ -171,6 +198,7 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
     mutations,
     storedReads,
     hold: (next: (() => Promise<void>) | null) => { gate = next; },
+    afterCommit: (next: (() => Promise<void>) | null) => { afterCommit = next; },
     onQuery: (next: ((count: number) => void) | null) => { beforeQuery = next; }
   };
 }
@@ -617,39 +645,81 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       expect(record).toMatchObject({ ...write.body, updatedAt: stored.updatedAt });
     });
 
-    it.each(writes)('answers a stored $method from the write when the readback fails, indexing and logging nothing of it', async (write) => {
+    /** Services whose in-transaction reads pass through `map`. */
+    function mapTransactionReads(services: InterfaceApiServices, map: (read: StoredReader) => StoredReader): InterfaceApiServices {
+      return { ...services, inWriteTransaction: (check, write) => services.inWriteTransaction((read) => check(map(read)), write) };
+    }
+
+    it.each(writes)('rolls a $method back and answers a logged 500 when its in-transaction readback fails', async (write) => {
       const logError = vi.fn();
       const updateIndices = vi.fn(async () => undefined);
       const rows = [task('task:a', null)];
-      const base = createPostgresLikeServices(rows, { logError });
-      const services: InterfaceApiServices = {
-        ...base.services,
-        readStored: async (resource, id, namespace) => {
-          if (resource === 'task') throw Object.assign(new Error('read failed near sentinel-note-body'), { code: '57014' });
-          return base.services.readStored(resource, id, namespace);
-        },
-        getSearchIndex: () => ({ provider: { updateIndices } })
-      };
+      const before = structuredClone(rows);
+      const base = createPostgresLikeServices(rows, { logError, getSearchIndex: () => ({ provider: { updateIndices } }) });
+      const services = mapTransactionReads(base.services, (read) => async (resource, id, namespace) => {
+        if (resource === 'task') throw Object.assign(new Error('read failed near sentinel-note-body'), { code: '57014' });
+        return read(resource, id, namespace);
+      });
       const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
-      expect(response.status).toBe(write.status);
-      expect(await response.json()).toMatchObject(write.body);
-      expect(rows.filter((row) => row.label === write.body.label)).toHaveLength(1);
-      expect(logError).toHaveBeenCalledWith(expect.any(String), { name: 'Error', code: '57014' });
-      expect(JSON.stringify(logError.mock.calls)).not.toContain('sentinel-note-body');
-      // A row built from the write could overwrite a newer write's index entry.
+      expect(response.status).toBe(500);
+      expect(base.mutations).toHaveLength(1);
+      expect(rows).toEqual(before);
       expect(updateIndices).not.toHaveBeenCalled();
+      expect(JSON.stringify(logError.mock.calls)).not.toContain('sentinel-note-body');
+    });
+
+    it.each(writes)('answers 404 and indexes nothing when the $method row is not visible in its transaction', async (write) => {
+      const updateIndices = vi.fn(async () => undefined);
+      const base = createPostgresLikeServices([task('task:a', null)], { getSearchIndex: () => ({ provider: { updateIndices } }) });
+      // As a trash that a readback in the same transaction sees.
+      const services = mapTransactionReads(base.services, (read) => async (resource, id, namespace) => {
+        const row = await read(resource, id, namespace);
+        return row && resource === 'task' ? { ...row, trashedAt: 1 } : row;
+      });
+      const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
+      expect(response.status).toBe(404);
+      expect(await response.json()).toMatchObject({ code: 'not_found' });
+      expect(updateIndices).not.toHaveBeenCalled();
+    });
+
+    it('answers and indexes each of two interleaved updates with its own committed revision', async () => {
+      const updateIndices = vi.fn(async (_: { records: Row[] }) => undefined);
+      const rows = [task('task:a', null)];
+      const base = createPostgresLikeServices(rows, { getSearchIndex: () => ({ provider: { updateIndices } }) });
+      let second: Row | undefined;
+      let secondRevision: Row | undefined;
+      // The second update commits after the first commits and before the first answers.
+      base.afterCommit(async () => {
+        const response = await send(base.services, '/v1/pointron/tasks/task:a', {
+          method: 'PATCH', body: JSON.stringify({ label: 'Second', dateUnix: 1000 })
+        });
+        second = { status: response.status, ...await response.json() as Row };
+        secondRevision = structuredClone(rows[0]);
+      });
+      const first = await send(base.services, '/v1/pointron/tasks/task:a', {
+        method: 'PATCH', body: JSON.stringify({ label: 'First' })
+      });
+      const record = await first.json() as Row;
+      expect(first.status, JSON.stringify(record)).toBe(200);
+      expect(record).toMatchObject({ label: 'First', minutes: 25 });
+      expect(record.dateUnix ?? null).toBeNull();
+      expect(second).toMatchObject({ status: 200, label: 'Second', dateUnix: 1000, updatedAt: secondRevision?.updatedAt });
+      expect(record.updatedAt).toBeLessThan(Number(second?.updatedAt));
+      // Each write indexes the revision it committed (ordering between writers is TIDY-592's).
+      const indexed = updateIndices.mock.calls.map(([update]) => update.records[0]);
+      expect(indexed).toHaveLength(2);
+      expect(indexed).toContainEqual(expect.objectContaining({ id: 'task:a', label: 'First', updatedAt: record.updatedAt }));
+      expect(indexed.find((doc) => doc.label === 'First')?.dateUnix ?? null).toBeNull();
+      expect(indexed).toContainEqual(expect.objectContaining({ id: 'task:a', label: 'Second', dateUnix: 1000, updatedAt: second?.updatedAt }));
     });
 
     it('answers a create as a DataFn read does, leaving out unset non-nullable columns stored as null', async () => {
       const base = createPostgresLikeServices([]);
-      const services: InterfaceApiServices = {
-        ...base.services,
-        readStored: async (resource, id, namespace) => {
-          const row = await base.services.readStored(resource, id, namespace);
-          // PostgreSQL returns every column, unset ones as null.
-          return row && resource === 'task' ? { minutes: null, completedAtUnix: null, ...row } : row;
-        }
-      };
+      const services = mapTransactionReads(base.services, (read) => async (resource, id, namespace) => {
+        const row = await read(resource, id, namespace);
+        // PostgreSQL returns every column, unset ones as null.
+        return row && resource === 'task' ? { minutes: null, completedAtUnix: null, ...row } : row;
+      });
       const response = await send(services, '/v1/pointron/tasks', {
         method: 'POST', body: JSON.stringify({ label: 'No minutes', dateUnix: 900 })
       });
@@ -717,6 +787,35 @@ describe('v1 routes on PostgreSQL-like storage', () => {
         expect(updateIndices).not.toHaveBeenCalled();
         expect(rows).toEqual(before);
       });
+
+    it.each(writes.flatMap((write) => [
+      { ...write, start: 'no settings row' },
+      { ...write, start: 'a settings row with encryption off' }
+    ]))('rolls a $method back when encryption turns on after the route check and before the commit, from $start', async (write) => {
+      const encrypted = { ...task('task:a', null), label: 'example-ciphertext' };
+      const rows: Row[] = write.start === 'no settings row'
+        ? [encrypted]
+        : [encrypted, settingsRow({ version: 1, enabled: false, updatedAt: 1 })];
+      const updateIndices = vi.fn(async () => undefined);
+      const { services, mutations, hold } = createPostgresLikeServices(rows, {
+        getSearchIndex: () => ({ provider: { updateIndices } })
+      });
+      let enabledAt: Row[] | undefined;
+      // Another device turns encryption on while this write's transaction runs.
+      hold(async () => {
+        hold(null);
+        rows.splice(0, rows.length, ...rows.filter((row) => row.resource !== 'kv'),
+          settingsRow({ version: 1, enabled: true, updatedAt: 2 }));
+        enabledAt = structuredClone(rows);
+      });
+      const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({ code: 'end_to_end_encrypted' });
+      expect(mutations).toHaveLength(1);
+      expect(rows).toEqual(enabledAt);
+      expect(rows.some((row) => row.label === 'Plaintext')).toBe(false);
+      expect(updateIndices).not.toHaveBeenCalled();
+    });
 
     it.each(writes)('writes a $method when encryption is off', async (write) => {
       const rows = [task('task:a', null), settingsRow({ version: 1, enabled: false, updatedAt: 1 })];

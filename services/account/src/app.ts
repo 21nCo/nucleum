@@ -1,10 +1,12 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import {
   wrapWithRowLevelNamespace,
   type Adapter,
   type ConditionalKVStoreAdapter,
-  type RuntimeStores
+  type RuntimeStores,
+  type TransactionAdapter
 } from "@superfunctions/db";
 import type { SuperfunctionObservability } from "@superfunctions/observability";
 import type {
@@ -137,11 +139,18 @@ export interface AccountServices {
    * bounded by the id, outside DataFn's authorization, rate limits and
    * response hooks, for callers that already authorized the access.
    */
-  readSyncRecord: (
-    resource: string,
-    id: string,
-    namespace: string
-  ) => Promise<Record<string, unknown> | null>;
+  readSyncRecord: SyncRecordReader;
+  /**
+   * Runs `write` with `check` run inside each sync database transaction the
+   * write opens (one for a DataFn transact call), after the transaction's
+   * work and before it commits. `check` reads rows by id through that
+   * transaction, scoped as readSyncRecord is; a check that throws rolls the
+   * transaction back.
+   */
+  inSyncWriteTransaction: <T>(
+    check: (read: SyncRecordReader) => Promise<void>,
+    write: () => Promise<T>
+  ) => Promise<T>;
   regionId: string;
   corsOrigins: string[];
   observability: SuperfunctionObservability<AccountObservationEvent>;
@@ -149,6 +158,57 @@ export interface AccountServices {
   deployment: AccountDeployment;
   integrations: AccountIntegrations;
   close(): Promise<void>;
+}
+
+/** Reads one row of a namespace by id. */
+export type SyncRecordReader = (
+  resource: string,
+  id: string,
+  namespace: string
+) => Promise<Record<string, unknown> | null>;
+
+type SyncWriteCheck = (read: SyncRecordReader) => Promise<void>;
+
+/** The checks of the sync write running in the current async context. */
+const syncWriteChecks = new AsyncLocalStorage<SyncWriteCheck>();
+
+/** A by-id reader scoped to a namespace by the `__ns` column, as DataFn scopes its reads. */
+function namespacedReader(database: Adapter): SyncRecordReader {
+  const scoped = wrapWithRowLevelNamespace(database, {
+    enabled: true,
+    columnName: "__ns",
+    mandatory: true
+  });
+  return (resource, id, namespace) =>
+    scoped.findOne<Record<string, unknown>>({
+      model: resource,
+      where: [{ field: "id", operator: "eq", value: id }],
+      namespace
+    });
+}
+
+/**
+ * The sync database with the current sync write's checks run inside each
+ * transaction it opens, after the transaction's work and before it commits.
+ */
+function withSyncWriteChecks(database: Adapter): Adapter {
+  return new Proxy(database, {
+    get(target, property) {
+      if (property !== "transaction") {
+        const value: unknown = Reflect.get(target, property, target);
+        // Bound to the adapter itself, whose methods may use private state.
+        return typeof value === "function" ? value.bind(target) : value;
+      }
+      return <R>(callback: (trx: TransactionAdapter) => Promise<R>): Promise<R> =>
+        target.transaction(async (trx) => {
+          const result = await callback(trx);
+          const check = syncWriteChecks.getStore();
+          // Only the reads below run on the transaction, which lacks transaction() and close().
+          if (check) await check(namespacedReader(trx as unknown as Adapter));
+          return result;
+        });
+    }
+  });
 }
 
 /**
@@ -230,15 +290,11 @@ export function buildAccountServices(
       : undefined;
   let syncServer: Promise<SyncServer> | undefined;
   let syncSearchProvider: SearchProvider | undefined;
-  let syncDatabaseAdapter: Adapter | undefined;
+  let readSyncDatabase: SyncRecordReader | undefined;
   const getSyncServer = () => {
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
       .then((syncDatabase) => {
-        syncDatabaseAdapter = wrapWithRowLevelNamespace(syncDatabase, {
-          enabled: true,
-          columnName: "__ns",
-          mandatory: true
-        });
+        readSyncDatabase = namespacedReader(syncDatabase);
         // Resolved here, as the sync server would, so the v1 API indexes its
         // writes with the same provider instance.
         syncSearchProvider =
@@ -249,7 +305,7 @@ export function buildAccountServices(
             authenticate: (request) => auth.provider.authenticate(request),
             authorizeMutation: (request) => auth.authorizeMutation(request)
           },
-          database: syncDatabase,
+          database: withSyncWriteChecks(syncDatabase),
           stores: infra.stores,
           regionId,
           observability,
@@ -301,13 +357,10 @@ export function buildAccountServices(
         : undefined,
     readSyncRecord: async (resource, id, namespace) => {
       await getSyncServer();
-      if (!syncDatabaseAdapter) throw new Error("Sync database unavailable");
-      return syncDatabaseAdapter.findOne<Record<string, unknown>>({
-        model: resource,
-        where: [{ field: "id", operator: "eq", value: id }],
-        namespace
-      });
+      if (!readSyncDatabase) throw new Error("Sync database unavailable");
+      return readSyncDatabase(resource, id, namespace);
     },
+    inSyncWriteTransaction: (check, write) => syncWriteChecks.run(check, write),
     regionId,
     corsOrigins,
     observability,
@@ -429,6 +482,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
       idempotencyStore: services.infra.stores.atomicKv,
       getSearchIndex: () => services.getSyncSearchIndex?.(),
       readStored: services.readSyncRecord,
+      inWriteTransaction: services.inSyncWriteTransaction,
       logError: (message, failure) => logger.error(message, { failure })
     }
   });

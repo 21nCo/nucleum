@@ -1,3 +1,4 @@
+import { AsyncResource } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -710,7 +711,8 @@ describe('v1 writes on the real DataFn executor', () => {
   /**
    * A router over the harness's DataFn executor. `beforeWrite` runs once just
    * before the write's DataFn call (after the router's own checks), so a
-   * change it makes lands between them; `afterWrite` runs once after it.
+   * change it makes lands between them. It runs as another request would,
+   * outside the write's async context and so outside its in-transaction check.
    */
   function routerAround(
     app: InterfaceApp,
@@ -718,9 +720,11 @@ describe('v1 writes on the real DataFn executor', () => {
   ) {
     let beforeWrite = hooks.beforeWrite ?? null;
     let written = false;
+    const outside = AsyncResource.bind((run: () => Promise<void>) => run());
     const router = createInterfaceApiRouter(app, {
       authenticate: (request) => harness.services.auth.provider.authenticate(request),
       readStored: harness.services.readSyncRecord,
+      inWriteTransaction: harness.services.inSyncWriteTransaction,
       getSyncServer: async () => {
         const executor = (await harness.services.getSyncServer()).executor;
         const wrapped: Executor = {
@@ -740,7 +744,7 @@ describe('v1 writes on the real DataFn executor', () => {
           transact: async <TResult>(payload: unknown, context?: SyncContext) => {
             const run = beforeWrite;
             beforeWrite = null;
-            await run?.();
+            if (run) await outside(run);
             const result = await executor.transact<TResult>(payload, context);
             written = true;
             return result;
@@ -869,6 +873,27 @@ describe('v1 writes on the real DataFn executor', () => {
     expect(await json(await call(`/v1/pointron/tasks/${id}`, actors.pointronWrite, {
       method: 'PATCH', body: { label: 'Writable again' }
     }), 200)).toMatchObject({ label: 'Writable again' });
+  });
+
+  it.each(['create', 'update'])('rolls a %s back when encryption turns on after the route check and before the commit', async (write) => {
+    const id = `task:encrypting-${write}`;
+    if (write === 'update') await seed(insert('task', id, { label: 'example-ciphertext', dateUnix: 1_700_000_000_000 }));
+    const setting = (enabled: boolean) =>
+      mutation('kv', 'merge', 'kv:nucleum:e2ee', { record: { value: { version: 1, enabled, updatedAt: 1 } } });
+    const send = routerAround('pointron', { beforeWrite: () => seed(setting(true)) });
+    try {
+      await problem(await send(write === 'create' ? '/v1/pointron/tasks' : `/v1/pointron/tasks/${id}`, actors.pointronWrite, {
+        method: write === 'create' ? 'POST' : 'PATCH',
+        body: { label: 'Plaintext in the race', ...(write === 'create' ? { dateUnix: 1_700_000_000_000 } : {}) }
+      }), 409, 'end_to_end_encrypted');
+      const plaintext = await json(await call('/datafn/query', actors.cookie, {
+        body: { resource: 'task', version: 1, filters: { label: { eq: 'Plaintext in the race' } } }
+      }), 200) as { result: { data: Body[] } };
+      expect(plaintext.result.data).toEqual([]);
+      if (write === 'update') expect(await stored('task', id)).toMatchObject({ label: 'example-ciphertext' });
+    } finally {
+      await seed(setting(false));
+    }
   });
 
   it('answers a space update with only the items the app may see', async () => {

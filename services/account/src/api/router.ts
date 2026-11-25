@@ -30,6 +30,9 @@ import {
   type JsonSchema
 } from './resources.js';
 
+/** Reads one stored row of a namespace by id. */
+export type StoredReader = (resource: string, id: string, namespace: string) => Promise<Row | null>;
+
 /** What a router needs to serve requests. Without it the router only describes the API. */
 export interface InterfaceApiServices {
   authenticate(request: Request): Promise<AuthFnSession | null> | AuthFnSession | null;
@@ -51,10 +54,17 @@ export interface InterfaceApiServices {
   /**
    * Reads one stored row of a namespace by id from the sync database: a
    * single lookup bounded by the id, outside DataFn's rate limits. The API
-   * reads the row a write committed with it, and the namespace's end-to-end
-   * encryption setting, which app-scoped tokens may not read through DataFn.
+   * reads the namespace's end-to-end encryption setting with it, which
+   * app-scoped tokens may not read through DataFn, before a write starts.
    */
   readStored(resource: string, id: string, namespace: string): Promise<Row | null>;
+  /**
+   * Runs `write`, one DataFn transact call, with `check` run inside its
+   * database transaction after the mutation and before the commit. `check`
+   * reads stored rows by id through that transaction, as `readStored` does
+   * outside it; a check that throws rolls the write back.
+   */
+  inWriteTransaction<T>(check: (read: StoredReader) => Promise<void>, write: () => Promise<T>): Promise<T>;
   /**
    * Records failures the API answers with a 500. It receives only a
    * failure's class, code and status, never its message, which can quote
@@ -748,15 +758,13 @@ function referenceFields(contract: InterfaceResourceContract): string[] {
 }
 
 /**
- * A record a write read back, with its reference fields taken from the write
- * and the earlier read (which the answer must keep consistent with), and a
- * space's items taken from the earlier read.
+ * A record a write read back in its transaction, with a space's items taken
+ * from the earlier read.
  */
-function withReferences(
+function withAppItems(
   app: InterfaceApp,
   contract: InterfaceResourceContract,
   row: Row,
-  written: Row,
   before: Row = {}
 ): Row {
   const complete = { ...row };
@@ -768,10 +776,6 @@ function withReferences(
     // A new space's empty item list hides nothing, so it is kept.
     if (shared.field in before) complete[shared.field] = before[shared.field];
     else if (!Array.isArray(items) || items.length > 0) delete complete[shared.field];
-  }
-  for (const name of referenceFields(contract)) {
-    const value = name in written ? written[name] : before[name];
-    if (value !== undefined) complete[name] = value;
   }
   return complete;
 }
@@ -891,10 +895,9 @@ async function createRecord(
     if (result.ok) {
       await committed();
       // A replayed create whose record is gone meanwhile has nothing to answer with.
-      if (row === null && result.deduped === true) throw idempotencyConflict();
-      const stored = withReferences(app, contract, row ?? { ...record, id }, record);
-      // A row built from the write could overwrite a newer write's index entry.
-      if (row !== undefined) await indexWritten(caller, contract.resource, stored);
+      if (row === null) throw result.deduped === true ? idempotencyConflict() : notVisible(contract, id);
+      const stored = withAppItems(app, contract, row);
+      await indexWritten(caller, contract.resource, stored);
       return respond(project(contract, stored), result.deduped === true);
     }
     if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
@@ -958,9 +961,10 @@ async function updateRecord(
       throw new ApiProblem(409, 'conflict', `The ${contract.resource} changed while this update ran; retry it.`);
     }
     await committed();
-    if (row === null && result.deduped === true) throw notVisible(contract, id);
-    const stored = withReferences(app, contract, row ?? { ...before, ...record }, record, before);
-    if (row !== undefined) await indexWritten(caller, contract.resource, stored);
+    // The row left this token's view in the same transaction: nothing to answer with or index.
+    if (row === null) throw notVisible(contract, id);
+    const stored = withAppItems(app, contract, row, before);
+    await indexWritten(caller, contract.resource, stored);
     return respond(project(contract, stored), result.deduped === true);
   });
 }
@@ -1015,7 +1019,17 @@ function isGuardFailure(result: MutationResult): boolean {
  * check reads the namespace's encryption setting before anything is stored.
  */
 async function refuseEncrypted(caller: Caller): Promise<void> {
-  const stored = await caller.services.readStored('kv', E2EE_SETTINGS_ID, resolveAccountUserNamespace(caller.actorId));
+  const settings = await caller.services.readStored('kv', E2EE_SETTINGS_ID, resolveAccountUserNamespace(caller.actorId));
+  if (encryptionEnabled(settings)) throw encryptedProblem();
+}
+
+function encryptedProblem(): ApiProblem {
+  return new ApiProblem(409, 'end_to_end_encrypted',
+    'This account uses end-to-end encryption, and v1 writes cannot encrypt content yet.');
+}
+
+/** Whether a stored end-to-end encryption settings row turns encryption on. */
+function encryptionEnabled(stored: Row | null): boolean {
   let settings = stored?.value;
   if (typeof settings === 'string') {
     try {
@@ -1024,25 +1038,18 @@ async function refuseEncrypted(caller: Caller): Promise<void> {
       settings = null;
     }
   }
-  if (typeof settings === 'object' && settings !== null && (settings as { enabled?: unknown }).enabled === true) {
-    throw new ApiProblem(409, 'end_to_end_encrypted',
-      'This account uses end-to-end encryption, and v1 writes cannot encrypt content yet.');
-  }
+  return typeof settings === 'object' && settings !== null && (settings as { enabled?: unknown }).enabled === true;
 }
 
 function notVisible(contract: InterfaceResourceContract, id: string): ApiProblem {
   return new ApiProblem(404, 'not_found', `No ${contract.resource} ${id} is visible to this token.`);
 }
 
-/** A write's outcome and the record it stored, read back after the write. */
+/** A write's outcome and the record it stored, read back in its transaction. */
 interface Written {
   result: MutationResult;
-  /**
-   * Null when the write failed or the stored record is not visible to this
-   * token; undefined when reading it back failed, so the answer is built
-   * from the write.
-   */
-  row: Row | null | undefined;
+  /** Null when the write failed or the stored record is not visible to this token. */
+  row: Row | null;
 }
 
 interface TransactResult {
@@ -1050,52 +1057,72 @@ interface TransactResult {
   results?: unknown[];
 }
 
+/** Thrown inside a write's transaction to roll it back; its message quotes nothing stored. */
+class WriteRolledBack extends Error {
+  constructor() {
+    super('v1 write rolled back by its in-transaction check');
+    this.name = 'WriteRolledBack';
+  }
+}
+
 /**
  * Runs one mutation in a DataFn transact call, whose one rate-limit and
- * authorization check runs before anything is stored, then reads the row it
- * committed by id from the sync database. A query step in the transact call
- * would load every row of the resource (DataFn pushes no filter down there),
- * and a DataFn query after the commit could be refused by its rate limit. A
- * failed mutation comes back as a failed result; other failures come back as
- * problems.
+ * authorization check runs before anything is stored. Inside the same
+ * database transaction, after the mutation, it checks the namespace's
+ * end-to-end encryption setting again (turned on since the route's check:
+ * the write rolls back and answers 409) and reads the written row by id, so
+ * the answer and the index hold exactly this write's revision. A query step
+ * in the transact call would load every row of the resource (DataFn pushes
+ * no filter down there). A failed mutation comes back as a failed result;
+ * other failures, a failed readback included (it rolls the write back), come
+ * back as problems.
  */
 async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<Written> {
-  const response = await run(async () => {
-    try {
-      return await caller.executor.transact({ steps: [{ mutation: payload }] }, caller.context) as TransactResult;
-    } catch (error) {
-      if (error instanceof DatafnExecutorError && error.code === 'CONFLICT') {
-        const path = (error.details as { path?: unknown } | undefined)?.path;
-        const failed: MutationResult = {
-          ok: false,
-          errors: [{ code: 'CONFLICT', message: error.message, path: typeof path === 'string' ? path : undefined }]
-        };
-        return { ok: false, results: [failed] } satisfies TransactResult;
-      }
-      throw error;
+  const resource = payload.resource as string;
+  const namespace = resolveAccountUserNamespace(caller.actorId);
+  const inTransaction: { encrypted: boolean; row: Row | null } = { encrypted: false, row: null };
+  const check = async (read: StoredReader) => {
+    if (encryptionEnabled(await read('kv', E2EE_SETTINGS_ID, namespace))) {
+      inTransaction.encrypted = true;
+      throw new WriteRolledBack();
     }
-  }, 'write', caller.services);
+    inTransaction.row = await read(resource, payload.id as string, namespace);
+  };
+  let response: TransactResult;
+  try {
+    response = await run(() => caller.services.inWriteTransaction(check, async () => {
+      try {
+        return await caller.executor.transact({ steps: [{ mutation: payload }] }, caller.context) as TransactResult;
+      } catch (error) {
+        if (error instanceof DatafnExecutorError && error.code === 'CONFLICT') {
+          const path = (error.details as { path?: unknown } | undefined)?.path;
+          const failed: MutationResult = {
+            ok: false,
+            errors: [{ code: 'CONFLICT', message: error.message, path: typeof path === 'string' ? path : undefined }]
+          };
+          return { ok: false, results: [failed] } satisfies TransactResult;
+        }
+        throw error;
+      }
+    }), 'write', caller.services);
+  } catch (error) {
+    if (inTransaction.encrypted) throw encryptedProblem();
+    throw error;
+  }
+  if (inTransaction.encrypted) throw encryptedProblem();
   const [step] = Array.isArray(response.results) ? response.results : [];
   const result = isMutationResult(step)
     ? step
     : { ok: false, errors: [{ code: 'INTERNAL', message: 'DataFn returned no mutation result.' }] };
   if (!result.ok) return { result, row: null };
-  return { result, row: await readCommitted(app, caller, payload.resource as string, payload.id as string) };
+  return { result, row: visibleRow(app, resource, inTransaction.row) };
 }
 
 /**
- * The row a write committed, read by id in the caller's namespace. It is
- * null when the row is trashed or holds a type outside this app's view (a
- * change that landed after the write), as a DataFn read would hide it.
+ * A row as a DataFn read in this app shows it: null when it is missing,
+ * trashed or holds a type outside this app's view.
  */
-async function readCommitted(app: InterfaceApp, caller: Caller, resource: string, id: string): Promise<Row | null | undefined> {
-  let row: Row | null;
-  try {
-    row = await caller.services.readStored(resource, id, resolveAccountUserNamespace(caller.actorId));
-  } catch (error) {
-    caller.services.logError?.('v1 API write readback failed; answering from the write', failureSummary(error));
-    return undefined;
-  }
+function visibleRow(app: InterfaceApp, resource: string, row: Row | null): Row | null {
   if (!row || (hasCapability(resource, 'trash') && row.trashedAt != null)) return null;
   const shared = resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource);
   const visible = resolveInterfaceVisibleTypes(app);
