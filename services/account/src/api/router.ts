@@ -764,8 +764,10 @@ function withReferences(
   // come from the earlier read (writes never set them) and not from storage.
   const shared = resolveInterfaceSharedFilter(app, contract.resource as InterfaceExposedResource);
   if (shared?.kind === 'items') {
+    const items = complete[shared.field];
+    // A new space's empty item list hides nothing, so it is kept.
     if (shared.field in before) complete[shared.field] = before[shared.field];
-    else delete complete[shared.field];
+    else if (!Array.isArray(items) || items.length > 0) delete complete[shared.field];
   }
   for (const name of referenceFields(contract)) {
     const value = name in written ? written[name] : before[name];

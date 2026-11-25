@@ -880,6 +880,8 @@ describe('v1 writes on the real DataFn executor', () => {
       method: 'PATCH', body: { isStarred: false }
     }), 200);
     expect((nucleum.items as Body[]).map((item) => item.id)).toEqual(['item-node', 'item-goal']);
+    const created = await json(await call('/v1/memotron/spaces', actors.memotronWrite, { body: { label: 'Empty space' } }), 201);
+    expect(created.items).toEqual(await json(await call(`/v1/memotron/spaces/${String(created.id)}`, actors.memotronRead), 200).then((read) => read.items));
   });
 
   it('reads a write back only within the caller\'s namespace', async () => {
