@@ -729,11 +729,11 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * already covers the generation (a fence that lands after a verified copy of
  * its change), else the generation's mark, then, even when that failed and
  * unless the copy read again covers the generation by then, the plain mark
- * if absent (a deleted one names the generation; one whose read failed is
- * written naming none) and the generation's mark again. A stale mark is
- * never replaced, so an earlier build's ("") keeps telling nothing, and it
- * removes no mark: only a locked settle does (see settleMarks). Without a
- * `generation` (no change names one) it writes only the plain mark if absent.
+ * if absent and the generation's mark again. A deleted mark names the
+ * generation, or none (also one present) when its read failed or it wrote no
+ * generation mark. A stale mark is never replaced, so an earlier build's ("")
+ * keeps telling nothing, and it removes no mark: only a locked settle does
+ * (see settleMarks). A `generation` is optional (no change names one).
  */
 export async function markQueuedFileStale(
   dir: string,
@@ -756,9 +756,10 @@ export async function markQueuedFileStale(
     if (isDeleted) return null;
     throw error;
   });
+  const isUnnamed = isDeleted && !!was && (!generation || !!failed);
   const text = isDeleted ? (was !== null && generation) || "" : CHANGED_MARK;
-  if (was === undefined || was === null) {
-    await writeEntryFile(dir, name, mark, text);
+  if (was === undefined || was === null || isUnnamed) {
+    await writeEntryFile(dir, name, mark, isUnnamed ? "" : text);
     await writeMarked();
   } else if (failed) throw failed.error;
 }

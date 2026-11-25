@@ -4533,6 +4533,90 @@ describe("files captured offline or by a local-only user", () => {
     expect(listedEntry?.stale).toBeUndefined();
   });
 
+  it.each([
+    ["with no generation", false],
+    ["whose generation's mark cannot be written", true]
+  ])(
+    "keeps a capture held at a locked settle by a delete re-mark %s beside a deleted mark that names a covered delete",
+    async (_, isFailed) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const entry = `queued_${fileId}`;
+      const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      const later = `${Date.now() + 1}-00000000-0000-4000-8000-000000000002`;
+      // A deleted mark names a delete the verified copy covers, as a delete
+      // fence that paused across that copy's write leaves it.
+      await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: [] }
+      );
+      await writeLocalEntryFile(fileId, "deleted", covered);
+      // A later delete's re-mark writes no generation's mark.
+      if (isFailed) {
+        hookEntryFiles({
+          create(name) {
+            if (name === `deleted.${later}`)
+              throw new Error("The disk is full");
+          }
+        });
+        await expect(
+          markQueuedFileStale(LOCAL_QUEUE, fileId, true, later)
+        ).rejects.toThrow("The disk is full");
+      } else await markQueuedFileStale(LOCAL_QUEUE, fileId, true);
+
+      await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+      expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+        true
+      );
+    }
+  );
+
+  it("publishes nothing once signed in for a guest record of a retired namespace whose delete only its pending entry told before a sign-out wiped it, beside a deleted mark that names a covered delete", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleTasks();
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const namespace = String(readLocalCopy(fileId)?.namespace);
+    const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", covered);
+    // The device moves to a new guest namespace; a tab of the earlier one
+    // deletes the guest record and closes before its fence.
+    await signOutToLocal(true);
+    await settleLocalFileRecords();
+    const key = [namespace, record.id].map(encodeURIComponent).join(":");
+    localStorage.setItem(`${LOCAL_QUEUE}-pending:${key}`, "delete");
+    // A guest pass re-marks it deleted; a sign-out then wipes that entry.
+    await openData();
+    await settleLocalFileRecords();
+    await signOutToLocal();
+    await settleLocalFileRecords();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+  });
+
   it("holds no capture by a fence that paused across a verified copy covering its change and then another record's takeover copy", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
