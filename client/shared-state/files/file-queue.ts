@@ -556,7 +556,8 @@ export async function listQueuedFileMarks(dir: string, fileId: string) {
  * cleared (a fence's; an earlier build's and a restored one have none). A
  * plain stale mark has no owner (an earlier build's fence finds it set and
  * writes none), so only a listing clears it. It then sets a plain mark again
- * (an earlier build's tab reads only those) while a generation mark holds.
+ * (an earlier build's tab reads only those) while an uncovered generation's
+ * mark holds.
  */
 async function settleMarks(
   dir: string,
@@ -573,10 +574,11 @@ async function settleMarks(
     );
   const names = await readNames(entry);
   const isPending = () => !!copy && isHeld?.(copy as QueuedFileRecord) === true;
+  const isOpen = (name: string) =>
+    !covered.includes(String(toMarkGeneration(name)));
   for (const kind of kinds)
     for (const name of ofKind(names, kind))
-      if (covered.includes(String(toMarkGeneration(name))))
-        await removeMark(entry, name);
+      if (!isOpen(name)) await removeMark(entry, name);
   const now = await readNames(entry);
   for (const kind of kinds) {
     const isOwned =
@@ -587,7 +589,7 @@ async function settleMarks(
   }
   const after = await readNames(entry);
   for (const kind of kinds)
-    if (ofKind(after, kind)[0] && !after.includes(kind)) {
+    if (ofKind(after, kind).some(isOpen) && !after.includes(kind)) {
       await writeEntryFile(
         dir,
         entryName,
@@ -793,7 +795,8 @@ export async function listQueuedFiles(dir: string, isStrict = false) {
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded:
         (await hasEntryFile(dir, entryName, UPLOADED_FILE)) &&
-        !(await hasEntryFile(dir, entryName, PUBLISHING_FILE)),
+        (await readEntryText(dir, entryName, PUBLISHING_FILE, isStrict)) ===
+          undefined,
       ...(await readHoldMarks(dir, entryName, record, isStrict)),
       covered: toCovered(record),
       isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
@@ -1505,9 +1508,11 @@ export async function restoreLocalQueuedFiles(
           });
           const write = writeEntryFile.bind(null, dir, entryName);
           const covered = toCovered(copy.record);
-          for (const { name, text } of copy.marks ?? [])
-            if (!covered.includes(toMarkGeneration(name) ?? ""))
+          for (const { name, text } of copy.marks ?? []) {
+            const at = toMarkGeneration(name);
+            if (!at || !covered.includes(at))
               await write(name, name === DELETED_FILE ? "" : text);
+          }
           if (copy.claim) await write(CLAIM_FILE, JSON.stringify(copy.claim));
           const { thumbnail } = copy;
           if (thumbnail && THUMBNAIL_TYPES.has(thumbnail.type)) {

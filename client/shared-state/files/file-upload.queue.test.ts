@@ -5385,6 +5385,124 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
+  it("rejects a strict listing whose publishing mark of an uploaded capture cannot be read, instead of counting it uploaded", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    await writeLocalEntryFile(fileId, "uploaded", "test-version");
+    await writeLocalEntryFile(fileId, "publishing", "{}");
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "getFileHandle") return Reflect.get(target, key);
+          return async (name: string, options?: { create?: boolean }) => {
+            if (name === "publishing")
+              throw new DOMException(
+                "The file system is busy",
+                "NotReadableError"
+              );
+            return target.getFileHandle(name, options);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await expect(listQueuedFiles(LOCAL_QUEUE, true)).rejects.toThrow(
+      "The file system is busy"
+    );
+  });
+
+  it("sets no stale mark at a settle for a generation mark that lands covered after its first scan", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const late = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [earlier, late], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, `stale.${earlier}`);
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name === `stale.${earlier}`)
+              await writeLocalEntryFile(fileId, `stale.${late}`);
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).not.toContain("stale");
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
+  });
+
+  it.each([
+    ["beside a covered generation's mark", false],
+    ["whose copy lists an empty covered token", true]
+  ])(
+    "keeps a restored claimed capture held once signed in by its backup's deleted mark %s",
+    async (_, isEmptyToken) => {
+      const record = await captureThenSignOutDuringUpload();
+      await settleLocalFileRecords();
+      const { fileId } = record;
+      const entry = `queued_${fileId}`;
+      const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+      await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: [] }
+      );
+      await writeLocalEntryFile(fileId, "deleted", "");
+      if (!isEmptyToken)
+        await writeLocalEntryFile(fileId, `deleted.${covered}`);
+      const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+      const [copy] = files;
+      const backup = isEmptyToken
+        ? { ...copy, record: { ...copy.record, covered: [""] } }
+        : copy;
+      const root = await opfs.getDirectory();
+      const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+      await queue.removeEntry(entry, { recursive: true });
+
+      await restoreLocalQueuedFiles([backup as never], () => false);
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain(`deleted.${covered}`);
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+      expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+        true
+      );
+    }
+  );
+
   it("restores no capture unheld whose backup holds the forced deleted mark beside a leftover covered generation's", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
