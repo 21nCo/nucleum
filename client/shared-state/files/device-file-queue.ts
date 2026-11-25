@@ -241,7 +241,8 @@ function isAbandoned(entry: QueuedFileEntry) {
  * the record as it is now (another record that took over its `fileId` when
  * the first one was deleted, too) and is marked committed. A copy a reread
  * confirms covers the changes `read` lists of its record and the marks
- * listed before that reread (see writeQueuedFileRecord); one the reread does
+ * listed before that reread, and clears those marks, which hold it until
+ * then (see writeQueuedFileRecord); one the reread does
  * not confirm gets a new stale mark, for a later pass. A committed file
  * no record references any more, or one never committed and abandoned, is
  * removed under Web Locks; one claimed and not uploaded is marked orphaned,
@@ -269,11 +270,11 @@ async function reconcileLocalFile(
     const covered = read.filter((c) => ids.includes(c.id)).map(toToken);
     if (entry.isOrphaned) await markQueuedFileStale(dir, fileId);
     // The marks it lists, before its reread, are of changes that reread sees.
-    covered.push(...(await writeQueuedFileRecord(dir, fileId, copy)));
+    const listed = await writeQueuedFileRecord(dir, fileId, copy, "unverified");
     const now = await readFileRecord(namespace, { id: copy.id });
     if (!now || toState(toQueuedFileRecord(now, namespace)) !== toState(copy))
       await markQueuedFileStale(dir, fileId, !now);
-    else await writeQueuedFileRecord(dir, fileId, copy, covered);
+    else await writeQueuedFileRecord(dir, fileId, copy, { covered, listed });
     if (!entry.isCommitted) {
       await markQueuedFileCommitted(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     }
@@ -282,8 +283,7 @@ async function reconcileLocalFile(
   if (!entry.isCommitted && !isAbandoned(entry)) return false;
   if (entry.claim && !entry.isUploaded) {
     // Its lookups came after the changes it read and the marks listed.
-    const covered = [...read.map(toToken), ...entry.generations];
-    await markQueuedFileOrphaned(dir, fileId, covered);
+    await markQueuedFileOrphaned(dir, fileId, read.map(toToken), entry.marks);
   } else if (globalThis.navigator?.locks) {
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));
@@ -608,8 +608,12 @@ type PendingChange = {
   at?: string;
 };
 
-/** A pending change's generation; an earlier build's key, which has none. */
-const toToken = (change: PendingChange) => change.at ?? change.key;
+/**
+ * A pending change's generation; an earlier build's key and value (it
+ * reuses the key for each write to a record, with a new value).
+ */
+const toToken = (change: PendingChange) =>
+  change.at ?? `${change.key} ${change.value}`;
 
 function pendingKey(namespace: string, id: string) {
   return PENDING_PREFIX + [namespace, id].map(encodeURIComponent).join(":");
