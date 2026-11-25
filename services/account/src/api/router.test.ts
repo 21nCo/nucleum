@@ -719,6 +719,7 @@ describe('v1 writes on the real DataFn executor', () => {
     let written = false;
     const router = createInterfaceApiRouter(app, {
       authenticate: (request) => harness.services.auth.provider.authenticate(request),
+      readStored: harness.services.readSyncRecord,
       getSyncServer: async () => {
         const executor = (await harness.services.getSyncServer()).executor;
         const wrapped: Executor = {
@@ -840,5 +841,32 @@ describe('v1 writes on the real DataFn executor', () => {
     }), 200);
     expect(updated).toEqual(await json(await call(`/v1/pointron/tasks/${String(record.id)}`, actors.pointronWrite), 200));
     expect(updated).toMatchObject({ isChecked: true, completedAtUnix: expect.any(Number), objectiveId: 'objective:o1' });
+  });
+
+  it('refuses writes while the account has end-to-end encryption on and leaves the stored record alone', async () => {
+    const id = 'task:encrypted';
+    await seed(insert('task', id, { label: 'example-ciphertext', dateUnix: 1_700_000_000_000 }));
+    // The setting as the apps store it: DataFn KV key nucleum:e2ee.
+    const setting = (enabled: boolean) =>
+      mutation('kv', 'merge', 'kv:nucleum:e2ee', { record: { value: { version: 1, enabled, updatedAt: 1 } } });
+    await seed(setting(true));
+    try {
+      await problem(await call(`/v1/pointron/tasks/${id}`, actors.pointronWrite, {
+        method: 'PATCH', body: { label: 'Plaintext label' }
+      }), 409, 'end_to_end_encrypted');
+      await problem(await call('/v1/pointron/tasks', actors.pointronWrite, {
+        body: { label: 'Plaintext label', dateUnix: 1_700_000_000_000 }
+      }), 409, 'end_to_end_encrypted');
+      expect(await stored('task', id)).toMatchObject({ label: 'example-ciphertext' });
+      const plaintext = await json(await call('/datafn/query', actors.cookie, {
+        body: { resource: 'task', version: 1, filters: { label: { eq: 'Plaintext label' } } }
+      }), 200) as { result: { data: Body[] } };
+      expect(plaintext.result.data).toEqual([]);
+    } finally {
+      await seed(setting(false));
+    }
+    expect(await json(await call(`/v1/pointron/tasks/${id}`, actors.pointronWrite, {
+      method: 'PATCH', body: { label: 'Writable again' }
+    }), 200)).toMatchObject({ label: 'Writable again' });
   });
 });

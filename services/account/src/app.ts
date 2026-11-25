@@ -126,6 +126,16 @@ export interface AccountServices {
    * before then or when search is not configured.
    */
   getSyncSearchIndex?: () => { provider: SearchProvider; regionId?: string } | undefined;
+  /**
+   * Reads one row of a namespace by id from the sync server's database: a
+   * single lookup bounded by the id, outside DataFn's authorization and rate
+   * limits, for callers that already authorized the access.
+   */
+  readSyncRecord: (
+    resource: string,
+    id: string,
+    namespace: string
+  ) => Promise<Record<string, unknown> | null>;
   regionId: string;
   corsOrigins: string[];
   observability: SuperfunctionObservability<AccountObservationEvent>;
@@ -214,9 +224,11 @@ export function buildAccountServices(
       : undefined;
   let syncServer: Promise<SyncServer> | undefined;
   let syncSearchProvider: SearchProvider | undefined;
+  let syncDatabaseAdapter: Adapter | undefined;
   const getSyncServer = () => {
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
       .then((syncDatabase) => {
+        syncDatabaseAdapter = syncDatabase;
         // Resolved here, as the sync server would, so the v1 API indexes its
         // writes with the same provider instance.
         syncSearchProvider =
@@ -277,6 +289,15 @@ export function buildAccountServices(
             regionId: infra.stores.directory ? regionId : undefined
           }
         : undefined,
+    readSyncRecord: async (resource, id, namespace) => {
+      await getSyncServer();
+      if (!syncDatabaseAdapter) throw new Error("Sync database unavailable");
+      return syncDatabaseAdapter.findOne<Record<string, unknown>>({
+        model: resource,
+        where: [{ field: "id", operator: "eq", value: id }],
+        namespace
+      });
+    },
     regionId,
     corsOrigins,
     observability,
@@ -397,7 +418,8 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
       regionId,
       idempotencyStore: services.infra.stores.atomicKv,
       getSearchIndex: () => services.getSyncSearchIndex?.(),
-      logError: (message, error) => logger.error(message, { error })
+      readStored: services.readSyncRecord,
+      logError: (message, failure) => logger.error(message, { failure })
     }
   });
   registerAccountAuthRoutes({ app, auth });

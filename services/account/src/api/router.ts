@@ -47,8 +47,26 @@ export interface InterfaceApiServices {
    * indexes the record each write commits the same way.
    */
   getSearchIndex?(): { provider: Pick<SearchProvider, 'updateIndices'>; regionId?: string } | undefined;
-  /** Records failures the API answers with a 500. */
-  logError?(message: string, error: unknown): void;
+  /**
+   * Reads one stored row of a namespace by id from the sync database: a
+   * single lookup bounded by the id, outside DataFn's rate limits. The API
+   * reads the row a write committed with it, and the namespace's end-to-end
+   * encryption setting, which app-scoped tokens may not read through DataFn.
+   */
+  readStored(resource: string, id: string, namespace: string): Promise<Row | null>;
+  /**
+   * Records failures the API answers with a 500. It receives only a
+   * failure's class, code and status, never its message, which can quote
+   * stored content.
+   */
+  logError?(message: string, failure: FailureSummary): void;
+}
+
+/** What the API logs about a failure. */
+export interface FailureSummary {
+  name?: string;
+  code?: string;
+  status?: number;
 }
 
 type Access = 'read' | 'write';
@@ -95,6 +113,8 @@ const IDEMPOTENCY_PENDING_SECONDS = 60;
  * archived ancestor, in a read. Trashed records stay hidden.
  */
 const INCLUDE_INACTIVE = { includeArchived: true, includeAncestorInactive: true } as const;
+/** The DataFn KV row (`kv:` and the key) holding a namespace's end-to-end encryption settings. */
+const E2EE_SETTINGS_ID = 'kv:nucleum:e2ee';
 
 /**
  * Builds one app's versioned REST router: list, get, create and update for
@@ -313,7 +333,7 @@ const ERROR_DESCRIPTIONS: Record<number, string> = {
   403: '403 token lacks the scope or may not reach the record',
   404: '404 no visible record with that id',
   405: '405 method not served for this path (with Allow)',
-  409: '409 the record an Idempotency-Key created is no longer visible, a request with that key is still in progress (with Retry-After), or the record changed while an update ran',
+  409: '409 the record an Idempotency-Key created is no longer visible, a request with that key is still in progress (with Retry-After), the record changed while an update ran, or the account uses end-to-end encryption (end_to_end_encrypted)',
   413: '413 body larger than 64 KiB',
   422: '422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body',
   429: '429 rate limited'
@@ -818,6 +838,7 @@ async function createRecord(
   collectionPath: string
 ): Promise<Response> {
   const body = validateWriteBody(contract, 'create', await readBody(ctx));
+  await refuseEncrypted(caller);
   const visible = sharedFieldConstraint(app, contract);
   if (visible && !visible.includes(String(body.resource))) {
     throw validationProblem([{ pointer: '/resource', detail: `resource must be one of ${visible.join(', ')}.` }]);
@@ -852,7 +873,7 @@ async function createRecord(
     if (result.ok) {
       await committed();
       // A replayed create whose record is gone meanwhile has nothing to answer with.
-      if (!row && result.deduped === true) throw idempotencyConflict();
+      if (row === null && result.deduped === true) throw idempotencyConflict();
       const stored = withReferences(contract, row ?? { ...record, id }, record);
       await indexWritten(caller, contract.resource, stored);
       return respond(project(contract, stored), result.deduped === true);
@@ -872,6 +893,7 @@ async function updateRecord(
   request: Request
 ): Promise<Response> {
   const body = validateWriteBody(contract, 'update', await readBody(ctx));
+  await refuseEncrypted(caller);
   const id = ctx.params.id;
   const before = await getRecord(app, contract, caller, id);
   const keyed = await idempotency(app, request, caller, body, ['update', contract.resource, id]);
@@ -916,7 +938,7 @@ async function updateRecord(
       throw new ApiProblem(409, 'conflict', `The ${contract.resource} changed while this update ran; retry it.`);
     }
     await committed();
-    if (!row && result.deduped === true) throw notVisible(contract, id);
+    if (row === null && result.deduped === true) throw notVisible(contract, id);
     const stored = withReferences(contract, row ?? { ...before, ...record }, record, before);
     await indexWritten(caller, contract.resource, stored);
     return respond(project(contract, stored), result.deduped === true);
@@ -966,15 +988,41 @@ function isGuardFailure(result: MutationResult): boolean {
   return result.errors?.some((error) => error.code === 'CONFLICT' && error.path === 'if') === true;
 }
 
+/**
+ * Refuses a write to an account with end-to-end encryption on. Its apps
+ * encrypt record content before it reaches the server, so a plaintext v1
+ * write would replace encrypted content and reach the search index. The
+ * check reads the namespace's encryption setting before anything is stored.
+ */
+async function refuseEncrypted(caller: Caller): Promise<void> {
+  const stored = await caller.services.readStored('kv', E2EE_SETTINGS_ID, resolveAccountUserNamespace(caller.actorId));
+  let settings = stored?.value;
+  if (typeof settings === 'string') {
+    try {
+      settings = JSON.parse(settings);
+    } catch {
+      settings = null;
+    }
+  }
+  if (typeof settings === 'object' && settings !== null && (settings as { enabled?: unknown }).enabled === true) {
+    throw new ApiProblem(409, 'end_to_end_encrypted',
+      'This account uses end-to-end encryption, and v1 writes cannot encrypt content yet.');
+  }
+}
+
 function notVisible(contract: InterfaceResourceContract, id: string): ApiProblem {
   return new ApiProblem(404, 'not_found', `No ${contract.resource} ${id} is visible to this token.`);
 }
 
-/** A write's outcome and the record it stored, read back in the same DataFn call. */
+/** A write's outcome and the record it stored, read back after the write. */
 interface Written {
   result: MutationResult;
-  /** Null when the write failed or the stored record does not read back for this token. */
-  row: Row | null;
+  /**
+   * Null when the write failed or the stored record is not visible to this
+   * token; undefined when reading it back failed, so the answer is built
+   * from the write.
+   */
+  row: Row | null | undefined;
 }
 
 interface TransactResult {
@@ -983,20 +1031,18 @@ interface TransactResult {
 }
 
 /**
- * Runs one mutation and reads its record back in a single atomic DataFn
- * transact call. Its one rate-limit and authorization check runs before
- * anything is stored, so a stored write never meets a refused readback, and
- * the record answered is the one the write committed (with the timestamps
- * DataFn set). A failed mutation rolls the call back and comes back as a
- * failed result; other failures come back as problems.
+ * Runs one mutation in a DataFn transact call, whose one rate-limit and
+ * authorization check runs before anything is stored, then reads the row it
+ * committed by id from the sync database. A query step in the transact call
+ * would load every row of the resource (DataFn pushes no filter down there),
+ * and a DataFn query after the commit could be refused by its rate limit. A
+ * failed mutation comes back as a failed result; other failures come back as
+ * problems.
  */
 async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<Written> {
-  const id = payload.id as string;
   const response = await run(async () => {
     try {
-      return await caller.executor.transact({
-        steps: [{ mutation: payload }, { query: recordQuery(app, payload.resource as string, id) }]
-      }, caller.context) as TransactResult;
+      return await caller.executor.transact({ steps: [{ mutation: payload }] }, caller.context) as TransactResult;
     } catch (error) {
       if (error instanceof DatafnExecutorError && error.code === 'CONFLICT') {
         const path = (error.details as { path?: unknown } | undefined)?.path;
@@ -1009,13 +1055,32 @@ async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<
       throw error;
     }
   }, 'write', caller.services);
-  const [step, read] = Array.isArray(response.results) ? response.results : [];
+  const [step] = Array.isArray(response.results) ? response.results : [];
   const result = isMutationResult(step)
     ? step
     : { ok: false, errors: [{ code: 'INTERNAL', message: 'DataFn returned no mutation result.' }] };
   if (!result.ok) return { result, row: null };
-  const rows = (read as Partial<QueryResult> | undefined)?.data;
-  return { result, row: Array.isArray(rows) ? rows.find((entry) => entry.id === id) ?? null : null };
+  return { result, row: await readCommitted(app, caller, payload.resource as string, payload.id as string) };
+}
+
+/**
+ * The row a write committed, read by id in the caller's namespace. It is
+ * null when the row is trashed or holds a type outside this app's view (a
+ * change that landed after the write), as a DataFn read would hide it.
+ */
+async function readCommitted(app: InterfaceApp, caller: Caller, resource: string, id: string): Promise<Row | null | undefined> {
+  let row: Row | null;
+  try {
+    row = await caller.services.readStored(resource, id, resolveAccountUserNamespace(caller.actorId));
+  } catch (error) {
+    caller.services.logError?.('v1 API write readback failed; answering from the write', failureSummary(error));
+    return undefined;
+  }
+  if (!row || (hasCapability(resource, 'trash') && row.trashedAt != null)) return null;
+  const shared = resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource);
+  const visible = resolveInterfaceVisibleTypes(app);
+  if (shared?.kind === 'field' && visible !== 'all' && !visible.includes(String(row.resource))) return null;
+  return row;
 }
 
 /**
@@ -1038,7 +1103,7 @@ async function indexWritten(caller: Caller, resource: string, stored: Row): Prom
       operation: 'upsert'
     });
   } catch (error) {
-    caller.services.logError?.('v1 API search index update failed; the write stands', error);
+    caller.services.logError?.('v1 API search index update failed; the write stands', failureSummary(error));
   }
 }
 
@@ -1235,7 +1300,7 @@ async function idempotency(
     if (existing && existing.fingerprint !== fingerprint) throw idempotencyKeyReused();
     state = existing?.state === 'done' ? 'done' : 'in_progress';
   }
-  const logFailure = (error: unknown) => caller.services.logError?.('v1 idempotency key update failed', error);
+  const logFailure = (error: unknown) => caller.services.logError?.('v1 idempotency key update failed', failureSummary(error));
   return {
     enabled: true,
     key,
@@ -1329,7 +1394,8 @@ async function sha256Hex(text: string): Promise<string> {
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   if (value !== null && typeof value === 'object') {
-    return `{${Object.keys(value).sort().map((name) =>
+    // Code-unit order, not locale order, so a body's fingerprint never depends on the runtime's locale.
+    return `{${Object.keys(value).sort((a, b) => (a < b ? -1 : Number(a > b))).map((name) =>
       `${JSON.stringify(name)}:${canonicalJson((value as Row)[name])}`).join(',')}}`;
   }
   return JSON.stringify(value) ?? 'null';
@@ -1385,7 +1451,8 @@ function datafnProblem(
         ? validationProblem([{ pointer: '', detail: message ?? 'The write is invalid.' }])
         : new ApiProblem(400, 'invalid_request', message ?? 'The request is invalid.');
     default:
-      services?.logError?.('v1 API DataFn request failed', { status, code, message });
+      // The message can quote stored content (a failed insert's values), so only the code is logged.
+      services?.logError?.('v1 API DataFn request failed', { code, status });
       return new ApiProblem(500, 'internal', 'The request could not be completed.');
   }
 }
@@ -1417,6 +1484,17 @@ function toProblem(error: unknown, services: InterfaceApiServices | undefined): 
   if (error instanceof AuthFnError && error.status < 500) {
     return new ApiProblem(error.status, error.code.toLowerCase(), error.message);
   }
-  services?.logError?.('v1 API request failed', error);
+  services?.logError?.('v1 API request failed', failureSummary(error));
   return new ApiProblem(500, 'internal', 'The request could not be completed.');
+}
+
+/** A failure's class, code and status: unlike its message, they never quote stored content. */
+function failureSummary(error: unknown): FailureSummary {
+  if (typeof error !== 'object' || error === null) return { name: typeof error };
+  const { name, code, status } = error as { name?: unknown; code?: unknown; status?: unknown };
+  return {
+    ...(typeof name === 'string' ? { name } : {}),
+    ...(typeof code === 'string' ? { code } : {}),
+    ...(typeof status === 'number' ? { status } : {})
+  };
 }

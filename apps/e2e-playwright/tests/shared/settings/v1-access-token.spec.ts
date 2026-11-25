@@ -35,23 +35,47 @@ function tokenRow(section: Locator, name: string) {
   return section.getByTestId("access-token-row").filter({ hasText: name });
 }
 
+/** Problem codes a failure message may name; anything else shows as "other". */
+const knownProblemCodes = new Set([
+  "unauthenticated",
+  "insufficient_scope",
+  "forbidden",
+  "not_found",
+  "rate_limited",
+  "invalid_parameter",
+  "internal",
+  "unavailable"
+]);
+
 /**
  * Calls the app's `/v1` list with only the token, from a request context
- * without the browser's cookies, so the token alone authenticates it.
+ * without the browser's cookies, so the token alone authenticates it. TLS
+ * is verified, and the result keeps only the status, the content type, an
+ * allowlisted problem code and the list's shape, so a failure message never
+ * carries the token or response content.
  */
 async function listWithToken(accountBaseUrl: string, secret: string, path: string) {
   const context = await apiRequest.newContext({
-    ignoreHTTPSErrors: true,
     storageState: { cookies: [], origins: [] }
   });
   try {
-    const response = await context.get(`${accountBaseUrl}${path}?limit=1`, {
-      headers: { authorization: `Bearer ${secret}` }
-    });
+    const response = await context
+      .get(`${accountBaseUrl}${path}?limit=1`, {
+        headers: { authorization: `Bearer ${secret}` }
+      })
+      .catch((error: unknown) => {
+        // Transport errors can echo the request; report only that it failed.
+        throw new Error(`GET ${path} failed before a response (${error instanceof Error ? error.name : "unknown"})`);
+      });
+    const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+    let code = typeof body?.code === "string" ? body.code : null;
+    if (code !== null && !knownProblemCodes.has(code)) code = "other";
     return {
       status: response.status(),
       contentType: response.headers()["content-type"] ?? "",
-      body: (await response.json().catch(() => null)) as Record<string, unknown> | null
+      code,
+      problemStatus: typeof body?.status === "number" ? body.status : null,
+      isList: Array.isArray(body?.data) && body !== null && "nextCursor" in body
     };
   } finally {
     await context.dispose();
@@ -119,20 +143,20 @@ test.describe("settings - personal access token on the v1 API @settings @auth", 
       await expect(tokenRow(section, name)).toContainText(`${target.label} - Read`);
 
       const allowed = await listWithToken(accountBaseUrl, secretValue, target.path);
-      expect(allowed.status, JSON.stringify(allowed.body)).toBe(200);
-      expect(Array.isArray(allowed.body?.data)).toBe(true);
-      expect(allowed.body).toHaveProperty("nextCursor");
+      expect(allowed.status, `problem code ${allowed.code ?? "none"}`).toBe(200);
+      expect(allowed.isList, "the response is a page with data and nextCursor").toBe(true);
 
       await section.getByTestId("access-token-dismiss").click();
       await tokenRow(section, name).getByTestId("access-token-revoke").click();
       await tokenRow(section, name).getByTestId("access-token-revoke-confirm").click();
       await expect(tokenRow(section, name)).toHaveCount(0);
-      revoked = true;
 
       const refused = await listWithToken(accountBaseUrl, secretValue, target.path);
-      expect(refused.status, JSON.stringify(refused.body)).toBe(401);
+      expect(refused.status, `problem code ${refused.code ?? "none"}`).toBe(401);
+      // Only a refused call proves the server revoked it; until then cleanup revokes it.
+      revoked = true;
       expect(refused.contentType).toContain("application/problem+json");
-      expect(refused.body).toMatchObject({ status: 401, code: "unauthenticated" });
+      expect({ status: refused.problemStatus, code: refused.code }).toEqual({ status: 401, code: "unauthenticated" });
 
       // The section also shows no rows when its list fails to load, so the
       // token counts as gone only once the reloaded list arrived intact.

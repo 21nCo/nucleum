@@ -3,6 +3,7 @@ import { DatafnExecutorError } from '@datafn/server';
 import { createMemoryRuntimeStores } from '@superfunctions/db/adapters/memory';
 import type { AuthFnSession } from 'authfn';
 import type { SyncServer } from '../datafn/server.js';
+import { resolveAccountUserNamespace } from '../datafn/namespace.js';
 import { createInterfaceApiRouter, type InterfaceApiServices } from './router.js';
 
 /**
@@ -12,8 +13,10 @@ import { createInterfaceApiRouter, type InterfaceApiServices } from './router.js
  * thrown as a 409 executor error, and no replay record survives a write (as
  * after an interruption between the insert and saving it). A transact call
  * runs its mutation (checking an update's `if` guard on the stored row, and
- * failing a merge on a missing row as DataFn's strict adapters do) and reads
- * the record back in the same call, outside the separately counted queries.
+ * failing a merge on a missing row as DataFn's strict adapters do) and sets
+ * `updatedAt` as DataFn's timestamps capability does; the router reads the
+ * committed row back by id from storage (`readStored`), outside the counted
+ * queries, never with a query step in the transact call.
  */
 
 type Row = Record<string, unknown>;
@@ -67,6 +70,9 @@ function sortRows(rows: Row[], sort: string[]): Row[] {
 function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApiServices> = {}) {
   const queries: Row[] = [];
   const mutations: Row[] = [];
+  /** Each `readStored` lookup: the resource, id and namespace it was bounded by. */
+  const storedReads: Row[] = [];
+  let clock = 1_800_000_000_000;
   /** Holds each mutation until the returned promise resolves, when set. */
   let gate: (() => Promise<void>) | null = null;
   /** Runs before each query, when set; it may change rows or throw. */
@@ -91,7 +97,7 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
         // As DataFn's executor does for one mutation's CONFLICT envelope.
         throw new DatafnExecutorError({ code: 'CONFLICT', message: 'Record already exists', details: { path: 'id' } }, 409);
       }
-      rows.push({ resource: payload.resource, id: payload.id, ...(payload.record as Row) });
+      rows.push({ resource: payload.resource, id: payload.id, ...(payload.record as Row), updatedAt: ++clock });
       return { ok: true, affectedIds: [payload.id], deduped: false };
     }
     const guard = payload.if as Row | undefined;
@@ -102,7 +108,7 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
     if (!existing) {
       return { ok: false, affectedIds: [], errors: [{ code: 'NOT_FOUND', message: `Record not found: ${String(payload.id)}`, path: 'id' }], deduped: false };
     }
-    Object.assign(existing, payload.record);
+    Object.assign(existing, payload.record, { updatedAt: ++clock });
     return { ok: true, affectedIds: [payload.id], deduped: false };
   };
   const executor = {
@@ -116,8 +122,9 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
       return write(payload);
     },
     async transact(payload: { steps: { mutation?: Row; query?: Row }[] }) {
-      const [step, read] = payload.steps;
-      if (!step?.mutation || !read?.query) throw new Error('the router writes one mutation and reads it back');
+      const [step] = payload.steps;
+      // DataFn loads every row of the resource for a transact query step.
+      if (payload.steps.length !== 1 || !step?.mutation) throw new Error('the router transacts one mutation and no query');
       let result: Row;
       try {
         result = await write(step.mutation);
@@ -126,8 +133,7 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
         if (!(error instanceof DatafnExecutorError) || error.code !== 'CONFLICT') throw error;
         result = { ok: false, errors: [{ code: 'CONFLICT', message: error.message, path: 'id' }] };
       }
-      if (result.ok !== true) return { ok: false, results: [result] };
-      return { ok: true, results: [result, select(read.query, false)] };
+      return { ok: result.ok === true, results: [result] };
     },
     async search() {
       return { results: [] };
@@ -143,12 +149,20 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
   const services: InterfaceApiServices = {
     authenticate: () => session as unknown as AuthFnSession,
     getSyncServer: async () => ({ executor }) as unknown as SyncServer,
+    readStored: async (resource, id, namespace) => {
+      storedReads.push({ resource, id, namespace });
+      const found = rows.find((row) => row.resource === resource && row.id === id);
+      if (!found) return null;
+      const { resource: _, ...row } = found;
+      return { ...row };
+    },
     ...overrides
   };
   return {
     services,
     queries,
     mutations,
+    storedReads,
     hold: (next: (() => Promise<void>) | null) => { gate = next; },
     onQuery: (next: ((count: number) => void) | null) => { beforeQuery = next; }
   };
@@ -484,7 +498,8 @@ describe('v1 routes on PostgreSQL-like storage', () => {
     const response = await send(services, '/v1/pointron/tasks');
     expect(response.status).toBe(500);
     expect(JSON.stringify(await response.json())).not.toContain('database unavailable');
-    expect(logError).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ message: 'database unavailable' }));
+    expect(logError).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ code: 'INTERNAL' }));
+    expect(JSON.stringify(logError.mock.calls)).not.toContain('database unavailable');
   });
 
   describe('DataFn failures', () => {
@@ -535,6 +550,7 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       expect(JSON.parse(text)).toMatchObject({ status: 500, code: 'internal' });
       expect(text).not.toContain('example internal detail');
       expect(logError).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ code: 'INTERNAL' }));
+      expect(JSON.stringify(logError.mock.calls)).not.toContain('example internal detail');
     });
 
     it('answers an internal DataFn failure sent as a 400 on a list with a logged 500', async () => {
@@ -546,6 +562,7 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       expect(JSON.parse(text)).toMatchObject({ status: 500, code: 'internal' });
       expect(text).not.toContain('example internal detail');
       expect(logError).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ code: 'INTERNAL' }));
+      expect(JSON.stringify(logError.mock.calls)).not.toContain('example internal detail');
     });
 
     it.each(writes)('keeps a DataFn input error on $method a 422', async (write) => {
@@ -560,6 +577,136 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       const response = await send(services, '/v1/pointron/tasks');
       expect(response.status).toBe(400);
       expect(await response.json()).toMatchObject({ code: 'invalid_request' });
+    });
+  });
+
+  describe('write readback', () => {
+    const writes = [
+      { method: 'POST', path: '/v1/pointron/tasks', status: 201, body: { label: 'Created', dateUnix: 900 } },
+      { method: 'PATCH', path: '/v1/pointron/tasks/task:a', status: 200, body: { label: 'Renamed' } }
+    ];
+
+    it.each(writes)('answers a $method with the committed row read back by its id alone', async (write) => {
+      const rows = [task('task:a', null)];
+      const transacts: unknown[] = [];
+      const base = createPostgresLikeServices(rows);
+      const executor = (await base.services.getSyncServer()).executor;
+      const services: InterfaceApiServices = {
+        ...base.services,
+        getSyncServer: async () => ({
+          executor: { ...executor, transact: (payload: unknown) => { transacts.push(payload); return executor.transact(payload); } }
+        }) as unknown as SyncServer
+      };
+      const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
+      const record = await response.json() as Row;
+      expect(response.status, JSON.stringify(record)).toBe(write.status);
+      // One mutation step: a transact query step would load the whole resource.
+      expect(transacts).toEqual([{ steps: [{ mutation: expect.objectContaining({ id: record.id }) }] }]);
+      const namespace = resolveAccountUserNamespace('user-1');
+      expect(base.storedReads).toContainEqual({ resource: 'task', id: record.id, namespace });
+      expect(base.storedReads.filter((read) => read.resource === 'task')).toHaveLength(1);
+      // updatedAt is set by storage, so the answer is the committed row.
+      const stored = rows.find((row) => row.id === record.id) as Row;
+      expect(record).toMatchObject({ ...write.body, updatedAt: stored.updatedAt });
+    });
+
+    it.each(writes)('answers a stored $method from the write when the readback fails, logging no content', async (write) => {
+      const logError = vi.fn();
+      const rows = [task('task:a', null)];
+      const base = createPostgresLikeServices(rows, { logError });
+      const services: InterfaceApiServices = {
+        ...base.services,
+        readStored: async (resource, id, namespace) => {
+          if (resource === 'task') throw Object.assign(new Error('read failed near sentinel-note-body'), { code: '57014' });
+          return base.services.readStored(resource, id, namespace);
+        },
+        getSearchIndex: () => ({ provider: { updateIndices: async () => { throw new Error('index refused sentinel-note-body'); } } })
+      };
+      const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
+      expect(response.status).toBe(write.status);
+      expect(await response.json()).toMatchObject(write.body);
+      expect(rows.filter((row) => row.label === write.body.label)).toHaveLength(1);
+      expect(logError).toHaveBeenCalledWith(expect.any(String), { name: 'Error', code: '57014' });
+      expect(logError).toHaveBeenCalledWith(expect.any(String), { name: 'Error' });
+      expect(JSON.stringify(logError.mock.calls)).not.toContain('sentinel-note-body');
+    });
+
+    it('logs no stored content when a write fails inside DataFn', async () => {
+      const logError = vi.fn();
+      const base = createPostgresLikeServices([], { logError });
+      const executor = (await base.services.getSyncServer()).executor;
+      const services: InterfaceApiServices = {
+        ...base.services,
+        getSyncServer: async () => ({
+          executor: {
+            ...executor,
+            transact: async () => ({
+              ok: false,
+              results: [{ ok: false, errors: [{ code: 'INTERNAL', message: 'insert failed: params sentinel-note-body', path: '$' }] }]
+            })
+          }
+        }) as unknown as SyncServer
+      };
+      const response = await send(services, '/v1/pointron/tasks', {
+        method: 'POST', body: JSON.stringify({ label: 'sentinel-note-body', dateUnix: 900 })
+      });
+      expect(response.status).toBe(500);
+      expect(await response.text()).not.toContain('sentinel-note-body');
+      expect(logError).toHaveBeenCalledWith(expect.any(String), { code: 'INTERNAL', status: undefined });
+      expect(JSON.stringify(logError.mock.calls)).not.toContain('sentinel-note-body');
+    });
+  });
+
+  describe('end-to-end encrypted accounts', () => {
+    const settingsRow = (value: unknown): Row => ({ resource: 'kv', id: 'kv:nucleum:e2ee', value });
+    const writes = [
+      { method: 'POST', path: '/v1/pointron/tasks', body: { label: 'Plaintext', dateUnix: 900 } },
+      { method: 'PATCH', path: '/v1/pointron/tasks/task:a', body: { label: 'Plaintext' } }
+    ];
+    const enabled = [
+      { form: 'an object', value: { version: 1, enabled: true, keyRef: 'example-key-ref', updatedAt: 1 } },
+      { form: 'JSON text', value: JSON.stringify({ version: 1, enabled: true, updatedAt: 1 }) }
+    ];
+
+    it.each(writes.flatMap((write) => enabled.map((setting) => ({ ...write, ...setting }))))(
+      'refuses a $method before storing or indexing anything when the setting is $form', async (write) => {
+        const encrypted = { ...task('task:a', null), label: 'example-ciphertext' };
+        const rows = [encrypted, settingsRow(write.value)];
+        const before = structuredClone(rows);
+        const updateIndices = vi.fn(async () => undefined);
+        const { services, mutations } = createPostgresLikeServices(rows, {
+          idempotencyStore: createMemoryRuntimeStores().atomicKv,
+          getSearchIndex: () => ({ provider: { updateIndices } })
+        });
+        const response = await send(services, write.path, {
+          method: write.method, headers: { 'idempotency-key': 'encrypted-write' }, body: JSON.stringify(write.body)
+        });
+        expect(response.status).toBe(409);
+        expect(response.headers.get('content-type')).toContain('application/problem+json');
+        expect(await response.json()).toMatchObject({ status: 409, code: 'end_to_end_encrypted' });
+        expect(mutations).toEqual([]);
+        expect(updateIndices).not.toHaveBeenCalled();
+        expect(rows).toEqual(before);
+      });
+
+    it.each(writes)('writes a $method when encryption is off', async (write) => {
+      const rows = [task('task:a', null), settingsRow({ version: 1, enabled: false, updatedAt: 1 })];
+      const { services, storedReads } = createPostgresLikeServices(rows);
+      const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
+      expect(response.status).toBeLessThan(300);
+      expect(storedReads).toContainEqual({ resource: 'kv', id: 'kv:nucleum:e2ee', namespace: resolveAccountUserNamespace('user-1') });
+    });
+
+    it('answers a 500 and writes nothing when the setting cannot be read', async () => {
+      const { services, mutations } = createPostgresLikeServices([], {
+        logError: () => undefined,
+        readStored: async () => { throw new Error('storage unavailable'); }
+      });
+      const response = await send(services, '/v1/pointron/tasks', {
+        method: 'POST', body: JSON.stringify({ label: 'Plaintext', dateUnix: 900 })
+      });
+      expect(response.status).toBe(500);
+      expect(mutations).toEqual([]);
     });
   });
 });
