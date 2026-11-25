@@ -42,36 +42,6 @@ struct CustomWebView: UIViewRepresentable {
   class Coordinator: NSObject, WKNavigationDelegate {
     var navigationState: NavigationState?
 
-    func webView(
-      _ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
-      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
-    ) {
-      if action.targetFrame?.isMainFrame == false {
-        decisionHandler(.allow)
-        return
-      }
-      guard let url = action.request.url, isAllowedExternalUrl(url) else {
-        decisionHandler(.cancel)
-        return
-      }
-      decisionHandler(.allow)
-    }
-
-    func webView(
-      _ webView: WKWebView, decidePolicyFor response: WKNavigationResponse,
-      decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
-    ) {
-      if !response.isForMainFrame {
-        decisionHandler(.allow)
-        return
-      }
-      guard let url = response.response.url, isAllowedExternalUrl(url) else {
-        decisionHandler(.cancel)
-        return
-      }
-      decisionHandler(.allow)
-    }
-
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
       navigationState?.url = webView.url
     }

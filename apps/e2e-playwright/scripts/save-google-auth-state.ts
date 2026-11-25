@@ -1,6 +1,7 @@
 /**
  * One-time save: first Google login only. You complete sign-in; we save as soon as you're back on the app.
  * Any next screen (e.g. signup, "Continue offline") is handled in the test only.
+ * For local HTTPS, use the trusted Caddy certificate configured with `caddy trust`.
  *
  * Run:
  *   Nucleum:  npm run e2e:save-auth:nucleum   (or APP_BASE_URL=https://local.nucleum.app npm run e2e:save-auth)
@@ -68,7 +69,6 @@ async function main() {
   });
   const context = await browser.newContext({
     viewport: { width: 1512, height: 982 },
-    ignoreHTTPSErrors: true,
     userAgent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   });
