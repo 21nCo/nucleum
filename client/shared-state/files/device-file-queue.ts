@@ -499,7 +499,9 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
   await withQueueLock(LOCAL_FILE_QUEUE_DIR, uploader.signal, async () => {
     await releaseRetiredNamespaces().catch(logReleaseError);
     for (const { fileId } of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR))
-      await settleQueuedFileMarks(LOCAL_FILE_QUEUE_DIR, fileId, isHeld);
+      await settleQueuedFileMarks(LOCAL_FILE_QUEUE_DIR, fileId, isHeld).catch(
+        logReleaseError
+      );
   }).catch(logReleaseError);
   const publisher = createLocalFilePublisher(uploader);
   await settleOrphanedLocalFiles(uploader, publisher).catch(logOrphanError);
