@@ -194,6 +194,7 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
     authenticate: () => session as unknown as AuthFnSession,
     getSyncServer: async () => ({ executor }) as unknown as SyncServer,
     readStored: readRow,
+    findStored: findRows,
     inWriteTransaction: (check, write) => checks.run(check, write),
     ...overrides
   };
@@ -674,6 +675,7 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       expect(base.mutations).toHaveLength(1);
       expect(rows).toEqual(before);
       expect(updateIndices).not.toHaveBeenCalled();
+      expect(logError).toHaveBeenCalledWith(expect.any(String), { name: 'Error', code: '57014' });
       expect(JSON.stringify(logError.mock.calls)).not.toContain('sentinel-note-body');
     });
 

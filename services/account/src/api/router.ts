@@ -71,6 +71,12 @@ export interface InterfaceApiServices {
    */
   readStored(resource: string, id: string, namespace: string): Promise<Row | null>;
   /**
+   * Reads the stored rows of a namespace that match every clause, as
+   * `readStored` reads one: the lookups that decide which of a space's
+   * items an app-scoped token may see.
+   */
+  findStored: StoredTransaction['find'];
+  /**
    * Runs `write`, one DataFn transact call, with `check` run inside its
    * database transaction after the mutation and before the commit. `check`
    * reads stored rows through that transaction, scoped as `readStored` is
@@ -1078,8 +1084,7 @@ async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<
       if (encryptionEnabled(await transaction.read('kv', E2EE_SETTINGS_ID, namespace))) {
         inTransaction.encrypted = true;
       } else {
-        const row = await transaction.read(resource, payload.id as string, namespace);
-        inTransaction.row = visibleRow(app, resource, row && await withScopedItems(app, caller, resource, row, transaction));
+        inTransaction.row = visibleRow(app, resource, await transaction.read(resource, payload.id as string, namespace));
         inTransaction.checked = true;
         return;
       }
@@ -1124,19 +1129,21 @@ async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<
   if (!result.ok) return { result, row: null };
   // DataFn runs every successful transact mutation, a replay included, in one transaction.
   if (!inTransaction.checked) throw new Error('v1 write finished without its in-transaction check');
-  return { result, row: inTransaction.row };
+  // A space's items are those of the committed revision; which of them the
+  // app sees is decided after the commit, as a DataFn read decides it, so
+  // those lookups never run while the write holds its row.
+  return { result, row: inTransaction.row && await withScopedItems(app, caller, resource, inTransaction.row) };
 }
 
 /**
- * A space's items as this token's DataFn read shows them, decided on the
- * rows of the same transaction. Other resources come back unchanged.
+ * A row with a space's items filtered as this token's DataFn read filters
+ * them. Other resources come back unchanged.
  */
 async function withScopedItems(
   app: InterfaceApp,
   caller: Caller,
   resource: string,
-  row: Row,
-  transaction: StoredTransaction
+  row: Row
 ): Promise<Row> {
   if (resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource)?.kind !== 'items') return row;
   const namespace = resolveAccountUserNamespace(caller.actorId);
@@ -1146,7 +1153,7 @@ async function withScopedItems(
     { resource, version: 1 },
     body,
     resolveAppScopeAccess(caller.context.session ?? { scopes: [] }).read,
-    { findMany: (model, where) => transaction.find(model, where, namespace) },
+    { findMany: (model, where) => caller.services.findStored(model, where, namespace) },
     nucleumDatafnSchema
   ) as typeof body;
   return filtered.result.data[0] ?? row;

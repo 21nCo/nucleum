@@ -729,6 +729,7 @@ describe('v1 writes on the real DataFn executor', () => {
     const router = createInterfaceApiRouter(app, {
       authenticate: (request) => harness.services.auth.provider.authenticate(request),
       readStored: harness.services.readSyncRecord,
+      findStored: harness.services.findSyncRecords,
       inWriteTransaction: (check, write) => harness.services.inSyncWriteTransaction(
         (transaction) => check(hooks.transactionReads ? hooks.transactionReads(transaction) : transaction), write),
       getSyncServer: async () => {

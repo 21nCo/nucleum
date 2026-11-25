@@ -140,6 +140,8 @@ export interface AccountServices {
    * response hooks, for callers that already authorized the access.
    */
   readSyncRecord: SyncRecordReader;
+  /** Reads the rows of a namespace that match every clause, scoped as readSyncRecord is. */
+  findSyncRecords: SyncTransactionReads["find"];
   /**
    * Runs `write` with `check` run inside each sync database transaction the
    * write opens (one for a DataFn transact call), after the transaction's
@@ -308,11 +310,11 @@ export function buildAccountServices(
       : undefined;
   let syncServer: Promise<SyncServer> | undefined;
   let syncSearchProvider: SearchProvider | undefined;
-  let readSyncDatabase: SyncRecordReader | undefined;
+  let readSyncDatabase: SyncTransactionReads | undefined;
   const getSyncServer = () => {
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
       .then((syncDatabase) => {
-        readSyncDatabase = namespacedReads(syncDatabase).read;
+        readSyncDatabase = namespacedReads(syncDatabase);
         // Resolved here, as the sync server would, so the v1 API indexes its
         // writes with the same provider instance.
         syncSearchProvider =
@@ -376,7 +378,12 @@ export function buildAccountServices(
     readSyncRecord: async (resource, id, namespace) => {
       await getSyncServer();
       if (!readSyncDatabase) throw new Error("Sync database unavailable");
-      return readSyncDatabase(resource, id, namespace);
+      return readSyncDatabase.read(resource, id, namespace);
+    },
+    findSyncRecords: async (model, where, namespace) => {
+      await getSyncServer();
+      if (!readSyncDatabase) throw new Error("Sync database unavailable");
+      return readSyncDatabase.find(model, where, namespace);
     },
     inSyncWriteTransaction: (check, write) => syncWriteChecks.run(check, write),
     regionId,
@@ -500,6 +507,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
       idempotencyStore: services.infra.stores.atomicKv,
       getSearchIndex: () => services.getSyncSearchIndex?.(),
       readStored: services.readSyncRecord,
+      findStored: services.findSyncRecords,
       inWriteTransaction: services.inSyncWriteTransaction,
       logError: (message, failure) => logger.error(message, { failure })
     }
