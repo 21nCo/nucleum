@@ -1,0 +1,19 @@
+client/shared-state/files/file-upload.queue.test.ts
+  s_4ec5665e9ea606::t_a38dbbc4f3ec97 5510,5513-5515
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "25032d2ee2eee287a005e858eeaad6f20a748b15",
+  "prompts": {},
+  "sessions": {
+    "s_4ec5665e9ea606": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5cc07ae4-14cf-451c-924e-aa0bcc873fce",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
