@@ -730,10 +730,10 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * already covers the generation (a fence that lands after a verified copy of
  * its change), else a plain deleted mark first (an earlier build reads only
  * those) and the generation's mark, then, unless the copy read again covers
- * it, a new generation's mark if that failed (only a listing covers it), the
- * plain mark if absent and the generation's mark again. A deleted mark names
- * the generation, or none (also one present) when its read failed or it
- * wrote no generation mark (`generation` is optional). It removes no mark.
+ * it, the plain mark if absent and the generation's mark again. A deleted
+ * mark names the generation, or none (also one present) when its read failed
+ * or it wrote no generation mark (`generation` is optional), unless it keeps
+ * another's beside a new generation's mark (only a listing covers it).
  */
 export async function markQueuedFileStale(
   dir: string,
@@ -745,25 +745,24 @@ export async function markQueuedFileStale(
   const mark = isDeleted ? DELETED_FILE : STALE_FILE;
   const isCovered = async () =>
     toCovered(await readQueuedRecord(dir, name)).includes(generation ?? "");
-  const write = async (at = generation) => {
-    if (at) await writeEntryFile(dir, name, `${mark}.${at}`, "");
-  };
+  const write = (at = generation) =>
+    at ? writeEntryFile(dir, name, `${mark}.${at}`, "") : Promise.resolve();
   if (await isCovered()) return;
   const was = await readEntryText(dir, name, mark, true).catch(() => null);
   if (isDeleted && was === undefined)
     await writeEntryFile(dir, name, mark, generation ?? "").catch(() => {});
   const failed = await write().catch((error: unknown) => ({ error }));
   if (await isCovered()) return;
-  const isMarked =
-    !!generation &&
-    (!failed || (await write(toChangeGeneration()).catch(() => 0)) !== 0);
   const now = await readEntryText(dir, name, mark, true).catch((error) => {
     if (isDeleted) return null;
     throw error;
   });
-  const isUnnamed = isDeleted && !!now && !isMarked;
+  const isUnnamed =
+    isDeleted && !!now && now !== generation && (!generation || !!failed);
+  const isFresh =
+    isUnnamed && !!failed && !(await write(toChangeGeneration()).catch(String));
   const text = isDeleted ? (now !== null && generation) || "" : CHANGED_MARK;
-  if (now === undefined || now === null || isUnnamed) {
+  if (now === undefined || now === null || (isUnnamed && !isFresh)) {
     await writeEntryFile(dir, name, mark, isUnnamed ? "" : text);
     await write();
   } else if (failed) throw failed.error;
@@ -4131,7 +4130,7 @@ async function publishEntry(
 async function verifyCopy(dir: string, name: string, by: QueuedFilePublisher) {
   const copy = await readEntryText(dir, name, PUBLISHING_FILE, true);
   if (copy === undefined) return;
-  const now = await readUnheldRecord(dir, name, by).catch(() => null);
+  const now = await readUnheldRecord(dir, name, by);
   const entry = await getEntryDir(dir, name, true);
   if (JSON.stringify(now) !== copy) await removeEntryFile(entry, UPLOADED_FILE);
   await removeEntryFile(entry, PUBLISHING_FILE);

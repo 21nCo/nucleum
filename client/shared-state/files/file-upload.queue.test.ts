@@ -2673,51 +2673,83 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
-  it("keeps the upload of a publish whose reread verified its copy when the removal of its publishing mark fails, and uploads nothing again at the next replay", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
-    const entry = `queued_${record.fileId}`;
-    let isFailed = false;
-    let withdrawals = 0;
-    const getDirectory = navigator.storage.getDirectory;
-    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
-      new Proxy(dir, {
-        get(target, key) {
-          if (key === "getDirectoryHandle")
-            return async (name: string, options?: { create?: boolean }) =>
-              wrap(await target.getDirectoryHandle(name, options));
-          if (key !== "removeEntry") return Reflect.get(target, key);
-          return async (name: string) => {
-            if (name === "uploaded" && isFailed) withdrawals += 1;
-            if (name === "publishing" && !isFailed) {
-              isFailed = true;
-              throw new DOMException(
-                "The file system is busy",
-                "NotReadableError"
-              );
-            }
-            return target.removeEntry(name);
-          };
-        }
-      });
-    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+  it.each([
+    ["a reread", false],
+    ["a reread that fails once", true]
+  ])(
+    "keeps the upload of a publish whose reread verified its copy when the removal of its publishing mark fails, and uploads nothing again at the next replay's verification by %s",
+    async (_, isRereadFailing) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const entry = `queued_${record.fileId}`;
+      let isFailed = false;
+      let isRemovalFailing = true;
+      let isArmed = false;
+      let isRereading = false;
+      let withdrawals = 0;
+      const getDirectory = navigator.storage.getDirectory;
+      const wrap = (
+        dir: FileSystemDirectoryHandle
+      ): FileSystemDirectoryHandle =>
+        new Proxy(dir, {
+          get(target, key) {
+            if (key === "getDirectoryHandle")
+              return async (name: string, options?: { create?: boolean }) =>
+                wrap(await target.getDirectoryHandle(name, options));
+            if (key === "getFileHandle")
+              return async (name: string, options?: { create?: boolean }) => {
+                if (name === "publishing" && isArmed) {
+                  isArmed = false;
+                  isRereading = true;
+                } else if (
+                  name === "record.json" &&
+                  isRereading &&
+                  !options?.create
+                ) {
+                  isRereading = false;
+                  throw new DOMException("Unreadable", "NotReadableError");
+                }
+                return target.getFileHandle(name, options);
+              };
+            if (key !== "removeEntry") return Reflect.get(target, key);
+            return async (name: string) => {
+              if (name === "uploaded" && isFailed) withdrawals += 1;
+              if (name === "publishing" && isRemovalFailing) {
+                isFailed = true;
+                throw new DOMException(
+                  "The file system is busy",
+                  "NotReadableError"
+                );
+              }
+              return target.removeEntry(name);
+            };
+          }
+        });
+      navigator.storage.getDirectory = async () => wrap(await getDirectory());
 
-    await signInToCloud("user-a");
-    await replayLocalQueue();
-    await settleTasks();
-    const started = sdk.started.length;
-    await replayLocalQueue();
-    await settleTasks();
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      const started = sdk.started.length;
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("publishing");
+      isRemovalFailing = false;
+      isArmed = isRereadFailing;
+      await replayLocalQueue();
+      await settleTasks();
+      await replayLocalQueue();
+      await settleTasks();
 
-    expect(isFailed).toBe(true);
-    expect(withdrawals).toBe(0);
-    expect(sdk.started).toHaveLength(started);
-    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
-    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
-    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
-  });
+      expect(isFailed).toBe(true);
+      expect(isArmed || isRereading).toBe(false);
+      expect(withdrawals).toBe(0);
+      expect(sdk.started).toHaveLength(started);
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
+      expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+    }
+  );
 
   it.each([
     ["a whole backup", true],
@@ -4840,6 +4872,39 @@ describe("files captured offline or by a local-only user", () => {
     });
 
     await markQueuedFileStale(LOCAL_QUEUE, fileId, false, generation);
+
+    const names = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(names.filter((name) => name.startsWith("stale"))).toEqual([]);
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
+  });
+
+  it("writes no other generation's mark for a fence whose generation's mark cannot be written, so a locked copy covering its change releases the capture", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    hookEntryFiles({
+      create(name) {
+        if (name === "stale" || name === `stale.${generation}`)
+          throw new DOMException("The disk is full", "QuotaExceededError");
+      }
+    });
+
+    await expect(
+      markQueuedFileStale(LOCAL_QUEUE, fileId, false, generation)
+    ).rejects.toThrow();
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [generation], listed: [] }
+    );
 
     const names = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
     expect(names.filter((name) => name.startsWith("stale"))).toEqual([]);
