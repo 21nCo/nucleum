@@ -471,6 +471,29 @@ function failEntryRemoval(name: string, times = Infinity) {
   navigator.storage.getDirectory = async () => wrap(await getDirectory());
 }
 
+/** Runs `hook` before a queued file named `name` is removed, once. */
+function hookEntryRemovalOnce(name: string, hook: () => Promise<void>) {
+  let isRun = false;
+  const getDirectory = navigator.storage.getDirectory;
+  const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+    new Proxy(dir, {
+      get(target, key) {
+        if (key === "getDirectoryHandle")
+          return async (dirName: string, options?: { create?: boolean }) =>
+            wrap(await target.getDirectoryHandle(dirName, options));
+        if (key !== "removeEntry") return Reflect.get(target, key);
+        return async (entryName: string) => {
+          if (entryName === name && !isRun) {
+            isRun = true;
+            await hook();
+          }
+          return target.removeEntry(entryName);
+        };
+      }
+    });
+  navigator.storage.getDirectory = async () => wrap(await getDirectory());
+}
+
 /**
  * Runs `create` before a queued file is created and `lookup` before a
  * directory is opened; a hook that rejects fails that call.
@@ -5341,6 +5364,99 @@ describe("files captured offline or by a local-only user", () => {
     expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
       false
     );
+  });
+
+  it("keeps a restored plain deleted mark without a generation's held once signed in after a late fence of a covered delete", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await settleLocalFileRecords();
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", "");
+    const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await queue.removeEntry(entry, { recursive: true });
+    await restoreLocalQueuedFiles(files as never, () => false);
+
+    await writeLocalEntryFile(fileId, `deleted.${covered}`);
+    await signInToCloud("user-a");
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+  });
+
+  it("releases a listed plain stale mark its verified copy covers without a reload when a covered generation's mark lands during the settle", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const late = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "stale", "changed");
+    await writeLocalEntryFile(fileId, `stale.${earlier}`);
+    hookEntryRemovalOnce(`stale.${earlier}`, () =>
+      writeLocalEntryFile(fileId, `stale.${late}`)
+    );
+
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [earlier, late], listed: ["stale", `stale.${earlier}`] }
+    );
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks).toContain(`stale.${late}`);
+    expect(marks).not.toContain("stale");
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
+  });
+
+  it("withdraws the upload of a publish whose copy another tab fenced while its publishing mark was removed, so the next replay publishes the newer copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    let isFenced = false;
+    hookEntryRemovalOnce("publishing", async () => {
+      isFenced = true;
+      await writeLocalEntryFile(record.fileId, "stale");
+    });
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(isFenced).toBe(true);
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+
+    await signOutToLocal();
+    await settleTasks();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect((await readAnyRecord(record.id))?.name).toBe("receipt.png");
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
   });
 
   it.each(["listing", "changes-only export"])(
