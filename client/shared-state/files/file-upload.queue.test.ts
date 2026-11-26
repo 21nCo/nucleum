@@ -1130,7 +1130,10 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("holds a capture whose change pass the first sign-in aborted and publishes it once its guest namespace reconciles it again", async () => {
-    const record = await captureSettledGuestPhoto();
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
     // The cloud sign-in moves DataFn to the account's namespace while the
     // change pass of a rename made just before it reads the record.
     fileCalls.beforeQuery = async (args) => {
@@ -1169,7 +1172,10 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes the last copy of a capture held stale once a sign-out opened a new guest namespace", async () => {
-    const record = await captureSettledGuestPhoto();
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
     fileCalls.beforeQuery = async (args) => {
       const { filters } = args as { filters?: { id?: string } };
       if (filters?.id !== record.id) return;
@@ -1950,7 +1956,10 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a change whose local file's record copy cannot be read during its pass and publishes no outdated copy of it", async () => {
-    const record = await captureSettledGuestPhoto();
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
     // The change's stale mark lists the files leniently first, then the pass.
     failEntryFile("record.json", false, 2);
     await datafn.file.mutate({
@@ -1977,7 +1986,10 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a change pending when its record cannot be read and its local file cannot be marked stale", async () => {
-    const record = await captureSettledGuestPhoto();
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
     fileCalls.beforeQuery = async () => {
       fileCalls.beforeQuery = null;
       throw new DOMException("The records are busy", "NotReadableError");
@@ -2011,7 +2023,10 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes the current copy of a capture whose change's stale mark lands after a pass already copied that change", async () => {
-    const record = await captureSettledGuestPhoto();
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
     uninstall?.();
     // The namespace's startup pass waits for another tab's lock.
     const held = deferred<void>();
@@ -2169,7 +2184,10 @@ describe("files captured offline or by a local-only user", () => {
   );
 
   it("publishes the current copy of a capture whose change's fence fails after a pass already copied that change", async () => {
-    const record = await captureSettledGuestPhoto();
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
     uninstall?.();
     // The namespace's startup pass waits for another tab's lock.
     const held = deferred<void>();

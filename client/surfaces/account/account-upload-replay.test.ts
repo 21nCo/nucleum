@@ -1202,14 +1202,6 @@ describe("replay authorization across the session lifetime", () => {
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
   });
 
-  /** Looks up the file client while the sign-out cleanup is held. */
-  async function lookUpFileClientDuringSignOut() {
-    await settle();
-    const files = await import("@nucleum/shared-state/files/filefn-client");
-    await files.getFileFnClient();
-    await settle();
-  }
-
   function holdCleanup() {
     let release: () => void = () => undefined;
     cleanupHold.gate = new Promise<void>((resolve) => {
@@ -1219,6 +1211,24 @@ describe("replay authorization across the session lifetime", () => {
       };
     });
     return () => release();
+  }
+
+  /** Checks that looking up a client cannot start replay during sign-out cleanup. */
+  async function expectNoReplayDuringHeldSignOut(page: Page) {
+    const release = holdCleanup();
+    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await settle();
+    try {
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+    } finally {
+      release();
+      await signingOut;
+    }
   }
 
   it("does not restart a contradicted account's replay from a file lookup while sign-out cleanup is pending", async () => {
@@ -1232,33 +1242,13 @@ describe("replay authorization across the session lifetime", () => {
         at: "filefn.uploadReplay.start.accountMismatch"
       })
     );
-    const release = holdCleanup();
-    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
-    await lookUpFileClientDuringSignOut();
-    try {
-      expect(sdk.started).toEqual([]);
-      expect(sdk.deleted).toEqual([]);
-      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
-    } finally {
-      release();
-      await signingOut;
-    }
+    await expectNoReplayDuringHeldSignOut(page);
   });
 
   it("sends nothing for the ending session from a file lookup while sign-out cleanup is pending", async () => {
     const { page } = await restoreOffline();
     isOnline = true;
-    const release = holdCleanup();
-    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
-    await lookUpFileClientDuringSignOut();
-    try {
-      expect(sdk.started).toEqual([]);
-      expect(sdk.deleted).toEqual([]);
-      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
-    } finally {
-      release();
-      await signingOut;
-    }
+    await expectNoReplayDuringHeldSignOut(page);
   });
 
   it("sends nothing for the stored account from a file lookup during sign-out cleanup after an unavailable recheck", async () => {
@@ -1271,17 +1261,7 @@ describe("replay authorization across the session lifetime", () => {
     goOnline();
     await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
     await settle();
-    const release = holdCleanup();
-    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
-    await lookUpFileClientDuringSignOut();
-    try {
-      expect(sdk.started).toEqual([]);
-      expect(sdk.deleted).toEqual([]);
-      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
-    } finally {
-      release();
-      await signingOut;
-    }
+    await expectNoReplayDuringHeldSignOut(page);
   });
 
   it("tears the ending session's client down before sign-out destroys DataFn", async () => {
