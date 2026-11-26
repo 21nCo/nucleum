@@ -1,5 +1,11 @@
 import "fake-indexeddb/auto";
-import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import {
+  captureUploadTestPhoto,
+  newUploadTestDevice,
+  stubUploadBrowserGlobals,
+  stubUploadObjectUrls,
+  uploadTestUserInfo
+} from "../../../tests/fixtures/file-upload";
 import {
   afterEach,
   beforeEach,
@@ -117,12 +123,8 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
   const { derived } = await import("svelte/store");
-  const handlers = new Set<(event: never) => void>();
-  const emit = (type: string, context: Record<string, unknown>) => {
-    for (const handler of handlers) {
-      handler({ type, timestampMs: Date.now(), context } as never);
-    }
-  };
+  const { createUploadSyncEvents } = await import("../../../tests/fixtures/file-upload");
+  const { emit, subscribe } = createUploadSyncEvents();
   let pulls = 0;
   const pullNow = async () => {
     const pull = ++pulls;
@@ -133,12 +135,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   };
   const datafn = new Proxy(actual.datafn, {
     get(target, key) {
-      if (key === "subscribe") {
-        return (handler: (event: never) => void) => {
-          handlers.add(handler);
-          return () => handlers.delete(handler);
-        };
-      }
+      if (key === "subscribe") return subscribe;
       if (key === "sync") return { ...target.sync, pullNow };
       if (key === "file") {
         return new Proxy(target.file, {
@@ -204,14 +201,7 @@ function cloudAccount(userId: string): UserAccount {
     dataMode: UserDataMode.CLOUD,
     sessionType: UserSessionType.RETURNING,
     userId,
-    userInfo: {
-      id: `user:${userId}`,
-      email: `${userId}@example.test`,
-      nickName: userId,
-      joinDate: new Date(0),
-      lastLogin: new Date(0),
-      region: "useast"
-    }
+    userInfo: uploadTestUserInfo(userId)
   };
 }
 
@@ -345,17 +335,39 @@ function deferred<T>() {
 }
 
 /** Captures a photo (through `upload`, a reloaded page's module, if given). */
-async function capturePhoto(upload = fileUpload) {
-  codec.compressImageToTargetSize.mockResolvedValueOnce(
-    new Blob(["thumb bytes"], { type: "image/jpeg" })
+function capturePhoto(upload = fileUpload) {
+  return captureUploadTestPhoto(upload, codec.compressImageToTargetSize);
+}
+
+/** Renames the captured photo, as the guest does before its queue reconciles. */
+function renamePhotoToReceipt(id: string) {
+  return datafn.file.mutate({
+    operation: "merge",
+    id,
+    record: { id, name: "receipt.png" }
+  } as never);
+}
+
+/** Saves a rename and waits for the guest queue to process it. */
+async function renamePhotoAndSettle(id: string) {
+  await renamePhotoToReceipt(id);
+  await settleLocalFileRecords();
+}
+
+/** Switches to user-a on the rename pass's record read and runs replay. */
+async function replayAfterSignInInterruptsRename(id: string) {
+  fileCalls.beforeQuery = async (args) => {
+    const { filters } = args as { filters?: { id?: string } };
+    if (filters?.id !== id) return;
+    fileCalls.beforeQuery = null;
+    await signInToCloud("user-a");
+  };
+  await renamePhotoToReceipt(id);
+  await vi.waitFor(() =>
+    expect(datafn.currentNamespace()).toBe("user:user-a")
   );
-  const [record] = (await upload.uploadFileV2(
-    "image/png",
-    "photo.png",
-    new Blob(["photo bytes"], { type: "image/png" }),
-    { isGenerateThumbnail: true }
-  )) as { id: string; fileId: string }[];
-  return record;
+  await settleTasks();
+  await replayLocalQueue();
 }
 
 async function savedRecord(id: string) {
@@ -563,17 +575,9 @@ beforeEach(() => {
   for (const key of Object.keys(localStorage)) {
     if (key.startsWith(`${LOCAL_QUEUE}-pending:`)) localStorage.removeItem(key);
   }
-  vi.stubGlobal("Blob", NodeBlob);
-  vi.stubGlobal("File", NodeFile);
-  vi.stubEnv(
-    "VITE_ACCOUNT_BASE_URL_TEMPLATE",
-    "https://account-{region}-dev.nucleum.app"
-  );
+  stubUploadBrowserGlobals();
   opfs.clear();
-  device = {
-    dapId: `device-${crypto.randomUUID()}`,
-    env: `test-${crypto.randomUUID()}`
-  };
+  device = newUploadTestDevice();
   isOnline = true;
   webLocks = withSharedLocks(createFakeLocks());
   vi.stubGlobal("navigator", {
@@ -586,10 +590,7 @@ beforeEach(() => {
     },
     storage: { getDirectory: opfs.getDirectory }
   });
-  URL.createObjectURL ??= () => "";
-  vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:queued");
-  URL.revokeObjectURL ??= () => undefined;
-  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+  stubUploadObjectUrls();
   configurePersistenceLogger({ error: vi.fn(), info: vi.fn() });
   sdk.started = [];
   sdk.uploads = [];
@@ -930,12 +931,7 @@ describe("files captured offline or by a local-only user", () => {
       };
     };
 
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
+    await renamePhotoAndSettle(record.id);
     await otherTab;
 
     expect(
@@ -984,11 +980,7 @@ describe("files captured offline or by a local-only user", () => {
       };
     };
 
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     await vi.waitFor(() =>
       expect(datafn.currentNamespace()).toBe("user:user-a")
     );
@@ -1043,11 +1035,7 @@ describe("files captured offline or by a local-only user", () => {
       };
     };
 
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     await vi.waitFor(() =>
       expect(datafn.currentNamespace()).toBe("user:user-a")
     );
@@ -1093,11 +1081,7 @@ describe("files captured offline or by a local-only user", () => {
       // Once the startup pass read the old record, the capture is renamed,
       // its fence marks it stale, and its own pass will miss the lock.
       return async (result: unknown) => {
-        await datafn.file.mutate({
-          operation: "merge",
-          id: record.id,
-          record: { id: record.id, name: "receipt.png" }
-        } as never);
+        await renamePhotoToReceipt(record.id);
         await vi.waitFor(() =>
           expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined()
         );
@@ -1150,11 +1134,7 @@ describe("files captured offline or by a local-only user", () => {
     await vi.waitFor(() => expect(reads).toBe(1));
     uninstall();
     uninstall = installDeviceFileQueue();
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     gate.resolve();
     await settleLocalFileRecords();
     fileCalls.beforeQuery = null;
@@ -1175,22 +1155,7 @@ describe("files captured offline or by a local-only user", () => {
     await settleLocalFileRecords();
     // The cloud sign-in moves DataFn to the account's namespace while the
     // change pass of a rename made just before it reads the record.
-    fileCalls.beforeQuery = async (args) => {
-      const { filters } = args as { filters?: { id?: string } };
-      if (filters?.id !== record.id) return;
-      fileCalls.beforeQuery = null;
-      await signInToCloud("user-a");
-    };
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await vi.waitFor(() =>
-      expect(datafn.currentNamespace()).toBe("user:user-a")
-    );
-    await settleTasks();
-    await replayLocalQueue();
+    await replayAfterSignInInterruptsRename(record.id);
 
     expect(
       opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
@@ -1215,22 +1180,7 @@ describe("files captured offline or by a local-only user", () => {
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
     await settleLocalFileRecords();
-    fileCalls.beforeQuery = async (args) => {
-      const { filters } = args as { filters?: { id?: string } };
-      if (filters?.id !== record.id) return;
-      fileCalls.beforeQuery = null;
-      await signInToCloud("user-a");
-    };
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await vi.waitFor(() =>
-      expect(datafn.currentNamespace()).toBe("user:user-a")
-    );
-    await settleTasks();
-    await replayLocalQueue();
+    await replayAfterSignInInterruptsRename(record.id);
     expect(sdk.started).toEqual([]);
 
     // The sign-out cleared the device's DataFn ID: the capture's guest
@@ -1258,12 +1208,7 @@ describe("files captured offline or by a local-only user", () => {
     const record = await capturePhoto();
     await settleLocalFileRecords();
     failQueueLockOnce();
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
+    await renamePhotoAndSettle(record.id);
     expect(readLocalCopy(record.fileId)?.name).toBe("photo.png");
 
     await vi.waitFor(
@@ -1885,11 +1830,7 @@ describe("files captured offline or by a local-only user", () => {
         await entry.removeEntry("stale");
       }
     );
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     await vi.waitFor(() =>
       expect(readStaleMark(record.fileId)).toBe("changed")
     );
@@ -1982,12 +1923,7 @@ describe("files captured offline or by a local-only user", () => {
     vi.spyOn(OPFSStore.prototype, "listPendingUploads")
       .mockRejectedValueOnce(busy)
       .mockRejectedValueOnce(busy);
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
+    await renamePhotoAndSettle(record.id);
 
     await signInToCloud("user-a");
     await replayLocalQueue();
@@ -2013,12 +1949,7 @@ describe("files captured offline or by a local-only user", () => {
     await settleLocalFileRecords();
     // The change's stale mark lists the files leniently first, then the pass.
     failEntryFile("record.json", false, 2);
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
+    await renamePhotoAndSettle(record.id);
 
     await signInToCloud("user-a");
     await replayLocalQueue();
@@ -2047,12 +1978,7 @@ describe("files captured offline or by a local-only user", () => {
     };
     // Stale marks fail for the change, its pass and the change put back.
     failEntryFile("stale", true, 3);
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
+    await renamePhotoAndSettle(record.id);
     expect(
       opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
     ).toBeUndefined();
@@ -2108,11 +2034,7 @@ describe("files captured offline or by a local-only user", () => {
       });
     navigator.storage.getDirectory = async () => wrap(await getDirectory());
 
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     held.resolve();
     await otherTab;
     await vi.waitFor(() =>
@@ -2204,12 +2126,7 @@ describe("files captured offline or by a local-only user", () => {
         throw new DOMException("The storage is full", "QuotaExceededError");
       });
       failQueueLockOnce();
-      await datafn.file.mutate({
-        operation: "merge",
-        id: record.id,
-        record: { id: record.id, name: "receipt.png" }
-      } as never);
-      await settleLocalFileRecords();
+      await renamePhotoAndSettle(record.id);
       expect(isRefused).toBe(true);
       expect(readLocalCopy(record.fileId)?.name).toBe("photo.png");
       expect(
@@ -2266,11 +2183,7 @@ describe("files captured offline or by a local-only user", () => {
       }
     });
 
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     held.resolve();
     await otherTab;
     await vi.waitFor(() =>
@@ -2315,12 +2228,7 @@ describe("files captured offline or by a local-only user", () => {
         throw new DOMException("The file system is busy", "NotReadableError");
       }
     });
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
+    await renamePhotoAndSettle(record.id);
 
     expect(isFailed).toBe(true);
     expect(readLocalCopy(record.fileId)?.name).toBe("receipt.png");
@@ -2348,11 +2256,7 @@ describe("files captured offline or by a local-only user", () => {
       () => held.promise
     );
 
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
 
     await vi.waitFor(() =>
       expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined()
@@ -2493,11 +2397,7 @@ describe("files captured offline or by a local-only user", () => {
     } as never);
     await signOutToLocal();
     await settleTasks();
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     await settleTasks();
 
     await signInToCloud("user-a");
@@ -2526,11 +2426,7 @@ describe("files captured offline or by a local-only user", () => {
       } as never);
       await signOutToLocal();
       await settleTasks();
-      await datafn.file.mutate({
-        operation: "merge",
-        id: record.id,
-        record: { id: record.id, name: "receipt.png" }
-      } as never);
+      await renamePhotoToReceipt(record.id);
       await settleTasks();
 
       await signInToCloud("user-a");
@@ -2554,11 +2450,7 @@ describe("files captured offline or by a local-only user", () => {
     await datafn.file.mutate({ operation: "delete", id: record.id } as never);
     await signOutToLocal();
     await settleTasks();
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
+    await renamePhotoToReceipt(record.id);
     await settleTasks();
 
     await signInToCloud("user-a");
@@ -2870,12 +2762,7 @@ describe("files captured offline or by a local-only user", () => {
       };
     };
 
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
+    await renamePhotoAndSettle(record.id);
 
     expect(
       opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
