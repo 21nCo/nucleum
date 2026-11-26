@@ -1,7 +1,6 @@
 import "fake-indexeddb/auto";
 import {
   captureUploadTestPhoto,
-  createUploadSyncEvents,
   newUploadTestDevice,
   stubUploadBrowserGlobals,
   stubUploadObjectUrls,
@@ -124,6 +123,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
   const { derived } = await import("svelte/store");
+  const { createUploadSyncEvents } = await import("../../../tests/fixtures/file-upload");
   const { emit, subscribe } = createUploadSyncEvents();
   let pulls = 0;
   const pullNow = async () => {
@@ -1082,7 +1082,10 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("holds a capture whose change was queued behind the namespace's startup reconcile when that reconcile cannot read its record", async () => {
-    const record = await captureSettledGuestPhoto();
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
     // A change pass holds its read of the record while the namespace starts
     // again; a rename queues behind that start's full pass, and every later
     // read of the record fails, as when DataFn leaves the namespace.

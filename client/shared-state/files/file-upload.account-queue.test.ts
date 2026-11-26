@@ -1,7 +1,6 @@
 import "fake-indexeddb/auto";
 import {
   captureUploadTestPhoto,
-  createUploadSyncEvents,
   newUploadTestDevice,
   stubUploadBrowserGlobals,
   stubUploadObjectUrls,
@@ -118,6 +117,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
   const { derived } = await import("svelte/store");
+  const { createUploadSyncEvents } = await import("../../../tests/fixtures/file-upload");
   const { emit, subscribe } = createUploadSyncEvents();
   const pullNow = async () => {
     const pull = ++authority.pulls;
