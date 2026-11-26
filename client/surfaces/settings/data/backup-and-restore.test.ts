@@ -1,5 +1,13 @@
 import "fake-indexeddb/auto";
-import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import { Blob as NodeBlob } from "node:buffer";
+import {
+  captureUploadTestPhoto,
+  createUploadSyncEvents,
+  newUploadTestDevice,
+  stubUploadBrowserGlobals,
+  stubUploadObjectUrls,
+  uploadTestUserInfo
+} from "../../../../tests/fixtures/file-upload";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FileFnHttpError,
@@ -105,12 +113,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
   const { derived } = await import("svelte/store");
-  const handlers = new Set<(event: never) => void>();
-  const emit = (type: string, context: Record<string, unknown>) => {
-    for (const handler of handlers) {
-      handler({ type, timestampMs: Date.now(), context } as never);
-    }
-  };
+  const { emit, subscribe } = createUploadSyncEvents();
   let pulls = 0;
   const pullNow = async () => {
     const pull = ++pulls;
@@ -125,12 +128,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   };
   const datafn = new Proxy(actual.datafn, {
     get(target, key) {
-      if (key === "subscribe") {
-        return (handler: (event: never) => void) => {
-          handlers.add(handler);
-          return () => handlers.delete(handler);
-        };
-      }
+      if (key === "subscribe") return subscribe;
       if (key === "sync") return { ...target.sync, pullNow };
       if (key === "file" && data.fileQuery) {
         const { fileQuery } = data;
@@ -249,25 +247,11 @@ function cloudAccount(userId: string): UserAccount {
     dataMode: UserDataMode.CLOUD,
     sessionType: UserSessionType.RETURNING,
     userId,
-    userInfo: {
-      id: `user:${userId}`,
-      email: `${userId}@example.test`,
-      nickName: userId,
-      joinDate: new Date(0),
-      lastLogin: new Date(0),
-      region: "useast"
-    }
+    userInfo: uploadTestUserInfo(userId)
   };
 }
 
-/** A new device (or a browser whose storage was cleared). */
-function newDevice() {
-  return {
-    dapId: `device-${crypto.randomUUID()}`,
-    env: `test-${crypto.randomUUID()}`
-  };
-}
-let device = newDevice();
+let device = newUploadTestDevice();
 
 /** Boots local DataFn in the account's namespace, then signs the account in. */
 async function bootData(value: UserAccount) {
@@ -289,20 +273,37 @@ async function clearBrowser() {
   });
   await destroyNucleumDatafn();
   opfs.clear();
-  device = newDevice();
+  device = newUploadTestDevice();
 }
 
-async function capturePhoto() {
-  codec.compressImageToTargetSize.mockResolvedValueOnce(
-    new Blob(["thumb bytes"], { type: "image/jpeg" })
-  );
-  const [record] = (await fileUpload.uploadFileV2(
-    "image/png",
-    "photo.png",
-    new Blob(["photo bytes"], { type: "image/png" }),
-    { isGenerateThumbnail: true }
-  )) as { id: string; fileId: string }[];
-  return record;
+function capturePhoto() {
+  return captureUploadTestPhoto(fileUpload, codec.compressImageToTargetSize);
+}
+
+/** Captures a queued photo while user-a's browser is offline. */
+async function captureOfflinePhoto() {
+  await bootData(cloudAccount("user-a"));
+  isOnline = false;
+  return capturePhoto();
+}
+
+/** Captures a queued photo and exports the backup that contains it. */
+async function backUpOfflinePhoto() {
+  const record = await captureOfflinePhoto();
+  const backup = await backupFile();
+  return { record, backup };
+}
+
+/** Opens an empty browser for the account that will restore the backup. */
+async function signInOnClearedBrowser(userId: string) {
+  await clearBrowser();
+  await bootData(cloudAccount(userId));
+}
+
+/** Waits for user-a's queue to empty and for its observed replay passes to finish. */
+async function waitForQueueDrain() {
+  await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+  await Promise.all(replays.get(QUEUE_A) ?? []);
 }
 
 async function savedRecord(id: string) {
@@ -559,14 +560,9 @@ function countQueueLocks() {
 const initialAccount = account.get();
 
 beforeEach(() => {
-  vi.stubGlobal("Blob", NodeBlob);
-  vi.stubGlobal("File", NodeFile);
-  vi.stubEnv(
-    "VITE_ACCOUNT_BASE_URL_TEMPLATE",
-    "https://account-{region}-dev.nucleum.app"
-  );
+  stubUploadBrowserGlobals();
   opfs.clear();
-  device = newDevice();
+  device = newUploadTestDevice();
   isOnline = true;
   lockNames = [];
   passes = new Map();
@@ -598,14 +594,11 @@ beforeEach(() => {
     storage: { getDirectory: () => getDirectory() }
   });
   objectUrls.clear();
-  URL.createObjectURL ??= () => "";
-  vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => {
+  stubUploadObjectUrls((blob) => {
     const url = `blob:queued-${objectUrls.size}`;
     objectUrls.set(url, blob as Blob);
     return url;
   });
-  URL.revokeObjectURL ??= () => undefined;
-  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
   configurePersistenceLogger({ error: vi.fn(), info: vi.fn() });
   sdk.started = [];
   sdk.uploads = [];
@@ -639,13 +632,9 @@ afterEach(async () => {
 
 describe("backup and restore of files the account upload queue still holds", () => {
   it("restores an offline capture's original and thumbnail on a cleared browser and uploads it once online", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     expect(await savedRecord(record.id)).toBeUndefined();
     expect(opfs.list(QUEUE_A)).toEqual([]);
 
@@ -674,10 +663,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("uploads the restored files right away when the restore runs online", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
     await clearBrowser();
     isOnline = true;
@@ -691,10 +677,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("uploads a file once when the restored queue already holds it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
     await restoreBackup(backup, { triggerCloneUp: () => false });
     expect(opfs.list(QUEUE_A)).toEqual([`queued_${record.fileId}`]);
@@ -711,10 +694,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("uploads a file once when it is restored while its upload runs", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     let release!: () => void;
     sdk.hold = new Promise((resolve) => (release = resolve));
 
@@ -735,13 +715,9 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("keeps a file restored into another signed-in account in its own account's queue without uploading it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     lockNames = [];
 
@@ -756,14 +732,11 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("restores nothing from a backup whose queued files it cannot read", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const backup = await backupText();
     expect(backup.startsWith('{"fileQueue":{"version":1,')).toBe(true);
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const unreadable = new File(
       [
         backup.replace(
@@ -782,13 +755,9 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("restores nothing when the signed-in account changes before the records are imported", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const cloneUp = vi.fn(() => true);
     preflight.during = () => bootData(cloudAccount("user-b"));
 
@@ -804,13 +773,9 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("restores nothing when this device cannot keep the backup's queued files", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     vi.stubGlobal("navigator", { ...globalThis.navigator, storage: {} });
     const cloneUp = vi.fn(() => true);
 
@@ -863,8 +828,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(longestPart).toBeGreaterThan(0);
     expect(longestPart).toBeLessThanOrEqual(4 * 2 ** 20);
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     let longestRead = 0;
     const text = NodeBlob.prototype.text;
     vi.spyOn(NodeBlob.prototype, "text").mockImplementation(async function (
@@ -885,9 +849,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("leaves out a file whose upload completed though its pass stopped before removing it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     let release!: () => void;
     sdk.hold = new Promise((resolve) => (release = resolve));
 
@@ -909,9 +871,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("neither uploads nor discards a file restored into another account once its capturing account signs in", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const text = await backupText();
     const marker = JSON.stringify({
       userId: "user-a",
@@ -927,8 +887,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       "backup.json"
     );
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     sdk.started = [];
     passes = new Map();
@@ -944,13 +903,9 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("keeps the queued files untouched when the records could not all be restored and none references them", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     data.importResult = {
       ok: true,
       stats: { resources: { file: { skipped: 1 } }, joins: {} }
@@ -972,13 +927,9 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("keeps a queued file whose record a failed restore saved, and uploads it once online", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     data.importResult = {
       ok: true,
       stats: { resources: { file: { skipped: 1 } }, joins: {} }
@@ -993,8 +944,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1002,14 +952,10 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("carries a file an offline restore handed to its account's replay in the next backup, and uploads it once online", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
     expect(isHeldForAccount(entry)).toBe(false);
@@ -1023,8 +969,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1033,14 +978,10 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("keeps a restored file held while neither its restore nor its replay can record its adoption, and uploads it once a later replay does after the restore's hold expired", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
         ? new Error("The adoption cannot be recorded")
@@ -1066,8 +1007,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     isOnline = false;
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1075,17 +1015,14 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("restores a file a replay removed from the queue while the restore waited for it, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
     account.set({
       dataMode: UserDataMode.NONE,
       sessionType: UserSessionType.UNDETERMINED
     });
     await destroyNucleumDatafn();
-    device = newDevice();
+    device = newUploadTestDevice();
     await bootData(cloudAccount("user-a"));
     expect(await savedRecord(record.id)).toBeUndefined();
     expect(opfs.list(QUEUE_A)).toEqual([`queued_${record.fileId}`]);
@@ -1105,8 +1042,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
     await vi.waitFor(() => expect(sdk.uploads).toHaveLength(1));
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1114,10 +1050,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("removes a file a closed page left unpublished, neither uploading nor discarding it, though its record is in place, until a restore writes it again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
 
     opfs.clear();
@@ -1145,8 +1078,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     await restoreBackup(backup, { triggerCloneUp: () => false });
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1154,13 +1086,9 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("writes a queued file again over an empty entry a closed capture left, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const root = await opfs.getDirectory();
     const queue = await root.getDirectoryHandle(QUEUE_A, { create: true });
     await queue.getDirectoryHandle(`queued_${record.fileId}`, { create: true });
@@ -1172,8 +1100,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1185,9 +1112,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   ])(
     "keeps a capture past its grace restored into another account untouched by its own account's replay %s Web Locks, and uploads it once that account restores it",
     async (_, isLocking) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const capturedAt = new Date(
         Date.now() - 3 * UNCOMMITTED_GRACE_MS
       ).toISOString();
@@ -1214,8 +1139,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
       await restoreBackup(backup, { triggerCloneUp: () => false });
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toHaveLength(1);
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
@@ -1231,8 +1155,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     const second = await capturePhoto();
     const backup = await backupFile();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const written: string[] = [];
     getDirectory = failingWrites((path) => {
       written.push(path.join("/"));
@@ -1259,14 +1182,10 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("writes again a restored file a closed page left unpublished, which a replay removed, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     let isClosing = false;
     getDirectory = failingWrites((path) => {
       if (!path[2]?.startsWith("thumbnail-")) return undefined;
@@ -1300,8 +1219,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
@@ -1310,10 +1228,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("uploads right away when a restore online finds every queued file already held", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
 
     isOnline = true;
     await restoreBackup(backup, { triggerCloneUp: () => false });
@@ -1333,8 +1248,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     const later = await backupFile();
     const entry = `queued_${first.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(earlier, { triggerCloneUp: () => false });
     const held = opfs.list(QUEUE_A, entry).sort();
 
@@ -1357,8 +1271,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: first.fileId })
     ]);
@@ -1367,14 +1280,10 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("leaves a file a failed offline restore left for its account held for it as it was when another account restores the backup", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     data.importResult = {
       ok: true,
       stats: { resources: { file: { skipped: 1 } }, joins: {} }
@@ -1405,8 +1314,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1415,15 +1323,12 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("uploads a file restored into another account once a record of its capturing account references it, and carries it in that account's backups meanwhile", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     const backup = await backupFile();
     const entry = `queued_${record.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     expect(opfs.list(QUEUE_A, entry)).toContain("committed");
     expect(isHeldForAccount(entry)).toBe(true);
@@ -1440,8 +1345,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -1458,8 +1362,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     const later = await backupFile();
     const entry = `queued_${first.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(earlier, { triggerCloneUp: () => false });
     const held = opfs.list(QUEUE_A, entry).sort();
     expect(held).toContain("committed");
@@ -1486,8 +1389,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     await restoreBackup(earlier, { triggerCloneUp: () => false });
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: first.fileId })
     ]);
@@ -1501,9 +1403,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   ])(
     "keeps a file restored into another account marked when its account restores a backup without its record and replays past its grace %s Web Locks, and uploads it once that account restores the record",
     async (_, isLocking) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const capturedAt = new Date(
         Date.now() - 3 * UNCOMMITTED_GRACE_MS
       ).toISOString();
@@ -1541,8 +1441,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
       await restoreBackup(backup, { triggerCloneUp: () => false });
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toHaveLength(1);
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
@@ -1552,9 +1451,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   );
 
   it("keeps a file marked when a backup carrying it without its record is restored into a cleared browser of its account", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const capturedAt = new Date(
       Date.now() - 3 * UNCOMMITTED_GRACE_MS
     ).toISOString();
@@ -1564,14 +1461,12 @@ describe("backup and restore of files the account upload queue still holds", () 
     );
     const entry = `queued_${record.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await bootData(cloudAccount("user-a"));
     const unbound = await backupFile();
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(unbound, { triggerCloneUp: () => false });
     expect(await savedRecord(record.id)).toBeUndefined();
     expect(isHeldForAccount(entry)).toBe(true);
@@ -1587,10 +1482,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("does not restore again a file whose upload completed before the restore started while its replay still checks its record", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     let releaseUpload!: () => void;
     sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
     goOnline();
@@ -1609,8 +1501,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     releasePull();
     await restore;
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(opfs.list(QUEUE_A)).toEqual([]);
     expect(sdk.started).toHaveLength(1);
     expect(sdk.uploads).toEqual([
@@ -1621,10 +1512,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("does not restore again a file another tab uploaded and removed while the restore waited for the queue", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     let releaseUpload!: () => void;
     sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
     isOnline = true;
@@ -1650,10 +1538,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("does not restore again a file the page before a reload uploaded", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     isOnline = true;
     await replayInOtherTab();
     expect(sdk.uploads).toHaveLength(1);
@@ -1670,10 +1555,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("restores again a file its replay discarded after uploading it, once its record was deleted, and uploads it again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     let releaseUpload!: () => void;
     sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
     goOnline();
@@ -1711,10 +1593,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     "keeps a file the queue holds complete without its record while a replay runs before the restore imports it %s Web Locks, and uploads it once",
     async (_, isLocking) => {
       hasLocks = isLocking;
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
+      const { record, backup } = await backUpOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       expect(opfs.list(QUEUE_A, entry)).toContain("committed");
 
@@ -1723,7 +1602,7 @@ describe("backup and restore of files the account upload queue still holds", () 
         sessionType: UserSessionType.UNDETERMINED
       });
       await destroyNucleumDatafn();
-      device = newDevice();
+      device = newUploadTestDevice();
       await bootData(cloudAccount("user-a"));
       expect(await savedRecord(record.id)).toBeUndefined();
       expect(opfs.list(QUEUE_A)).toEqual([entry]);
@@ -1740,8 +1619,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       preflight.during = null;
 
       expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toHaveLength(1);
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
@@ -1769,7 +1647,7 @@ describe("backup and restore of files the account upload queue still holds", () 
         sessionType: UserSessionType.UNDETERMINED
       });
       await destroyNucleumDatafn();
-      device = newDevice();
+      device = newUploadTestDevice();
       await bootData(cloudAccount("user-a"));
       await dequeueFile(QUEUE_A, added.fileId);
       expect(opfs.list(QUEUE_A)).toEqual([entry]);
@@ -1832,8 +1710,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       const uploaded = (fileId: string) =>
         sdk.uploads.filter((input) => input.fileId === fileId);
       expect(sdk.started).toHaveLength(2);
@@ -1851,9 +1728,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   ] as const)(
     "finishes an upload FileFn confirmed when the queue's upload log %s, and sends it no more",
     async (_, fault) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       let faults = 0;
       const failAt = (kind: typeof fault) => (path: string[]) => {
         if (kind !== fault || path[0] !== UPLOAD_LOG) return undefined;
@@ -1891,9 +1766,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   );
 
   it("removes a file its replay discarded when the queue's upload log cannot be written, and deletes it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     let writes = 0;
     let removals = 0;
     getDirectory = failingWrites(
@@ -1940,14 +1813,10 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("keeps a file a failed restore added once another restore of the backup kept it and imported its record, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     let restores = 0;
     preflight.during = async () => {
       if (++restores > 1) return;
@@ -1968,8 +1837,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(await readQueuedBytes(record.fileId, "full")).toBe("photo bytes");
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
@@ -1979,10 +1847,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   });
 
   it("rolls back a file a failed restore wrote, which its hold kept a replay off meanwhile, and uploads it once restored again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await dequeueFile(QUEUE_A, record.fileId);
     expect(opfs.list(QUEUE_A)).toEqual([]);
@@ -2010,8 +1875,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     await restoreBackup(backup, { triggerCloneUp: () => false });
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
@@ -2027,10 +1891,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     "keeps a file whose upload completed though its pass could not check its record, when the queue holds it without its record and a replay runs before the restore imports it %s Web Locks, and removes it once the record is imported without uploading it again",
     async (_, isLocking) => {
       hasLocks = isLocking;
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
+      const { record, backup } = await backUpOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       let releaseUpload!: () => void;
       sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
@@ -2053,7 +1914,7 @@ describe("backup and restore of files the account upload queue still holds", () 
         sessionType: UserSessionType.UNDETERMINED
       });
       await destroyNucleumDatafn();
-      device = newDevice();
+      device = newUploadTestDevice();
       data.isPullFailing = false;
       await bootData(cloudAccount("user-a"));
       expect(await savedRecord(record.id)).toBeUndefined();
@@ -2071,8 +1932,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       preflight.during = null;
 
       expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toHaveLength(1);
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
@@ -2088,9 +1948,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   ])(
     "removes a file an offline restore brought back with its record once the record is deleted before it uploads, when its upload %s",
     async (_, isStarted) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       let text = await backupText();
       let started: { name: string; text: string }[] = [];
@@ -2121,8 +1979,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       }
       const backup = new File([text], "backup.json");
 
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       await restoreBackup(backup, { triggerCloneUp: () => false });
       expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
       const restored = opfs.list(QUEUE_A, entry);
@@ -2139,8 +1996,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       replays.clear();
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toHaveLength(isStarted ? 1 : 0);
       expect(sdk.deleted).toEqual(isStarted ? [record.fileId] : []);
       const next = JSON.parse(await backupText()) as { fileQueue?: unknown };
@@ -2154,9 +2010,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   ])(
     "removes a file whose record was deleted offline once its own account restores a backup without the record on the same browser, when its upload %s",
     async (_, isStarted) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       if (isStarted) {
         const marker = startedMarkerOf(entry);
@@ -2179,8 +2033,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       replays.clear();
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual(isStarted ? [record.fileId] : []);
       const next = JSON.parse(await backupText()) as { fileQueue?: unknown };
@@ -2189,9 +2042,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   );
 
   it("removes a capture past its grace whose record never saved once its own account restores a backup of it on the same browser", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     const metadata = JSON.parse(
@@ -2214,8 +2065,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     replays.clear();
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
@@ -2226,9 +2076,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   ] as const)(
     "hands a file the queue held complete back to the replay when its own account's restore rejects after keeping it because %s, and removes it once online",
     async (_, cause) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       await deleteRecord(record.id);
       const backup = await backupFile();
@@ -2260,8 +2108,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       replays.clear();
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual([]);
     }
@@ -2273,9 +2120,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   ])(
     "hands a restored file whose record a partly failed restore saved back to the replay, and removes it once the record is deleted offline, when its upload %s",
     async (_, isStarted) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const marker = startedMarkerOf(entry);
       let text = await backupText();
@@ -2289,8 +2134,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       }
       const backup = new File([text], "backup.json");
 
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       data.importResult = {
         ok: true,
         stats: { resources: { file: { skipped: 1 } }, joins: {} }
@@ -2310,8 +2154,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       replays.clear();
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual(isStarted ? [record.fileId] : []);
     }
@@ -2324,10 +2167,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     "keeps a file the queue holds complete for a restore still running after another restore that kept it settles %s Web Locks, and uploads it once that restore imports its record",
     async (_, isLocking) => {
       hasLocks = isLocking;
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
+      const { record, backup } = await backUpOfflinePhoto();
       const entry = `queued_${record.fileId}`;
 
       account.set({
@@ -2335,7 +2175,7 @@ describe("backup and restore of files the account upload queue still holds", () 
         sessionType: UserSessionType.UNDETERMINED
       });
       await destroyNucleumDatafn();
-      device = newDevice();
+      device = newUploadTestDevice();
       await bootData(cloudAccount("user-a"));
       expect(await savedRecord(record.id)).toBeUndefined();
       expect(opfs.list(QUEUE_A)).toEqual([entry]);
@@ -2372,8 +2212,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       preflight.during = null;
       expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.started).toHaveLength(1);
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
@@ -2384,9 +2223,7 @@ describe("backup and restore of files the account upload queue still holds", () 
   );
 
   it("stops holding a file the queue holds complete for a restore a closed page cut short once that restore's hold row outlives its lifetime, and removes it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     const backup = await backupFile();
@@ -2414,8 +2251,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     replays.clear();
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
@@ -2434,10 +2270,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     "keeps a file for a restore still running once an overlapping restore of it settles and its record is deleted %s Web Locks, and uploads it once",
     async (_, isLocking) => {
       hasLocks = isLocking;
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
+      const { record, backup } = await backUpOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       let resume!: () => void;
       const resumed = new Promise<void>((resolve) => (resume = resolve));
@@ -2467,8 +2300,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       expect(isKept(entry)).toBe(false);
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
       ]);
@@ -2482,13 +2314,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "leaves the file another restore wrote in its place when a restore rolls back after its own was replaced, %s, and uploads it once",
     async (_, isExpired) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
+      const { record, backup } = await backUpOfflinePhoto();
       const entry = `queued_${record.fileId}`;
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       let resume!: () => void;
       const resumed = new Promise<void>((resolve) => (resume = resolve));
       let later: Promise<void> | undefined;
@@ -2526,8 +2354,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       await restoreBackup(backup, { triggerCloneUp: () => false });
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
       ]);
@@ -2541,13 +2368,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "leaves the file another restore wrote in its place when a restore rolls back after its own was replaced, %s, and that restore completes and uploads it once",
     async (_, isExpired) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
+      const { record, backup } = await backUpOfflinePhoto();
       const entry = `queued_${record.fileId}`;
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       let resume!: () => void;
       const resumed = new Promise<void>((resolve) => (resume = resolve));
       let later: Promise<void> | undefined;
@@ -2583,8 +2406,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       await later;
       goOnline();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
       ]);
@@ -2593,13 +2415,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("keeps a file a restore into another account relied on when an earlier restore of it rolls back, and uploads it once its account restores its record", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     let restores = 0;
     preflight.during = async () => {
       if (++restores > 1) return;
@@ -2622,8 +2440,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     await restoreBackup(backup, { triggerCloneUp: () => false });
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -2631,10 +2448,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("resolves no bytes of a file a restore is still writing", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     opfs.clear();
     let isStaging = false;
@@ -2655,10 +2469,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("leaves out of backups, and removes on the next replay, a file whose restore was cut short just before publishing it, and uploads it once restored again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     opfs.clear();
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
@@ -2690,8 +2501,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     await restoreBackup(backup, { triggerCloneUp: () => false });
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -2705,9 +2515,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     "copies the bytes of a file whose record a backup exports though a replay would remove the file between the two reads %s Web Locks",
     async (_, isLocking) => {
       hasLocks = isLocking;
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       let isReplayed = false;
       data.exportHook = async () => {
         data.exportHook = null;
@@ -2727,8 +2535,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       expect(opfs.list(QUEUE_A)).toEqual([]);
       expect(text.includes(record.id)).toBe(true);
 
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       isOnline = false;
       await restoreBackup(new File([text], "backup.json"), {
         triggerCloneUp: () => false
@@ -2744,9 +2551,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   it.each(["metadata.json", "data.bin", "thumbnail-jpeg"])(
     "fails a backup visibly when a queued file's %s cannot be read, and fails a restore that finds it before importing a record, keeping the file",
     async (name) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
       await deleteRecord(record.id);
@@ -2780,13 +2585,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("removes a file a restore adopted through an adoption row once its record is deleted, though its adopted mark could not be created", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("adopted-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -2803,16 +2604,13 @@ describe("restore sessions, generations and publication of queued files", () => 
     await deleteRecord(record.id);
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
 
   it("carries a thumbnail FileFn could not take yet without its confirmed original, and a restore sends the thumbnail once without the original", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     sdk.artifactError = fileFnError(503);
     goOnline();
@@ -2840,8 +2638,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     expect(file.thumbnail).toBeDefined();
     expect(text.includes(btoa("photo bytes"))).toBe(false);
 
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     sdk.artifactError = null;
     await restoreBackup(new File([text], "backup.json"), {
       triggerCloneUp: () => false
@@ -2852,8 +2649,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     expect(await readQueuedBytes(record.fileId, "full")).toBeUndefined();
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toEqual([
       expect.objectContaining({ fileId: record.fileId, versionId: "ver_1" })
@@ -2868,9 +2664,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "sends a thumbnail again on a later pass without its confirmed original when %s",
     async (_, status, sent) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       sdk.artifactError = fileFnError(status);
       goOnline();
       await replayed(QUEUE_A);
@@ -2893,9 +2687,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("sends a delivered thumbnail no more when its pass stopped before removing the file", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     let releaseUpload!: () => void;
     sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
@@ -2929,9 +2721,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "leaves a confirmed original out of a backup though its uploaded mark was not written, when %s",
     async (_, status, isCarried) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       sdk.artifactError = status ? fileFnError(status) : null;
       getDirectory = failingWrites((path) =>
@@ -2961,9 +2751,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("takes a backup's snapshot again when another tab removes a file unuploaded between its reads, so no record is carried without its bytes", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     data.exportHook = async () => {
       data.exportHook = null;
       await deleteRecord(record.id);
@@ -2978,9 +2766,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("leaves out of a backup, and writes again on a restore, a file whose capture has not finished writing its metadata", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     const queued = await writeQueuedEntryFile(entry, "metadata.json", "");
@@ -2996,8 +2782,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     expect(await readQueuedBytes(record.fileId, "full")).toBe("photo bytes");
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -3022,13 +2807,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("keeps holding a file a restore into another account relied on when its settled mark cannot be created, so an earlier restore's rollback keeps it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     let restores = 0;
     preflight.during = async () => {
       if (++restores > 1) return;
@@ -3053,9 +2834,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("carries a pending thumbnail without its original when the original's uploaded mark is left empty, using the version the upload log records", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     sdk.artifactError = fileFnError(503);
     getDirectory = failingWrites(
@@ -3078,9 +2857,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("keeps holding a file for a restore still importing when the clock is set back, so a replay neither removes nor discards it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     const backup = await backupFile();
@@ -3201,9 +2978,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "rejects a backup and a restore, keeping the queued file, when the metadata of a file whose capture finished is %s",
     async (_, isRemoved) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
       await deleteRecord(record.id);
@@ -3224,13 +2999,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("rejects a restore without Web Locks, keeping another tab's restored file, when that tab writes the file after the restore found it missing", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const root = await opfs.getDirectory();
     const queue = await root.getDirectoryHandle(QUEUE_A, { create: true });
     const left = await queue.getDirectoryHandle(entry, { create: true });
@@ -3273,10 +3045,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("rejects a restore without Web Locks that would hold a file another tab's replay is discarding, so no record is restored without its original", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     await deleteRecord(record.id);
     hasLocks = false;
     isOnline = true;
@@ -3314,13 +3083,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("resolves no bytes of a generation that replaced the one it found published while it read it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const metadata = opfs.read(QUEUE_A, entry, "metadata.json")!;
     const replace = async () => {
@@ -3368,9 +3134,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("sends no thumbnail once offline mode is on while the thumbnail is read, and sends it once online again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     let isArmed = true;
     getDirectory = failingWrites(
@@ -3396,16 +3160,13 @@ describe("restore sessions, generations and publication of queued files", () => 
     getDirectory = opfs.getDirectory;
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(1);
   });
 
   it("sends a thumbnail no more once it was delivered and its file left the queue, when an older backup carrying it without its original is restored", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     sdk.artifactError = fileFnError(503);
     goOnline();
     await replayed(QUEUE_A);
@@ -3416,8 +3177,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     sdk.artifactError = null;
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.artifacts).toHaveLength(1);
 
     await restoreBackup(backup, { triggerCloneUp: () => false });
@@ -3430,13 +3190,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("runs a replay once a restore's retained hold expires, and uploads the file without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
         ? new Error("The adoption cannot be recorded")
@@ -3468,8 +3224,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     replays.clear();
     timers[0].run();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -3517,13 +3272,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("keeps a file another tab's restore wrote over an abandoned entry while a replay without Web Locks was about to remove that entry", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const root = await opfs.getDirectory();
     const queue = await root.getDirectoryHandle(QUEUE_A, { create: true });
     const left = await queue.getDirectoryHandle(entry, { create: true });
@@ -3547,9 +3299,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("neither discards nor removes a file without Web Locks once another tab restored its record after the replay found it deleted", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
@@ -3572,13 +3322,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("resolves a download again once another generation replaced the one its held URL was read from", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const download = async () => {
       const url = await resolveQueuedFileUrl(
@@ -3614,9 +3361,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "restores again a thumbnail its replay could not read, from a backup carrying it %s, and sends it once",
     async (_, isThumbnailOnly) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       let backup = await backupFile();
       if (isThumbnailOnly) {
@@ -3647,8 +3392,7 @@ describe("restore sessions, generations and publication of queued files", () => 
 
       replays.clear();
       await restoreBackup(backup, { triggerCloneUp: () => false });
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
 
       expect(sdk.artifacts).toHaveLength(1);
       expect(sdk.uploads).toHaveLength(1);
@@ -3656,12 +3400,8 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("restores nothing when DataFn is started again for the same account while the restore stages its files", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    const { record, backup } = await backUpOfflinePhoto();
+    await signInOnClearedBrowser("user-a");
     preflight.during = async () => {
       preflight.during = null;
       await bootData(cloudAccount("user-a"));
@@ -3676,9 +3416,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("takes a backup's snapshot again when another tab's replay without Web Locks discards a delivered file between its reads", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     let releaseUpload!: () => void;
     sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
     goOnline();
@@ -3730,13 +3468,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("resolves the generation that replaced the one it found published once reading that one fails", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const putBack = await takeEntryAside(entry);
     await putBack();
@@ -3767,13 +3502,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("keeps a file a rolling-back restore wrote once another tab's restore adopted it, without Web Locks", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     hasLocks = false;
     preflight.during = async () => {
       preflight.during = null;
@@ -3838,9 +3570,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("neither discards nor removes a file once its replay without Web Locks outlived its acting row while another tab restored its record, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
@@ -3868,8 +3598,7 @@ describe("restore sessions, generations and publication of queued files", () => 
 
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -3877,9 +3606,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("sends no discard when the account switches while the replay writes the queue's change mark, and discards the file once back in its account", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     hasLocks = false;
@@ -3899,16 +3626,13 @@ describe("restore sessions, generations and publication of queued files", () => 
     await bootData(cloudAccount("user-a"));
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.deleted).toEqual([record.fileId]);
     expect(sdk.uploads).toEqual([]);
   });
 
   it("removes a file when the queue's change mark cannot be written, and a backup between its reads takes its snapshot again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     let exports = 0;
     data.exportStartHook = async () => {
       exports++;
@@ -3932,13 +3656,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("shares one download URL between lookups that overlap a replacement of the file, never revoking the replacement's URL", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const download = () =>
       resolveQueuedFileUrl([QUEUE_A], record.fileId, "download");
@@ -3991,12 +3712,8 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "requests a restored file's original once when the pull after its upload fails, and removes it on the next replay %s",
     async (_, isReloaded) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      const { record, backup } = await backUpOfflinePhoto();
+      await signInOnClearedBrowser("user-a");
       await restoreBackup(backup, { triggerCloneUp: () => false });
       let release!: () => void;
       sdk.hold = new Promise<void>((resolve) => (release = resolve));
@@ -4031,12 +3748,8 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("removes a delivered restored file when its store is too full to write the upload log, records the delivery once that frees space, and a restore of the older backup delivers it no more", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    const { record, backup } = await backUpOfflinePhoto();
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     // The store is full while the file's bytes are in it.
     getDirectory = failingWrites((path) =>
@@ -4095,9 +3808,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   }
 
   it("sends no discard when its replay without Web Locks outlives its acting row while reading the hold rows, during which another tab restored the file's record", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
@@ -4126,16 +3837,13 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("keeps a file a rolling-back restore without Web Locks was removing once its acting row outlived its lifetime while another restore adopted it, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     const { files } = await (
       await openQueueTab()
     ).exportQueuedFiles(QUEUE_A, async () => null);
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     hasLocks = false;
     const tab = await openQueueTab();
     const staged = await tab.stageRestoredFiles(QUEUE_A, files, {
@@ -4158,8 +3866,7 @@ describe("restore sessions, generations and publication of queued files", () => 
 
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -4167,12 +3874,8 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("records a delivered restored file in the upload log when a restore's settlement removes it, so restoring the backup again sends neither its original nor its thumbnail", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    const { record, backup } = await backUpOfflinePhoto();
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     getDirectory = failingWrites((path) =>
       path[0] === UPLOAD_LOG
@@ -4257,9 +3960,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("sends no discard when the clock that let another tab restore the file is set back before its replay without Web Locks resumes", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
@@ -4290,9 +3991,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("discards and removes a file whose record was deleted when the store is too full for the queue's change mark, and a backup between its reads takes its snapshot again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     await deleteRecord(record.id);
     hasLocks = false;
     let exports = 0;
@@ -4323,9 +4022,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("sends no discard when DataFn is started again for the same account with the file's record while the replay writes the queue's change mark, and uploads the file once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     await deleteRecord(record.id);
     hasLocks = false;
@@ -4342,8 +4039,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     await replayed(QUEUE_A);
     getDirectory = opfs.getDirectory;
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
     expect(sdk.deleted).toEqual([]);
     expect(sdk.uploads).toEqual([
@@ -4352,13 +4048,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("lets no other tab restore an older backup of a delivered file before its replay records the delivery the full store kept it from logging, and sends neither component again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const { userId, baseUrl } = JSON.parse(startedMarkerOf(entry).text) as {
       userId: string;
@@ -4399,9 +4092,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("resolves no download URL, and holds none, once a lookup of another account's queues released it while it was read", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     getDirectory = beforeCreating(
       (path) => path[1] === entry && path[2] === "data.bin",
@@ -4476,9 +4167,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   }
 
   it("sends no discard when another tab restores the file after its replay without Web Locks last listed the hold rows, the clock reading its acting row expired meanwhile and then set back", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
@@ -4516,9 +4205,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "sends no discard when DataFn is started again for %s with the file's record after the replay's no-reference query, and uploads the file once",
     async (_, userIds) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const records = await datafn.exportData();
       await deleteRecord(record.id);
       hasLocks = false;
@@ -4538,8 +4225,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       await replayed(QUEUE_A);
       await vi.waitFor(() => expect(isRestarted).toBe(true));
       getDirectory = opfs.getDirectory;
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
 
       expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
       expect(sdk.deleted).toEqual([]);
@@ -4605,9 +4291,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("rejects a restore when a file's delivery row cannot be read, importing no record and keeping the queued file", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
@@ -4645,13 +4329,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "gives a download lookup that finds a complete replacement its own URL when the retired generation's held read %s",
     async (_, metadata) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       await restoreBackup(backup, { triggerCloneUp: () => false });
       const download = () =>
         resolveQueuedFileUrl([QUEUE_A], record.fileId, "download");
@@ -4700,13 +4381,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("keeps the download URL a lookup returned from the replacement it read meanwhile, sharing it with the next lookup", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const download = () =>
       resolveQueuedFileUrl([QUEUE_A], record.fileId, "download");
@@ -4742,9 +4420,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("sends no discard from a retry pass when DataFn is started again for the same account with the file's record after its no-reference query, and uploads the file once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     await deleteRecord(record.id);
     hasLocks = false;
@@ -4770,8 +4446,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       await vi.advanceTimersByTimeAsync(5_000);
       await vi.waitFor(() => expect(isRestarted).toBe(true));
       getDirectory = opfs.getDirectory;
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
     } finally {
       vi.useRealTimers();
     }
@@ -4789,13 +4464,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "without Web Locks, a restore meeting the dispatch row a closed tab left for the file %s",
     async (_, expiresIn, isRestored) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       hasLocks = false;
       const row = ["dispatch", "closed-tab", record.fileId, ""].join("~");
       const holds = await (
@@ -4829,13 +4501,10 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "requests a restored file's delivered original no more when its upload log's thumbnail row cannot be read, sending the thumbnail again only when %s",
     async (_, isSentMarkLost, artifacts) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       await restoreBackup(backup, { triggerCloneUp: () => false });
       getDirectory = failingWrites((path) =>
         path[1] === entry &&
@@ -4892,9 +4561,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   ])(
     "%s, though its sent mark could not be written and its pass stopped before removing it",
     async (_, status, isCarried) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       sdk.artifactError = status ? fileFnError(status) : null;
       getDirectory = failingWrites((path) =>
@@ -4936,9 +4603,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   );
 
   it("runs the replay DataFn started again asked for, not a retry pass of the replaced runtime that came due meanwhile, and sends the thumbnail without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
       sdk.artifactError = fileFnError(503);
@@ -4963,8 +4628,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       sdk.artifactError = null;
       releaseUpload();
 
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(sdk.uploads.map((input) => input.fileId).sort()).toEqual(
         [record.fileId, second.fileId].sort()
       );
@@ -4978,13 +4642,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("runs the replay DataFn started again asked for, not a deadline pass of the replaced runtime that came due meanwhile, and uploads the restored file without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites(
       (path) =>
         path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
@@ -5026,8 +4686,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     timers[0].run();
     releaseUpload();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads.map((upload) => upload.fileId).sort()).toEqual(
       [record.fileId, second.fileId].sort()
     );
@@ -5035,12 +4694,8 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("removes a restored file whose record is deleted before its hold expires, though neither its adopted mark nor its adoption row could be created, without uploading it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    const { record, backup } = await backUpOfflinePhoto();
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
         ? new Error("The adoption cannot be recorded")
@@ -5056,20 +4711,16 @@ describe("restore sessions, generations and publication of queued files", () => 
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
 
   it("requests a delivered original no more for a restored file its account adopted, once its pass stopped before removing it without its uploaded mark", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     getDirectory = failingWrites((path) =>
       path[1] === entry && path[2] === "uploaded"
@@ -5100,9 +4751,7 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("rejects a restore when a file's thumbnail row of the upload log cannot be read, importing no record and keeping the queued file", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
@@ -5136,13 +4785,9 @@ describe("restore sessions, generations and publication of queued files", () => 
   });
 
   it("keeps the deadline of the replay DataFn started again asked for when a retry pass of the replaced runtime runs after it, and uploads the restored file once its hold expires", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites(
       (path) =>
         path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
@@ -5197,8 +4842,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     replays.clear();
     deadline.run();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads.map((upload) => upload.fileId).sort()).toEqual(
       [record.fileId, second.fileId].sort()
     );
@@ -5211,13 +4855,10 @@ describe("TIDY-622 r6 checkpoint probe", () => {
     new FileFnHttpError("The thumbnail was not taken", status, {});
   // family account-queue-restore-dedupe-is-page-local (file-queue.ts:2120)
   it("probeA: a restored file whose delivered original's log row cannot be read is not requested again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     // First pass: original delivered, uploaded mark cannot be written, pull fails so the pass stops.
     getDirectory = failingWrites((path) =>
@@ -5267,9 +4908,7 @@ describe("TIDY-622 r6 checkpoint probe", () => {
       set() {}
     });
     try {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       let releaseUpload!: () => void;
       sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
@@ -5327,13 +4966,10 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   }
 
   it("sends nothing for a restored file whose original's upload log row cannot be read, retries it, and rejects a backup and a restore that need that row", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     getDirectory = failingWrites((path) =>
       path[1] === entry && path[2] === "uploaded"
@@ -5362,8 +4998,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
     getDirectory = opfs.getDirectory;
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(1);
@@ -5376,10 +5011,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   ])(
     "records a delivery its upload log cannot take beside the queue, %s, so a restore of the older backup after a reload sends neither component again, and moves it into the log once storage recovers",
     async (_, isLocked) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
+      const { record, backup } = await backUpOfflinePhoto();
       hasLocks = isLocked;
       const full = () =>
         failingWrites((path) =>
@@ -5389,8 +5021,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
         );
       getDirectory = full();
       goOnline();
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
 
       isOnline = false;
       replays.clear();
@@ -5433,9 +5064,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
       set() {}
     });
     try {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       await uploadUntilPullFails(entry);
       requests = uploadArtifact.mock.calls.length;
@@ -5465,8 +5094,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
 
       replays.clear();
       goOnline();
-      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-      await Promise.all(replays.get(QUEUE_A) ?? []);
+      await waitForQueueDrain();
       expect(uploadArtifact.mock.calls.length).toBe(requests);
       expect(sdk.started).toHaveLength(1);
       expect(sdk.deleted).toEqual([]);
@@ -5480,9 +5108,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("leaves out of a backup a file with an empty uploaded mark and a sent thumbnail without reading its unreadable thumbnail row, and rejects one whose thumbnail needs that row", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await uploadUntilPullFails(entry);
     isOnline = false;
@@ -5502,9 +5128,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("leaves the retry budget to the runtime DataFn started again when retries of the replaced runtime come due while no replay runs, and sends the thumbnail without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
       sdk.artifactError = fileFnError(503);
@@ -5537,12 +5161,8 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("runs no pass for a deadline of the replaced runtime that comes due while no replay runs, so the runtime DataFn started again keeps its retries and sends the thumbnail without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    const { record, backup } = await backUpOfflinePhoto();
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites(
       (path) =>
         path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
@@ -5597,13 +5217,10 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("removes a restored file whose record is deleted while its restore's retained hold holds it, though neither its adoption nor the removal of its restoring mark could be recorded, once storage recovered and the hold expired, without uploading it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites(
       (path) =>
         path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
@@ -5625,16 +5242,13 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
 
   it("sends no delete for a file a record of the same runtime references by the time its discard finds it acts alone, without Web Locks, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     hasLocks = false;
@@ -5673,8 +5287,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
     replays.clear();
     isOnline = false;
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
@@ -5682,13 +5295,10 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("keeps a file restored into another account for its capturing account when the restore could not mark it settled, also once its hold and its grace ended", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -5712,9 +5322,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("keeps a file a record references by the time its removal as unreferenced marks the change, with Web Locks, and uploads it once", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     let isPaused = false;
@@ -5747,20 +5355,16 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
     replays.clear();
     isOnline = false;
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.deleted).toEqual([]);
   });
 
   it("uploads a restored file its record references once its retained hold expired, though its adoption still cannot be recorded", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites(
       (path) =>
         path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
@@ -5779,8 +5383,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
 
     goOnline();
 
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     getDirectory = opfs.getDirectory;
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(1);
@@ -5788,18 +5391,14 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("sends a delivered thumbnail no more after a restore of the older backup when only its upload log row could not be written", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     getDirectory = failingWrites((path) =>
       path[0] === UPLOAD_LOG && path[1]?.endsWith("~thumbnail")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
         : undefined
     );
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(uploadLogText()).not.toContain("~thumbnail");
 
     isOnline = false;
@@ -5815,9 +5414,7 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("requests a capture's uploaded original no more while its uploaded mark cannot be read, and sends only its pending thumbnail once it can", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     sdk.artifactError = fileFnError(503);
     goOnline();
@@ -5844,17 +5441,14 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
     replays.clear();
     isOnline = false;
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(1);
     expect(sdk.deleted).toEqual([]);
   });
 
   it("rejects a backup of an uploaded file whose uploaded mark cannot be read, though its thumbnail is marked sent", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await uploadUntilPullFails(entry);
     isOnline = false;
@@ -5869,14 +5463,11 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   });
 
   it("keeps a file its own account restored for it when a restore into another account kept it, though neither restore could mark it settled, also once their holds and its grace ended", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -5909,12 +5500,8 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
   ])(
     "restores a delivered file's thumbnail only when it was not sent, when %s",
     async (_, isSent) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      const { record, backup } = await backUpOfflinePhoto();
+      await signInOnClearedBrowser("user-a");
       const root = await opfs.getDirectory();
       const holds = await root.getDirectoryHandle(HOLDS_A, { create: true });
       await holds.getFileHandle(`delivered~${record.fileId}~0~ver_1`, {
@@ -5973,24 +5560,17 @@ describe("binding, protection, delivery and retries of restored queued files", (
 
   /** Captures offline, backs up, clears the browser and restores as user-a. */
   async function restoreCapture() {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    const { record, backup } = await backUpOfflinePhoto();
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     return { record, entry: `queued_${record.fileId}`, backup };
   }
 
   it("writes no adoption for a restored file no record references, so a restore into another account then protects it from its capturing account's replay", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingAdoption();
     await restoreBackup(backup, { triggerCloneUp: () => false });
     getDirectory = opfs.getDirectory;
@@ -6049,8 +5629,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
     sdk.artifactError = null;
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(1);
     expect(sdk.deleted).toEqual([]);
@@ -6072,8 +5651,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
 
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(1);
     expect(sdk.deleted).toEqual([]);
@@ -6085,14 +5663,11 @@ describe("binding, protection, delivery and retries of restored queued files", (
   ])(
     "removes and discards a file restored into another account once its capturing account's replay acted on it and its record is deleted on a later page, when its adoption %s",
     async (_, isAdoptionWritable) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const records = await datafn.exportData();
       const backup = await backupFile();
       const entry = `queued_${record.fileId}`;
-      await clearBrowser();
-      await bootData(cloudAccount("user-b"));
+      await signInOnClearedBrowser("user-b");
       await restoreBackup(backup, { triggerCloneUp: () => false });
       expect(isHeldForAccount(entry)).toBe(true);
       await bootData(cloudAccount("user-a"));
@@ -6121,13 +5696,9 @@ describe("binding, protection, delivery and retries of restored queued files", (
   );
 
   it("keeps a file restored into another account that its capturing account's records never referenced, also once its hold and its grace ended", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await bootData(cloudAccount("user-a"));
     getDirectory = failingAdoption();
@@ -6145,14 +5716,11 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("keeps a file its own account's restore settled while no record references it, also once its hold and its grace ended", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     await deleteRecord(record.id);
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     expect(
       opfs.list(QUEUE_A, entry).some((n) => n.startsWith("settled-"))
@@ -6174,17 +5742,14 @@ describe("binding, protection, delivery and retries of restored queued files", (
   ])(
     "%s on a file kept by a restore into another account that rolls back after a later file fails to stage",
     async (_, isProtectedBefore) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       await deleteRecord(record.id);
       const backupOne = await backupFile();
       const second = await capturePhoto();
       const entryTwo = `queued_${second.fileId}`;
       const backupTwo = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       getDirectory = failingWrites((path) =>
         path[2]?.startsWith("settled-")
           ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -6216,9 +5781,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
   );
 
   it("requests a capture's original no more while its upload log row cannot be read after its uploaded mark could not be written, reuses its version once it can, and counts one request and one transfer", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     sdk.artifactError = fileFnError(503);
     getDirectory = failingWrites((path) =>
@@ -6249,8 +5812,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
     getDirectory = opfs.getDirectory;
     replays.clear();
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toEqual([
@@ -6260,25 +5822,20 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("requests a capture's original once when its upload log confirms no delivery, though an earlier attempt left its started marker", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const marker = startedMarkerOf(entry);
     await writeQueuedEntryFile(entry, marker.name, marker.text);
 
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     expect(sdk.started).toHaveLength(1);
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(1);
   });
 
   it("gives the runtime DataFn started again for the same account its own retries after the replaced runtime spent all of its own while current", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
       sdk.artifactError = fileFnError(503);
@@ -6312,12 +5869,8 @@ describe("binding, protection, delivery and retries of restored queued files", (
 
   it("never requests the queue for a deadline of the replaced runtime, so the expired hold stays until the explicit online trigger", async () => {
     const { entry } = await (async () => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
-      const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      const { record, backup } = await backUpOfflinePhoto();
+      await signInOnClearedBrowser("user-a");
       getDirectory = failingWrites(
         (path) =>
           path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
@@ -6362,10 +5915,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("retries removing a file a restore never published while the removal fails, and removes it once storage recovers, without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     opfs.clear();
     let isPublishing = false;
@@ -6404,15 +5954,12 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("removes and discards a file its own account's restore settled unreferenced once a later record bound it, though its adoption cannot be recorded, when that record is deleted on a later page", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const records = await datafn.exportData();
     await deleteRecord(record.id);
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     expect(
       opfs.list(QUEUE_A, entry).some((n) => n.startsWith("settled-"))
@@ -6440,14 +5987,11 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("binds a restored file its replay took on a record's reference before the upload request, so an attempt that went offline before sending it leaves the file bound and removed once the record is deleted", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     const backup = await backupFile();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await bootData(cloudAccount("user-a"));
     await datafn.importData(records, { triggerCloneUp: false });
@@ -6477,15 +6021,12 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("rejects a restore into another account that cannot create the foreign row of a file it keeps, before importing any record, leaving the file as it was", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const full = new DOMException(
       "The quota is exceeded",
       "QuotaExceededError"
@@ -6513,16 +6054,13 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("keeps a file a restore into another account kept protected for its records once that restore is cut short after their import, also once every hold and its grace ended", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const records = await datafn.exportData();
     const backup = await backupFile();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -6561,15 +6099,12 @@ describe("binding, protection, delivery and retries of restored queued files", (
   ])(
     "a restore into another account whose import failed but %s",
     async (_, isImportSaving) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
       await deleteRecord(record.id);
       const ownBackup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       getDirectory = failingWrites((path) =>
         path[2]?.startsWith("settled-")
           ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -6619,9 +6154,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("records a delivery the full upload log could not take once the store removed the file, though looking the entry up again fails", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const full = failingWrites((path) =>
       path[0] === UPLOAD_LOG
@@ -6655,8 +6188,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
         }
       });
     goOnline();
-    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
-    await Promise.all(replays.get(QUEUE_A) ?? []);
+    await waitForQueueDrain();
     getDirectory = opfs.getDirectory;
 
     expect(opfs.list(HOLDS_A)).toEqual([`delivered~${record.fileId}~1~ver_1`]);
@@ -6675,8 +6207,7 @@ describe("binding, protection, delivery and retries of restored queued files", (
     const records = await datafn.exportData();
     const backup = await backupFile();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await bootData(cloudAccount("user-a"));
     await datafn.importData(records, { triggerCloneUp: false });
@@ -6704,14 +6235,10 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("keeps the foreign row of a file two restores into another account keep while one imports nothing and the other imports its records", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -6750,14 +6277,11 @@ describe("binding, protection, delivery and retries of restored queued files", (
   });
 
   it("binds a restored file its replay took on a record's reference before a delivery read that cannot be read stops it, so it is removed once the record is deleted", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     const backup = await backupFile();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await bootData(cloudAccount("user-a"));
     await datafn.importData(records, { triggerCloneUp: false });
@@ -6839,9 +6363,7 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   ])(
     "requests a delivered capture's original and thumbnail no more %s once removing it could not be confirmed, and removes it on the retry",
     async (_, isLocked) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       hasLocks = isLocked;
       let isRemovalFailing = true;
@@ -6878,10 +6400,7 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   );
 
   it("retries removing a file a restore never published while the removal is refused and looking it up again fails, and removes it once storage recovers, without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     opfs.clear();
     let isPublishing = false;
@@ -6928,9 +6447,7 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   });
 
   it("keeps a delivery the full upload log could not take, and requests nothing more on the retry, once the store removed the file though looking it up again fails", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     getDirectory = failingLookup(
       failingWrites((path) =>
@@ -6959,14 +6476,11 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   });
 
   it("binds a restored file its replay took on a record's reference once storage recovers, though its adoption, its binding and its delivery could not be written or read, so it is removed once the record is deleted in a new runtime", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     const backup = await backupFile();
     const entry = `queued_${record.fileId}`;
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await bootData(cloudAccount("user-a"));
     await datafn.importData(records, { triggerCloneUp: false });
@@ -7010,16 +6524,13 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   ])(
     "a restore into another account cut short once it staged and %s, once that account's replay finds its hold expired",
     async (_, isSaved) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const records = await datafn.exportData();
       const backup = await backupFile();
       await deleteRecord(record.id);
       const ownBackup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-a"));
+      await signInOnClearedBrowser("user-a");
       getDirectory = failingWrites((path) =>
         path[2]?.startsWith("settled-")
           ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -7059,15 +6570,12 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   );
 
   it("frees a file a restore into another account kept once that account's replay removes the foreign row the restore could not remove after its import saved nothing", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -7114,9 +6622,7 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   ])(
     "requests a delivered capture's original and thumbnail no more %s once removing it could not be confirmed and its delivered mark could not be written, and removes it on the retry",
     async (_, isLocked) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       hasLocks = isLocked;
       let isRemovalFailing = true;
@@ -7155,14 +6661,10 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   );
 
   it("frees a file a restore into another account cut short before its import kept, once its hold expires, though that account's replay ran while the hold was live and no other trigger follows", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -7201,14 +6703,10 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   });
 
   it("removes the foreign row a restore into another account could not remove, once that account's replay could not remove it either, on the retry without another trigger", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -7248,13 +6746,10 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   });
 
   it("uploads a referenced restored file its replay took without recording its adoption or binding once its adoption can be written, though its binding still cannot", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await bootData(cloudAccount("user-a"));
     await datafn.importData(records, { triggerCloneUp: false });
@@ -7296,9 +6791,7 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   ])(
     "revokes the download URL of a file the store removed %s once the retry finds it gone, though looking it up right after the removal failed",
     async (_, isLocked) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       hasLocks = isLocked;
       const url = await resolveQueuedFileUrl(
@@ -7334,9 +6827,7 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
   );
 
   it("keeps the download URL of a file whose removal the store refused while looking it up again failed, and revokes it once the file is removed", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     let isRemovalFailing = true;
     let failedLookups = 0;
@@ -7417,9 +6908,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
    * cannot be read, so it sends nothing.
    */
   async function takeWithoutBinding(isLocked: boolean, isUnbound = true) {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const records = await datafn.exportData();
     const backup = await backupFile();
@@ -7551,15 +7040,12 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   );
 
   it("keeps the foreign row of a file a restore into another account kept when that account's records in another DataFn scope do not reference it, so its capturing account never reclaims the only copy", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -7605,15 +7091,12 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("protects a file a restore into another account kept again when its import resumes after its hold expired and that account's replay removed its foreign row meanwhile, so its capturing account never reclaims the only copy", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const isSettling = (path: string[]) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -7655,9 +7138,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   ])(
     "requests a delivered capture's original and thumbnail no more %s once removing it could not be confirmed while neither its uploaded mark, its upload log row, its delivered row nor its delivered mark could be written, and removes it on the retry once storage recovers",
     async (_, isLocked) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       hasLocks = isLocked;
       let isFailing = true;
@@ -7700,14 +7181,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   );
 
   it("rejects, importing nothing, a restore into another account whose kept file its capturing account reclaimed once the restore's hold expired, before its import resumed", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -7758,12 +7235,8 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("imports nothing when the account changes while a restore protects its files again before the import", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    const { record, backup } = await backUpOfflinePhoto();
+    await signInOnClearedBrowser("user-a");
     let release = () => undefined as void;
     let isRenewing = false;
     const gate = new Promise<void>((resolve) => {
@@ -7819,9 +7292,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("sends a confirmed delivery's thumbnail no more on the page's retry once another tab's replay recorded it sent in the upload log, though the removal could not be confirmed and the thumbnail could not be read before", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     let isFailing = true;
     getDirectory = failingWrites(
@@ -7867,13 +7338,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("keeps a file another restore into another account protects when a paused restore that wrote it cannot hold it again and rolls back, also once that restore's hold expired and it could not mark the file settled", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     let restores = 0;
     preflight.during = async () => {
       if (++restores > 1) return;
@@ -7904,13 +7372,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("keeps a file a paused restore into another account protects again once that account's replay removed its foreign row, though its capturing account's replay bound it on a reference while the earlier row was there, once the record is deleted", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     await deleteRecord(record.id);
     const { createFileFnClient } = await import("@filefn/client");
@@ -7976,9 +7441,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("keeps a confirmed delivery's capture queued on the page's retry while its thumbnail and its delivery evidence cannot be read, and sends the thumbnail once they can, without requesting the original again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     let isRemovalFailing = true;
     let isUnreadable = true;
@@ -8021,9 +7484,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("sends a confirmed delivery's thumbnail no more on the page's retry once the upload log records it sent at the confirmed version, though the original's mark and log row cannot be read", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     let isFirst = true;
     getDirectory = failingWrites(
@@ -8073,13 +7534,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("keeps a file its capturing account bound while a paused restore into another account that wrote it could not hold it again and rolls back", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     const { createFileFnClient } = await import("@filefn/client");
     preflight.during = async () => {
       vi.spyOn(Date, "now").mockReturnValue(
@@ -8135,10 +7593,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   });
 
   it("rejects, importing nothing, a restore paused past its hold whose queued file another tab removed with only its original recorded delivered, and stages the thumbnail again on the next restore without uploading the original again", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const backup = await backupFile();
+    const { record, backup } = await backUpOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     preflight.during = async () => {
       vi.spyOn(Date, "now").mockReturnValue(
@@ -8185,15 +7640,12 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
       records: Awaited<ReturnType<typeof datafn.exportData>>
     ) => Promise<void>
   ) {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const records = await datafn.exportData();
     const backup = await backupFile();
     await deleteRecord(record.id);
     const ownBackup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     getDirectory = failingWrites((path) =>
       path[2]?.startsWith("settled-")
         ? new DOMException("The quota is exceeded", "QuotaExceededError")
@@ -8471,13 +7923,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   ])(
     "takes a binding its replay began but could not finish writing before the page stopped as its account's, so a restored file whose restore rolled back meanwhile %s",
     async (_, isProtected, other) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-b"));
+      await signInOnClearedBrowser("user-b");
       let isReferenced = true;
       const references = (): QueuedFileReferences => ({
         owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
@@ -8565,8 +8014,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   it("restores a backup carrying no queued file while the account's FileFn authority cannot be read", async () => {
     await bootData(cloudAccount("user-a"));
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-a"));
+    await signInOnClearedBrowser("user-a");
     const session = cloudAccount("user-a");
     const read = clientStorage.get.bind(clientStorage);
     vi.spyOn(clientStorage, "get").mockImplementation(async (key) =>
@@ -8596,13 +8044,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   ])(
     "binds a restored file its replays took at two FileFn authorities by the later binding only: %s",
     async (_, isLater) => {
-      await bootData(cloudAccount("user-a"));
-      isOnline = false;
-      const record = await capturePhoto();
+      const record = await captureOfflinePhoto();
       const entry = `queued_${record.fileId}`;
       const backup = await backupFile();
-      await clearBrowser();
-      await bootData(cloudAccount("user-b"));
+      await signInOnClearedBrowser("user-b");
       await restoreBackup(backup, { triggerCloneUp: () => false });
       const useast = AUTHORITY_URL.replace(/\/datafn$/, "/files");
       const references =
@@ -8656,13 +8101,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
   );
 
   it("drops a take its replay could not bind once a later replay at another FileFn authority bound the file, so the earlier take never removes it after its own record is deleted", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const useast = AUTHORITY_URL.replace(/\/datafn$/, "/files");
     const references = (baseUrl: string, isReferenced: boolean) => ({
@@ -8761,13 +8203,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
    * foreign rows and user-a's references.
    */
   async function bindTwice() {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     await restoreBackup(backup, { triggerCloneUp: () => false });
     const published = opfs
       .list(QUEUE_A, entry)
@@ -8851,13 +8290,10 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     }
   );
   it("keeps on rollback a file its account bound, though a newer binding of the account was cut short, and lets the account's replay remove it once its record is deleted", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
+    const record = await captureOfflinePhoto();
     const entry = `queued_${record.fileId}`;
     const backup = await backupFile();
-    await clearBrowser();
-    await bootData(cloudAccount("user-b"));
+    await signInOnClearedBrowser("user-b");
     let isReferenced = true;
     const references = (): QueuedFileReferences => ({
       owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
@@ -9040,7 +8476,7 @@ describe("backup and restore of a local-only user's files", () => {
   async function captureInRetiredGuest() {
     await bootData(localAccount);
     const record = await capturePhoto();
-    device = newDevice();
+    device = newUploadTestDevice();
     await bootData(localAccount);
     expect(await savedRecord(record.id)).toBeUndefined();
     return record;

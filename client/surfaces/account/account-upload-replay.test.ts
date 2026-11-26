@@ -1,5 +1,10 @@
 import "fake-indexeddb/auto";
-import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import {
+  createUploadSyncEvents,
+  newUploadTestDevice,
+  stubUploadBrowserGlobals,
+  stubUploadObjectUrls
+} from "../../../tests/fixtures/file-upload";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FileFnClient, UploadInput } from "@filefn/client";
 import {
@@ -113,12 +118,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
   const { derived } = await import("svelte/store");
-  const handlers = new Set<(event: never) => void>();
-  const emit = (type: string, context: Record<string, unknown>) => {
-    for (const handler of handlers) {
-      handler({ type, timestampMs: Date.now(), context } as never);
-    }
-  };
+  const { emit, subscribe } = createUploadSyncEvents();
   let pulls = 0;
   const pullNow = async () => {
     const pull = ++pulls;
@@ -127,12 +127,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   };
   const datafn = new Proxy(actual.datafn, {
     get(target, key) {
-      if (key === "subscribe") {
-        return (handler: (event: never) => void) => {
-          handlers.add(handler);
-          return () => handlers.delete(handler);
-        };
-      }
+      if (key === "subscribe") return subscribe;
       if (key === "sync") return { ...target.sync, pullNow };
       return Reflect.get(target, key);
     }
@@ -381,17 +376,9 @@ function installLocks() {
 }
 
 beforeEach(async () => {
-  vi.stubGlobal("Blob", NodeBlob);
-  vi.stubGlobal("File", NodeFile);
-  vi.stubEnv(
-    "VITE_ACCOUNT_BASE_URL_TEMPLATE",
-    "https://account-{region}-dev.nucleum.app"
-  );
+  stubUploadBrowserGlobals();
   opfs.clear();
-  device = {
-    dapId: `device-${crypto.randomUUID()}`,
-    env: `test-${crypto.randomUUID()}`
-  };
+  device = newUploadTestDevice();
   isOnline = true;
   vi.stubGlobal("navigator", {
     ...globalThis.navigator,
@@ -401,10 +388,7 @@ beforeEach(async () => {
     locks: undefined,
     storage: { getDirectory: opfs.getDirectory }
   });
-  URL.createObjectURL ??= () => "";
-  vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:queued");
-  URL.revokeObjectURL ??= () => undefined;
-  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+  stubUploadObjectUrls();
   configurePersistenceLogger({ error: vi.fn(), info: vi.fn() });
   sdk.baseUrls = [];
   sdk.started = [];
@@ -1218,6 +1202,14 @@ describe("replay authorization across the session lifetime", () => {
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
   });
 
+  /** Looks up the file client while the sign-out cleanup is held. */
+  async function lookUpFileClientDuringSignOut() {
+    await settle();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await settle();
+  }
+
   function holdCleanup() {
     let release: () => void = () => undefined;
     cleanupHold.gate = new Promise<void>((resolve) => {
@@ -1242,10 +1234,7 @@ describe("replay authorization across the session lifetime", () => {
     );
     const release = holdCleanup();
     const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
-    await settle();
-    const files = await import("@nucleum/shared-state/files/filefn-client");
-    await files.getFileFnClient();
-    await settle();
+    await lookUpFileClientDuringSignOut();
     try {
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual([]);
@@ -1261,10 +1250,7 @@ describe("replay authorization across the session lifetime", () => {
     isOnline = true;
     const release = holdCleanup();
     const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
-    await settle();
-    const files = await import("@nucleum/shared-state/files/filefn-client");
-    await files.getFileFnClient();
-    await settle();
+    await lookUpFileClientDuringSignOut();
     try {
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual([]);
@@ -1287,10 +1273,7 @@ describe("replay authorization across the session lifetime", () => {
     await settle();
     const release = holdCleanup();
     const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
-    await settle();
-    const files = await import("@nucleum/shared-state/files/filefn-client");
-    await files.getFileFnClient();
-    await settle();
+    await lookUpFileClientDuringSignOut();
     try {
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual([]);

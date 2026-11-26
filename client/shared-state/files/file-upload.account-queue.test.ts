@@ -1,5 +1,12 @@
 import "fake-indexeddb/auto";
-import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import {
+  captureUploadTestPhoto,
+  createUploadSyncEvents,
+  newUploadTestDevice,
+  stubUploadBrowserGlobals,
+  stubUploadObjectUrls,
+  uploadTestUserInfo
+} from "../../../tests/fixtures/file-upload";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   FileFnClient,
@@ -111,12 +118,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
   const { derived } = await import("svelte/store");
-  const handlers = new Set<(event: never) => void>();
-  const emit = (type: string, context: Record<string, unknown>) => {
-    for (const handler of handlers) {
-      handler({ type, timestampMs: Date.now(), context } as never);
-    }
-  };
+  const { emit, subscribe } = createUploadSyncEvents();
   const pullNow = async () => {
     const pull = ++authority.pulls;
     emit("sync_started", { phase: "pull" });
@@ -126,12 +128,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   };
   const datafn = new Proxy(actual.datafn, {
     get(target, key) {
-      if (key === "subscribe") {
-        return (handler: (event: never) => void) => {
-          handlers.add(handler);
-          return () => handlers.delete(handler);
-        };
-      }
+      if (key === "subscribe") return subscribe;
       if (key === "sync") return { ...target.sync, pullNow };
       if (key === "file" && authority.onFileQuery) {
         const { onFileQuery } = authority;
@@ -179,14 +176,7 @@ function cloudAccount(userId: string): UserAccount {
     dataMode: UserDataMode.CLOUD,
     sessionType: UserSessionType.RETURNING,
     userId,
-    userInfo: {
-      id: `user:${userId}`,
-      email: `${userId}@example.test`,
-      nickName: userId,
-      joinDate: new Date(0),
-      lastLogin: new Date(0),
-      region: "useast"
-    }
+    userInfo: uploadTestUserInfo(userId)
   };
 }
 
@@ -221,17 +211,8 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-async function capturePhoto() {
-  codec.compressImageToTargetSize.mockResolvedValueOnce(
-    new Blob(["thumb bytes"], { type: "image/jpeg" })
-  );
-  const [record] = (await fileUpload.uploadFileV2(
-    "image/png",
-    "photo.png",
-    new Blob(["photo bytes"], { type: "image/png" }),
-    { isGenerateThumbnail: true }
-  )) as { id: string; fileId: string }[];
-  return record;
+function capturePhoto() {
+  return captureUploadTestPhoto(fileUpload, codec.compressImageToTargetSize);
 }
 
 async function savedRecord(id: string) {
@@ -276,17 +257,9 @@ function trackReplayPasses() {
 const initialAccount = account.get();
 
 beforeEach(() => {
-  vi.stubGlobal("Blob", NodeBlob);
-  vi.stubGlobal("File", NodeFile);
-  vi.stubEnv(
-    "VITE_ACCOUNT_BASE_URL_TEMPLATE",
-    "https://account-{region}-dev.nucleum.app"
-  );
+  stubUploadBrowserGlobals();
   opfs.clear();
-  device = {
-    dapId: `device-${crypto.randomUUID()}`,
-    env: `test-${crypto.randomUUID()}`
-  };
+  device = newUploadTestDevice();
   isOnline = true;
   vi.stubGlobal("navigator", {
     ...globalThis.navigator,
@@ -296,10 +269,7 @@ beforeEach(() => {
     locks: undefined,
     storage: { getDirectory: opfs.getDirectory }
   });
-  URL.createObjectURL ??= () => "";
-  vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:queued");
-  URL.revokeObjectURL ??= () => undefined;
-  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+  stubUploadObjectUrls();
   configurePersistenceLogger({ error: vi.fn(), info: vi.fn() });
   sdk.started = [];
   sdk.uploads = [];

@@ -1,5 +1,12 @@
 import "fake-indexeddb/auto";
-import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import {
+  captureUploadTestPhoto,
+  createUploadSyncEvents,
+  newUploadTestDevice,
+  stubUploadBrowserGlobals,
+  stubUploadObjectUrls,
+  uploadTestUserInfo
+} from "../../../tests/fixtures/file-upload";
 import {
   afterEach,
   beforeEach,
@@ -117,12 +124,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
   const { derived } = await import("svelte/store");
-  const handlers = new Set<(event: never) => void>();
-  const emit = (type: string, context: Record<string, unknown>) => {
-    for (const handler of handlers) {
-      handler({ type, timestampMs: Date.now(), context } as never);
-    }
-  };
+  const { emit, subscribe } = createUploadSyncEvents();
   let pulls = 0;
   const pullNow = async () => {
     const pull = ++pulls;
@@ -133,12 +135,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   };
   const datafn = new Proxy(actual.datafn, {
     get(target, key) {
-      if (key === "subscribe") {
-        return (handler: (event: never) => void) => {
-          handlers.add(handler);
-          return () => handlers.delete(handler);
-        };
-      }
+      if (key === "subscribe") return subscribe;
       if (key === "sync") return { ...target.sync, pullNow };
       if (key === "file") {
         return new Proxy(target.file, {
@@ -204,14 +201,7 @@ function cloudAccount(userId: string): UserAccount {
     dataMode: UserDataMode.CLOUD,
     sessionType: UserSessionType.RETURNING,
     userId,
-    userInfo: {
-      id: `user:${userId}`,
-      email: `${userId}@example.test`,
-      nickName: userId,
-      joinDate: new Date(0),
-      lastLogin: new Date(0),
-      region: "useast"
-    }
+    userInfo: uploadTestUserInfo(userId)
   };
 }
 
@@ -345,17 +335,8 @@ function deferred<T>() {
 }
 
 /** Captures a photo (through `upload`, a reloaded page's module, if given). */
-async function capturePhoto(upload = fileUpload) {
-  codec.compressImageToTargetSize.mockResolvedValueOnce(
-    new Blob(["thumb bytes"], { type: "image/jpeg" })
-  );
-  const [record] = (await upload.uploadFileV2(
-    "image/png",
-    "photo.png",
-    new Blob(["photo bytes"], { type: "image/png" }),
-    { isGenerateThumbnail: true }
-  )) as { id: string; fileId: string }[];
-  return record;
+function capturePhoto(upload = fileUpload) {
+  return captureUploadTestPhoto(upload, codec.compressImageToTargetSize);
 }
 
 async function savedRecord(id: string) {
@@ -372,6 +353,15 @@ async function readAnyRecord(id: string) {
   return result.data?.[0] as Record<string, unknown> | undefined;
 }
 
+/** Captures a guest photo and waits for the device queue to save its record. */
+async function captureSettledGuestPhoto() {
+  await bootData(localAccount);
+  uninstall = installDeviceFileQueue();
+  const record = await capturePhoto();
+  await settleLocalFileRecords();
+  return record;
+}
+
 const LOCAL_QUEUE = "nucleum-file-queue-local";
 
 /**
@@ -379,10 +369,7 @@ const LOCAL_QUEUE = "nucleum-file-queue-local";
  * upload of it is still running when the account signs out.
  */
 async function captureThenSignOutDuringUpload(isNewGuest = false) {
-  await bootData(localAccount);
-  uninstall = installDeviceFileQueue();
-  const record = await capturePhoto();
-  await settleLocalFileRecords();
+  const record = await captureSettledGuestPhoto();
   let release!: () => void;
   sdk.hold = new Promise<void>((done) => (release = done));
   await signInToCloud("user-a");
@@ -563,17 +550,9 @@ beforeEach(() => {
   for (const key of Object.keys(localStorage)) {
     if (key.startsWith(`${LOCAL_QUEUE}-pending:`)) localStorage.removeItem(key);
   }
-  vi.stubGlobal("Blob", NodeBlob);
-  vi.stubGlobal("File", NodeFile);
-  vi.stubEnv(
-    "VITE_ACCOUNT_BASE_URL_TEMPLATE",
-    "https://account-{region}-dev.nucleum.app"
-  );
+  stubUploadBrowserGlobals();
   opfs.clear();
-  device = {
-    dapId: `device-${crypto.randomUUID()}`,
-    env: `test-${crypto.randomUUID()}`
-  };
+  device = newUploadTestDevice();
   isOnline = true;
   webLocks = withSharedLocks(createFakeLocks());
   vi.stubGlobal("navigator", {
@@ -586,10 +565,7 @@ beforeEach(() => {
     },
     storage: { getDirectory: opfs.getDirectory }
   });
-  URL.createObjectURL ??= () => "";
-  vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:queued");
-  URL.revokeObjectURL ??= () => undefined;
-  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+  stubUploadObjectUrls();
   configurePersistenceLogger({ error: vi.fn(), info: vi.fn() });
   sdk.started = [];
   sdk.uploads = [];
@@ -784,10 +760,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps the claiming account's file and record and drops the capture when its record was published before the local-only record was deleted", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await signInToCloud("user-a");
     await vi.waitFor(() =>
       expect(
@@ -855,10 +828,7 @@ describe("files captured offline or by a local-only user", () => {
   ])(
     "leaves an account record with the capture's ID and %s unchanged, deletes the upload and keeps the capture on the device for its guest record",
     async (_, otherFileId) => {
-      await bootData(localAccount);
-      uninstall = installDeviceFileQueue();
-      const record = await capturePhoto();
-      await settleLocalFileRecords();
+      const record = await captureSettledGuestPhoto();
       // The account already holds a record with the capture's ID, as one
       // restored from a guest backup (bytes on the record, no fileId) does.
       await openData("user-a");
@@ -950,10 +920,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a capture deleted in another tab while this tab copies its rename held when the sign-in aborts the copy's reread and the default sign-out follows", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     const namespace = String(readLocalCopy(record.fileId)?.namespace);
     let reads = 0;
     fileCalls.beforeQuery = async (args) => {
@@ -1004,10 +971,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a capture deleted in this tab while its rename's pass copies it held, when the delete's pending entry cannot be stored and the sign-in aborts the copy's reread", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     const entry = `queued_${record.fileId}`;
     const setItem = Storage.prototype.setItem;
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
@@ -1064,10 +1028,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("holds a capture renamed while the startup pass copies its old record when the rename's pending entry cannot be stored, the sign-in aborts that copy's reread and the rename's pass cannot take the queue's lock", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     uninstall?.();
     const entry = `queued_${record.fileId}`;
     const setItem = Storage.prototype.setItem;
@@ -1121,10 +1082,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("holds a capture whose change was queued behind the namespace's startup reconcile when that reconcile cannot read its record", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // A change pass holds its read of the record while the namespace starts
     // again; a rename queues behind that start's full pass, and every later
     // read of the record fails, as when DataFn leaves the namespace.
@@ -1169,10 +1127,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("holds a capture whose change pass the first sign-in aborted and publishes it once its guest namespace reconciles it again", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // The cloud sign-in moves DataFn to the account's namespace while the
     // change pass of a rename made just before it reads the record.
     fileCalls.beforeQuery = async (args) => {
@@ -1211,10 +1166,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes the last copy of a capture held stale once a sign-out opened a new guest namespace", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     fileCalls.beforeQuery = async (args) => {
       const { filters } = args as { filters?: { id?: string } };
       if (filters?.id !== record.id) return;
@@ -1253,10 +1205,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("copies a change whose pass could not take the queue's lock on a later pass and publishes the new copy", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     failQueueLockOnce();
     await datafn.file.mutate({
       operation: "merge",
@@ -1286,10 +1235,7 @@ describe("files captured offline or by a local-only user", () => {
    * whose pass the first cloud sign-in aborts as it reads the record.
    */
   async function captureThenChangeDuringSignIn(mutation: "rename" | "delete") {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     fileCalls.beforeQuery = async (args) => {
       const { filters } = args as { filters?: { id?: string } };
       if (filters?.id !== record.id) return;
@@ -1865,10 +1811,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("copies a guest change whose pending entry and stale mark another tab cleared before this tab's pass took the queue's lock", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // Another tab, signing out to a new guest namespace, holds the queue's
     // lock while this tab renames; its sign-out clears local storage and its
     // full pass releases this tab's stale mark.
@@ -1969,10 +1912,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a change whose pass could not list the local files and publishes no outdated copy of it", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // The change's stale mark (written without the queue's lock) cannot list
     // the files either, so it marks nothing until the pass fails.
     const busy = new DOMException(
@@ -2007,10 +1947,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a change whose local file's record copy cannot be read during its pass and publishes no outdated copy of it", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // The change's stale mark lists the files leniently first, then the pass.
     failEntryFile("record.json", false, 2);
     await datafn.file.mutate({
@@ -2037,10 +1974,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a change pending when its record cannot be read and its local file cannot be marked stale", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     fileCalls.beforeQuery = async () => {
       fileCalls.beforeQuery = null;
       throw new DOMException("The records are busy", "NotReadableError");
@@ -2074,10 +2008,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes the current copy of a capture whose change's stale mark lands after a pass already copied that change", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     uninstall?.();
     // The namespace's startup pass waits for another tab's lock.
     const held = deferred<void>();
@@ -2135,10 +2066,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes a capture whose first rename's pending entry could not be stored once the pass copies a second rename", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // Both renames come while another tab holds the queue's lock; local
     // storage refuses the first one's pending entry.
     const held = deferred<void>();
@@ -2238,10 +2166,7 @@ describe("files captured offline or by a local-only user", () => {
   );
 
   it("publishes the current copy of a capture whose change's fence fails after a pass already copied that change", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     uninstall?.();
     // The namespace's startup pass waits for another tab's lock.
     const held = deferred<void>();
@@ -2297,10 +2222,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a change pending when its local file's entry cannot be opened to clear its stale mark, and copies it on the pass's retry", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // Once the pass writes the new copy, opening the file's entry fails once.
     const entry = `queued_${record.fileId}`;
     let isWritten = false;
@@ -2335,10 +2257,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("marks a changed capture stale at once while another tab's replay holds the queue's lock, then copies the change", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     const entry = `queued_${record.fileId}`;
     const held = deferred<void>();
     onTestFinished(() => held.resolve());
@@ -2371,10 +2290,7 @@ describe("files captured offline or by a local-only user", () => {
   ])(
     "marks nothing uploaded over a guest change another tab fences while the replay %s",
     async (_, step) => {
-      await bootData(localAccount);
-      uninstall = installDeviceFileQueue();
-      const record = await capturePhoto();
-      await settleLocalFileRecords();
+      const record = await captureSettledGuestPhoto();
       // A guest tab renames the record and, without the queue's lock this
       // replay holds, marks its local file stale.
       const fence = () => writeLocalEntryFile(record.fileId, "stale");
@@ -2481,10 +2397,7 @@ describe("files captured offline or by a local-only user", () => {
   );
 
   it("keeps an account-side edit made after an outdated save over the guest change fenced during it", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await publishOutdatedThenSignOut(record);
     await datafn.file.mutate({
       operation: "merge",
@@ -2546,10 +2459,7 @@ describe("files captured offline or by a local-only user", () => {
   );
 
   it("publishes no record the account deleted after its save was confirmed, and marks the capture uploaded", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await publishOutdatedThenSignOut(record);
     await datafn.file.mutate({ operation: "delete", id: record.id } as never);
     await signOutToLocal();
@@ -2571,10 +2481,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes the record that took over a capture's file after an earlier record's save was confirmed", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await publishOutdatedThenSignOut(record);
     await signOutToLocal();
     await settleTasks();
@@ -2598,10 +2505,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("inserts the record on a later replay when the first save was rejected", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     let isRejected = false;
     fileCalls.beforeMutate = async (args) => {
       const [first] = Array.isArray(args) ? args : [args];
@@ -2625,10 +2529,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes nothing when another tab fences a capture while the publish records what it is about to save", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // Another tab deletes the guest record and fences its local file just as
     // this tab's publish writes the states its save can leave.
     const getDirectory = navigator.storage.getDirectory;
@@ -2669,10 +2570,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("drops a capture whose guest record another tab deletes during its save, keeping the account record that save published and the upload it references", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await publishOutdatedThenSignOut(record);
     await signOutToLocal();
     await settleTasks();
@@ -2689,10 +2587,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("decides nothing on a runtime that replaced the one the publisher was created with, even in the same namespace", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     const store = await vi.importActual<
       typeof import("@nucleum/datafn/datafn.store")
     >("@nucleum/datafn/datafn.store");
@@ -2724,10 +2619,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("makes no mutation in either namespace when another account signs in while the publish rereads its local file", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     let isArmed = false;
     let isSwitched = false;
     fileCalls.beforeQuery = async (args) => {
@@ -2778,10 +2670,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("marks a capture uploaded before deleting its upload for an account record that holds another file, so no later replay publishes it", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await openData("user-a");
     await datafn.file.mutate({
       operation: "insert",
@@ -2811,10 +2700,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps an upload another account record references when the record of the capture's ID holds another file", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await openData("user-a");
     await datafn.file.mutate([
       {
@@ -2846,10 +2732,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("marks a local file stale when its record changes in another tab after this tab's pass read it", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // Once this tab's pass has read the renamed record, another tab, whose
     // changes this tab does not see, renames it again and marks its local
     // file stale without the queue's lock.
@@ -2888,10 +2771,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("copies the record that took over a capture's file when the removal's reread finds it, and publishes that record only", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     const replacementId = `${record.id}-copy`;
     let lookups = 0;
     // Another tab saves a record referencing the file between the lookup
@@ -2928,10 +2808,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("sends no thumbnail once offline mode starts during the upload and sends it with the next replay", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     const upload = deferred<void>();
     sdk.hold = upload.promise;
 
@@ -2957,10 +2834,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("records the delete of an upload whose ID an account record holds instead of sending it in offline mode", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     await openData("user-a");
     await datafn.file.mutate({
       operation: "insert",
@@ -2989,10 +2863,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a committed capture whose local-only record is deleted while Web Locks cannot fence other tabs", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     expect(
       opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "committed")
     ).toBeDefined();
@@ -3071,10 +2942,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a capture a record references again by the time its removal would run", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // The pass's first lookup by file misses the record that takes the file
     // over, as one read before that record saved does.
     let lookups = 0;
@@ -3099,10 +2967,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a capture while a lookup of the records that reference its file cannot tell whether one does", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // Each lookup by file resolves without a list of records, as a failed
     // query does.
     let lookups = 0;
@@ -3128,10 +2993,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("decides a first publish on the account's records pulled from its authority, leaving one the authority already holds unchanged", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     // The authority holds a record with the capture's ID (restored on another
     // device) that reaches this device with the first pull after the upload.
     const restored = { name: "restored.png", type: "image/png" };
@@ -3160,10 +3022,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("publishes nothing and marks nothing uploaded while the account's records cannot be pulled", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     fileCalls.onPull = async () => "fail";
 
     await signInToCloud("user-a");
@@ -3510,10 +3369,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("keeps a capture from an earlier guest namespace and publishes it at the first cloud sign-in", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
 
     // A sign-out cleared the device's DataFn ID: a new guest namespace opens,
     // which holds no record of the earlier guest's capture.
@@ -3550,10 +3406,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("uploads a local-only user's capture only once a live session confirms the cloud account", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
 
     // A cached cloud session restored: its client binds and sends nothing.
     account.set(cloudAccount("user-a"));
@@ -3580,10 +3433,7 @@ describe("files captured offline or by a local-only user", () => {
   });
 
   it("uploads a local-only user's capture when the app's offline mode ends", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
+    const record = await captureSettledGuestPhoto();
     context.update((value) => ({ ...value, isInOfflineMode: true }));
 
     await signInToCloud("user-a");
@@ -3734,10 +3584,7 @@ describe("guest changes a page reload interrupts", () => {
   ])(
     "never publishes a capture whose guest delete %s before the sign-in, after the default sign-out and a reload",
     async (_case, isMarkedLate) => {
-      await bootData(localAccount);
-      uninstall = installDeviceFileQueue();
-      const record = await capturePhoto();
-      await settleLocalFileRecords();
+      const record = await captureSettledGuestPhoto();
       // The delete's mark cannot be written (or an earlier rename's fence,
       // which read no mark, writes its own after it), and the sign-in aborts
       // its pass as it reads the record.
