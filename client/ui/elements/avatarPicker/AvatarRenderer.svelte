@@ -1,6 +1,7 @@
 <script lang="ts">
   import { elementPlatform as context } from "@21n/ui/environment/element-environment.store";
   import { AvatarType, type IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
+  import { avatarEmojiText, avatarIconText } from "@21n/ui/elements/avatarPicker/avatar-code";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
   import "@fontsource/noto-color-emoji";
@@ -79,7 +80,7 @@
           style:color={avatar?.color !== "bw" ? avatar?.color : ""}
           style:font-size={fontSize}
         >
-          {@html avatar.code}
+          {avatarIconText(avatar.code)}
         </span>
       {/if}
     {:else if avatar.type === AvatarType.EMOJI && avatar.code}
@@ -92,7 +93,7 @@
         )}
         style="font-size: {fontSize};"
       >
-        {@html avatar.code}
+        {avatarEmojiText(avatar.code)}
       </span>
     {/if}
   {/if}

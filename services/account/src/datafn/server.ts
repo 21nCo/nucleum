@@ -48,11 +48,21 @@ export interface SyncAuthProvider {
   authorizeMutation(request: Request): Promise<AuthFnSession>;
 }
 
+export type SyncClientIpResolver = (
+  request: Request
+) => string | undefined | Promise<string | undefined>;
+
 export interface CreateSyncServerInput {
   auth: SyncAuthProvider;
   database: Adapter;
   stores?: RuntimeStores;
   rateLimit?: false | RateLimitConfig<SyncContext>;
+  /**
+   * Trusted client IP for a request, used as the rate-limit key for requests
+   * with neither a session nor a public link. Without it they share one
+   * `anonymous` bucket.
+   */
+  resolveClientIp?: SyncClientIpResolver;
   regionId?: string;
   observability?: SuperfunctionObservability;
   searchProvider?: SearchProvider;
@@ -216,7 +226,11 @@ export function createSyncServer(
     },
     rateLimit: input.rateLimit === false
       ? undefined
-      : input.rateLimit ?? createDefaultRateLimit(input.stores),
+      : {
+          keyExtractor: (ctx: SyncContext) =>
+            resolveSyncRateLimitKey(ctx, input.resolveClientIp),
+          ...(input.rateLimit ?? createDefaultRateLimit(input.stores))
+        },
     routeHooks: {
       afterResponse: [
         settleFileDeletions,
@@ -226,6 +240,27 @@ export function createSyncServer(
     },
     observability: input.observability
   });
+}
+
+/**
+ * Rate-limit bucket for a DataFn request. A public-link request counts against
+ * its link, not the link owner's namespace, so link traffic cannot lock the
+ * owner out. A signed-in request counts against the user's namespace, and a
+ * request with neither counts against the client IP when it is known.
+ */
+export async function resolveSyncRateLimitKey(
+  ctx: SyncContext,
+  resolveClientIp?: SyncClientIpResolver
+): Promise<string> {
+  if (ctx.publicLink) {
+    return `public_link:${ctx.publicLink.linkId}`;
+  }
+  const actorId = ctx.session?.actorId;
+  if (actorId) {
+    return resolveAccountUserNamespace(actorId);
+  }
+  const clientIp = (await resolveClientIp?.(ctx.request))?.trim();
+  return clientIp ? `ip:${clientIp}` : 'anonymous';
 }
 
 function createDefaultRateLimit(

@@ -331,6 +331,7 @@ export function buildAccountServices(
           observability,
           searchProvider: syncSearchProvider,
           rateLimit: integrations.syncRateLimit,
+          resolveClientIp: deployment.resolveClientIp,
           fileDeletions: createFileDeletions(syncDatabase)
         });
       })
