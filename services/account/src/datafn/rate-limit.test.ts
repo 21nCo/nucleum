@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { AuthFnSession } from 'authfn';
 import type { DatafnPublicLinkPrincipal } from '@datafn/server';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
@@ -87,6 +87,20 @@ afterAll(async () => {
 });
 
 describe('DataFn rate limit buckets', () => {
+  // DataFn counts requests in fixed wall-clock windows. Freeze the clock just
+  // after the next minute starts so a run never straddles two windows.
+  beforeAll(() => {
+    const minute = 60_000;
+    vi.useFakeTimers({
+      toFake: ['Date'],
+      now: (Math.floor(Date.now() / minute) + 1) * minute + 1_000
+    });
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it('does not lock the link owner out when public-link traffic hits the limit', async () => {
     const viewer = { 'x-datafn-public-link-token': linkToken, [clientIpHeader]: '192.0.2.10' };
     expect((await call('/datafn/query', viewer, objectiveQuery)).status).toBe(200);
