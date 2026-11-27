@@ -1,0 +1,26 @@
+client/shared-state/files/file-queue.ts
+  s_352a15ae1e92dd::t_9873d23620b759 733-736,748-749,760-763,765,4133
+client/shared-state/files/file-upload.queue.test.ts
+  s_352a15ae1e92dd::t_ca0231af48b93c 2676-2730,2732-2742,2744-2747,4908-4910
+  s_352a15ae1e92dd::t_83298d18de88eb 2751-2752,4914-4915
+  s_352a15ae1e92dd::t_211261529f2e1a 4911-4913
+  s_352a15ae1e92dd::t_b694316c02931d 2748-2750
+  s_352a15ae1e92dd::t_92d77314e13aaf 4905-4907
+  s_352a15ae1e92dd::t_825ab149bc7fff 4883-4904
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ec6c9e735c14f276401cf71670b3a4635467346",
+  "prompts": {},
+  "sessions": {
+    "s_352a15ae1e92dd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea7539f9-0cd8-448a-bef5-04fbc59b04f3",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

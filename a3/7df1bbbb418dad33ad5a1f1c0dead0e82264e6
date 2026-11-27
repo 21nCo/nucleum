@@ -1,0 +1,25 @@
+client/shared-state/files/file-upload.account-queue.test.ts
+  s_545bb079978e5a::t_c2c5e88ab3654b 120
+client/shared-state/files/file-upload.queue.test.ts
+  s_545bb079978e5a::t_83ad177abfc330 126,1085-1088
+client/surfaces/account/account-upload-replay.test.ts
+  s_545bb079978e5a::t_54135f5784b819 120
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_545bb079978e5a::t_949090591621cc 115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a37df1bbbb418dad33ad5a1f1c0dead0e82264e6",
+  "prompts": {},
+  "sessions": {
+    "s_545bb079978e5a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a2144f-8f2a-7690-8b1a-e7858b67a889",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

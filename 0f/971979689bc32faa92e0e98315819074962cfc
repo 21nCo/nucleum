@@ -1,0 +1,27 @@
+services/account/openapi/memotron.json
+  s_5d723fdc755151::t_bc26ff5aed2c4a 11,958,1397,1784,2756,3937,4794
+services/account/openapi/nucleum.json
+  s_5d723fdc755151::t_b686e5d63f308e 11,934,1812,2251,2658,3630,4735,6856,7713,8660
+services/account/openapi/pointron.json
+  s_5d723fdc755151::t_65179e062325a7 11,960,1838,2225,3330,5465,6322,7269
+services/account/src/api/router.test.ts
+  s_5d723fdc755151::t_9623441b18aa90 2,631-656
+services/account/src/api/router.ts
+  s_5d723fdc755151::t_e3e5d24187b33a 222-224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f971979689bc32faa92e0e98315819074962cfc",
+  "prompts": {},
+  "sessions": {
+    "s_5d723fdc755151": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "051445e0-f9f0-4dda-82e6-ed61b7bedab8",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

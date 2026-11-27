@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/shared/settings/v1-access-token.spec.ts
+  s_28047bbe3887b4::t_80c400e4a7034a 137-144,147-159
+services/account/src/api/router.adapter.test.ts
+  s_28047bbe3887b4::t_312e75a4383e96 248-303
+services/account/src/api/router.test.ts
+  s_28047bbe3887b4::t_8d113d71fc8db0 584-655
+services/account/openapi/memotron.json
+  s_28047bbe3887b4::t_0b8cef93b73d9f 11,485,893,958,1397,1784,2253,2691,2756,3240,3669,3937,4333,4729,4794
+services/account/openapi/nucleum.json
+  s_28047bbe3887b4::t_fcdbba713433c8 11,461,869,934,1354,1747,1812,2251,2658,3127,3565,3630,4180,4670,4735,5193,5622,6856,7252,7648,7713,8166,8595,8660
+services/account/openapi/pointron.json
+  s_28047bbe3887b4::t_3c5dcf5114d7a9 11,487,895,960,1380,1773,1838,2225,2775,3265,3330,3816,4245,5465,5861,6257,6322,6775,7204,7269
+services/account/src/api/router.ts
+  s_28047bbe3887b4::t_7b73d716003fb4 85-89,137-138,219-244,303,503-505,511-512,527,532,556-559,580,616-617,648-652,659-665,667-669,671,674-675,677-737,772,812
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e4c22f0b517b127d1f90bb0c5615699b75e2814f",
+  "prompts": {},
+  "sessions": {
+    "s_28047bbe3887b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c77a785e-55e9-4945-b6e4-03805346332b",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

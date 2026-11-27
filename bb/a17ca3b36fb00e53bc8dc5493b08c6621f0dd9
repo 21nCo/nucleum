@@ -1,0 +1,19 @@
+client/shared-state/files/file-queue.ts
+  s_678c59606b3057::t_101a0becdae17e 1495
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bba17ca3b36fb00e53bc8dc5493b08c6621f0dd9",
+  "prompts": {},
+  "sessions": {
+    "s_678c59606b3057": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "688c2770-72c6-417d-aed2-1e830c568574",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

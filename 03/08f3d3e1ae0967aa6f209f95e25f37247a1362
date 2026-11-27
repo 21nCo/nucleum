@@ -1,0 +1,21 @@
+services/account/openapi/memotron.json
+  s_1c8263fed6a7a1::t_4620464a989981 5
+services/account/src/api/memotron/apifn.config.ts
+  s_1c8263fed6a7a1::t_08e572fb0f69dd 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0308f3d3e1ae0967aa6f209f95e25f37247a1362",
+  "prompts": {},
+  "sessions": {
+    "s_1c8263fed6a7a1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d1da4f3-5f53-4f10-9073-7a4ded7b8102",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

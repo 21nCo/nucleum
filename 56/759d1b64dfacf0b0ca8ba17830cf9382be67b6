@@ -1,0 +1,35 @@
+apps/e2e-playwright/tests/shared/settings/v1-access-token.spec.ts
+  s_8fee5428d1f1c5::t_795ab69d974e9d 38-49,52-55,62-72,76-78,146-147,155-157,159
+services/account/openapi/memotron.json
+  s_8fee5428d1f1c5::t_6681043f62e114 485,893,2253,2691,3240,3669,4333,4729
+services/account/openapi/nucleum.json
+  s_8fee5428d1f1c5::t_4d28c876b85d06 461,869,1354,1747,3127,3565,4180,4670,5193,5622,7252,7648,8166,8595
+services/account/openapi/pointron.json
+  s_8fee5428d1f1c5::t_8f26f4555e32d9 487,895,1380,1773,2775,3265,3816,4245,5861,6257,6775,7204
+services/account/src/api/generate-openapi.mjs
+  s_8fee5428d1f1c5::t_8ec748748d2e5d 9,15-17
+services/account/src/api/router.adapter.test.ts
+  s_8fee5428d1f1c5::t_67716430f8cc7a 6,16-19,73-75,100,111,125-127,136,152-158,165,501-502,553,565,582-711
+services/account/src/api/router.test.ts
+  s_8fee5428d1f1c5::t_0877b715cd3855 722,845-871
+services/account/src/api/router.ts
+  s_8fee5428d1f1c5::t_9f96d2b82eef54 50-69,116-117,336,841,876,896,941,991-1012,1017,1020-1025,1034-1040,1045,1058,1063-1083,1106,1303,1397-1398,1454-1455,1487,1490-1500
+services/account/src/app.ts
+  s_8fee5428d1f1c5::t_41186a9ed0f423 129-138,227,231,292-300,421-422
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "56759d1b64dfacf0b0ca8ba17830cf9382be67b6",
+  "prompts": {},
+  "sessions": {
+    "s_8fee5428d1f1c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2dc73ead-201f-496f-9ba1-6aaf56c3201c",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
