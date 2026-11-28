@@ -14,6 +14,7 @@ export type InputLabel = {
   tooltip?: InputLabelInfoToolTip;
   isMarkRequired?: boolean;
   isShrink?: boolean;
+  isWrapText?: boolean;
   badge?: string;
 };
 

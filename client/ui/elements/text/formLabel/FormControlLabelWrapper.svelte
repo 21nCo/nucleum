@@ -30,9 +30,13 @@
       (props?.orientation === Orientation.Vertical ||
         (!props?.orientation && $view.isPortrait)) &&
       size === Size.sm,
-    "flex-row flex-wrap items-center gap-2":
+    "flex-row items-center gap-2":
       props?.orientation === Orientation.Horizontal ||
       (!props?.orientation && !$view.isPortrait),
+    "flex-wrap":
+      !props?.isWrapText &&
+      (props?.orientation === Orientation.Horizontal ||
+        (!props?.orientation && !$view.isPortrait)),
     "text-b2": size === Size.sm,
     "w-full": !props?.isShrink,
     "justify-between":
