@@ -59,7 +59,7 @@ export async function openCapture(
     await page
       .getByRole("button", { name: /^Capture$/i })
       .first()
-      .click({ timeout: 5_000 });
+      .click({ noWaitAfter: true, timeout: 10_000 });
   }
   await page.getByTestId("capture-editor").waitFor({
     state: "visible",
