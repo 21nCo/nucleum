@@ -93,7 +93,7 @@ describe("patch-legacy-oauth-redirect", () => {
         'async function run(e,t){if(e.httpMethod==="POST")return ane(Object.fromEntries(new URLSearchParams(e.body)),ev,hO);'
       );
     expect(() => verifyPatchedBundle(writeBundle(postBypass))).toThrow(
-      /forged state was not refused \(POST\)/
+      /forged state was not refused \(POST google\)/
     );
     const patched = await patchedFile();
     expect(() => verifyPatchedBundle(patched)).not.toThrow();

@@ -283,8 +283,8 @@ function isFalse(node) {
 
 /**
  * Loads a patched bundle in a child process and calls its exported Lambda
- * handler the way API Gateway does, for GET and for a form-encoded POST, with
- * no code (so nothing signs in). The
+ * handler the way API Gateway does (a Google GET, and form-encoded POSTs for
+ * Google and Apple's form_post), with no code or user (so nothing signs in). The
  * patch is accepted only if a forged state host is never redirected to, and a
  * legitimate state still reaches its host.
  */
@@ -301,11 +301,11 @@ export function verifyPatchedBundle(file) {
       body: null,
       isBase64Encoded: false
     });
-    const post = (state) => ({
+    const post = (provider) => (state) => ({
       httpMethod: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       queryStringParameters: null,
-      pathParameters: { provider: "google" },
+      pathParameters: { provider },
       requestContext: { ...requestContext, httpMethod: "POST" },
       body: new URLSearchParams({ state }).toString(),
       isBase64Encoded: false
@@ -313,7 +313,12 @@ export function verifyPatchedBundle(file) {
     (async () => {
       const log = console.log; console.log = () => {}; console.error = () => {};
       const results = {};
-      for (const [method, event] of [["GET", get], ["POST", post]]) {
+      const probes = [
+        ["GET google", get],
+        ["POST google", post("google")],
+        ["POST apple", post("apple")]
+      ];
+      for (const [method, event] of probes) {
         results[method] = {
           forged: await handler(event("probe:evil.example/x.memotron.app")),
           trusted: await handler(event("probe:web.memotron.app"))
@@ -330,7 +335,7 @@ export function verifyPatchedBundle(file) {
     throw new Error(`patched bundle did not run: ${run.stderr || run.error}`);
   }
   const results = JSON.parse(run.stdout.trim().split("\n").pop());
-  for (const method of ["GET", "POST"]) {
+  for (const method of ["GET google", "POST google", "POST apple"]) {
     const { forged, trusted } = results[method] ?? {};
     if (
       forged?.statusCode !== 302 ||
@@ -357,15 +362,22 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     process.exit(2);
   }
   const patched = patchBundle(fs.readFileSync(input, "utf8"), await compileRedirectModule());
-  fs.writeFileSync(output, patched);
-  const check = spawnSync(process.execPath, ["--check", output], { stdio: "inherit" });
-  if (check.status !== 0) process.exit(check.status ?? 1);
+  // Write and verify a sibling first, so a failed check never touches the
+  // destination (which may be the input itself).
+  const candidate = path.join(
+    path.dirname(path.resolve(output)),
+    `.${path.basename(output)}.${process.pid}.candidate.js`
+  );
+  fs.writeFileSync(candidate, patched);
   try {
-    verifyPatchedBundle(output);
+    const check = spawnSync(process.execPath, ["--check", candidate], { stdio: "inherit" });
+    if (check.status !== 0) throw new Error("patched bundle failed node --check");
+    verifyPatchedBundle(candidate);
   } catch (error) {
-    fs.rmSync(output, { force: true });
+    fs.rmSync(candidate, { force: true });
     console.error(String(error));
     process.exit(1);
   }
+  fs.renameSync(candidate, output);
   console.log(`patched and verified ${output}`);
 }
