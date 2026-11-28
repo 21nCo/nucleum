@@ -5,12 +5,75 @@
 //   return fetch.default(url, options);
 
 import { isValidString } from "$lib/shared/utils/text.utils";
-import { DatabaseError } from "./common/errors";
+import regions from "../deployment/regions.json";
+import { DatabaseError, ValidationError } from "./common/errors";
 import {
   Agent,
   DatabaseQueryParams,
-  CONTEXT
+  CONTEXT,
+  QueryVars
 } from "./common/account/account.type";
+
+const GLOBAL_REGION = "global";
+const REGION_CODES: ReadonlySet<string> = new Set(
+  (regions as { code: string }[]).map((region) => region.code)
+);
+const IDENTIFIER = /^[A-Za-z0-9_]+$/;
+const VARIABLE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/** True for a region the client may name: a code in deployment/regions.json or "global". */
+export function isKnownRegion(region: unknown): region is string {
+  return (
+    typeof region === "string" &&
+    (region === GLOBAL_REGION || REGION_CODES.has(region))
+  );
+}
+
+/**
+ * Database host for a region. Only codes from deployment/regions.json pick a
+ * regional host; anything else is refused so a caller can never choose the
+ * host that receives the root credentials.
+ */
+export function resolveDatabaseInstance(region: string | undefined) {
+  if (!isValidString(region) || region === GLOBAL_REGION) {
+    return "db." + process.env.DOMAIN;
+  }
+  if (!isKnownRegion(region)) {
+    throw new ValidationError("Unknown region");
+  }
+  return region + ".db." + process.env.DOMAIN;
+}
+
+/**
+ * Returns `value` when it is a plain identifier (letters, digits, `_`), the
+ * only form that can be written into SurrealQL as a record key, namespace or
+ * database name. Throws otherwise.
+ */
+export function assertIdentifier(value: unknown, label = "id"): string {
+  if (typeof value !== "string" || !IDENTIFIER.test(value)) {
+    throw new ValidationError(`Invalid ${label}`);
+  }
+  return value;
+}
+
+/**
+ * Encodes query variables for SurrealDB's `/sql` endpoint, which binds URL
+ * query parameters to `$name`. Each value is sent as JSON so it is bound as a
+ * value and never parsed as part of the query; `undefined` values are left
+ * out (they read as NONE).
+ */
+export function encodeQueryVars(vars?: QueryVars) {
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries(vars ?? {})) {
+    if (!VARIABLE_NAME.test(name)) {
+      throw new ValidationError(`Invalid query variable ${name}`);
+    }
+    if (value === undefined) continue;
+    params.append(name, JSON.stringify(value));
+  }
+  const encoded = params.toString();
+  return encoded ? "?" + encoded : "";
+}
 
 // }
 export async function performQuery(body: any) {
@@ -27,9 +90,10 @@ export async function performQuery(body: any) {
   });
   return await response.json();
 }
-export async function performQueryOnMasterDb(query: any) {
+export async function performQueryOnMasterDb(query: any, vars?: QueryVars) {
   return performRootQuery({
     query,
+    vars,
     dbType: CONTEXT.ADMIN,
     instance: "db." + process.env.DOMAIN
   });
@@ -37,15 +101,12 @@ export async function performQueryOnMasterDb(query: any) {
 
 export async function performQueryOnRegionalDb(
   query: string,
-  props: { region: string; db: string; context?: CONTEXT }
+  props: { region?: string; db: string; context?: CONTEXT; vars?: QueryVars }
 ) {
-  const instance =
-    isValidString(props.region) && props.region != "global"
-      ? props.region + ".db." + process.env.DOMAIN
-      : "db." + process.env.DOMAIN;
   return performRootQuery({
     query,
-    instance,
+    vars: props.vars,
+    instance: resolveDatabaseInstance(props.region),
     dbType: props.context ?? CONTEXT.USER,
     db: props.db
   });
@@ -60,11 +121,16 @@ export async function performQueryOnRegionalDb(
  * @param agent
  * @returns
  */
-export async function performAgentProxyQuery(query: any, agent: Agent) {
+export async function performAgentProxyQuery(
+  query: any,
+  agent: Agent,
+  vars?: QueryVars
+) {
   return performQueryOnRegionalDb(query, {
     context: agent.context ? (agent.context as CONTEXT) : CONTEXT.USER,
     db: agent.db,
-    region: agent.region
+    region: agent.region,
+    vars
   });
 }
 
@@ -77,16 +143,22 @@ async function performRootQuery(params: DatabaseQueryParams) {
       "Basic " + btoa(process.env.DB_USER + ":" + process.env.DB_PASS)
     );
     headers.append("Accept", "application/json");
-    const namespace = resolveNamespace(params.dbType);
-    const db =
+    const namespace = assertIdentifier(
+      resolveNamespace(params.dbType),
+      "namespace"
+    );
+    const db = assertIdentifier(
       params.dbType === CONTEXT.ADMIN
         ? process.env.ADMIN_DB_NAME ?? "ADMIN"
-        : params.db ?? "";
+        : params.db,
+      "database"
+    );
     headers.append("NS", namespace);
     headers.append("DB", db);
     const body = `USE NAMESPACE ${namespace}; USE DATABASE ${db}; ${params.query}`;
-    let endPoint = "https://" + params.instance + "/sql";
-    console.log({ endPoint, body });
+    const endPoint =
+      "https://" + params.instance + "/sql" + encodeQueryVars(params.vars);
+    console.log({ instance: params.instance, namespace, db });
     const response = await fetch(endPoint, {
       method: "POST",
       body,

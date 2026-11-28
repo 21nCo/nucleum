@@ -53,7 +53,7 @@ export async function restore(body: any, agent: Agent) {
 }
 
 async function retrieveUserPlan(id: string) {
-  const userDataResult = await performQueryOnMasterDb(resolvePlanQuery(id));
+  const userDataResult = await performQueryOnMasterDb(...resolvePlanQuery(id));
   if (!userDataResult || !userDataResult[0]) {
     throw new ValidationError("User not found");
   }
@@ -61,8 +61,8 @@ async function retrieveUserPlan(id: string) {
 }
 
 async function retrieveUserTransactions(userId: string) {
-  const query = `SELECT * FROM transaction WHERE userId = user:${userId} ORDER BY createdAt DESC`;
-  const transactionResult = await performQueryOnMasterDb(query);
+  const query = `SELECT * FROM transaction WHERE userId = type::thing("user", $userId) ORDER BY createdAt DESC`;
+  const transactionResult = await performQueryOnMasterDb(query, { userId });
   if (!transactionResult || !transactionResult[0]?.result) {
     return [];
   }

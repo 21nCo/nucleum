@@ -4,8 +4,12 @@ import { PlanType } from "@nucleum/schema/account/subscription";
 import { PaymentProvider } from "@nucleum/schema/account/payment-provider";
 import { paymentProductsList } from "./paymentProducts";
 
-export function resolvePlanQuery(userId: string) {
-  return `select id, context, userPlan.* as userPlan from user:${userId};`;
+/** Query and bound variables that read a user's plan. */
+export function resolvePlanQuery(userId: string): [string, { userId: string }] {
+  return [
+    `select id, context, userPlan.* as userPlan from type::thing("user", $userId);`,
+    { userId }
+  ];
 }
 
 export function resolveDodoProductId({

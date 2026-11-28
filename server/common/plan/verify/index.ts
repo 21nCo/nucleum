@@ -255,8 +255,8 @@ export async function webhook(body: any) {
 }
 
 async function retrieveTransaction(nonce: string) {
-  const query = `SELECT * FROM transaction WHERE nonce = "${nonce}"`;
-  const transactionResult = await performQueryOnMasterDb(query);
+  const query = `SELECT * FROM transaction WHERE nonce = $nonce`;
+  const transactionResult = await performQueryOnMasterDb(query, { nonce });
   if (!transactionResult || !transactionResult[0]?.result?.[0]) {
     throw new NotFoundError("Transaction not found");
   }
@@ -279,7 +279,7 @@ async function promoteUserPlan(params?: {
 }
 
 async function retrieveUserPlan(id: string) {
-  const userDataResult = await performQueryOnMasterDb(resolvePlanQuery(id));
+  const userDataResult = await performQueryOnMasterDb(...resolvePlanQuery(id));
   if (!userDataResult || !userDataResult[0])
     throw new ValidationError("User not found");
   const user = userDataResult[0].result?.[0];

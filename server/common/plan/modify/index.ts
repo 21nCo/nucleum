@@ -127,7 +127,7 @@ async function cancel(agent: Agent) {
 }
 
 async function retrieveUserPlan(id: string) {
-  const userDataResult = await performQueryOnMasterDb(resolvePlanQuery(id));
+  const userDataResult = await performQueryOnMasterDb(...resolvePlanQuery(id));
   if (!userDataResult || !userDataResult[0])
     throw new ValidationError("User not found");
   const user = userDataResult[0].result?.[0];
