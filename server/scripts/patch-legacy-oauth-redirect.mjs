@@ -9,6 +9,10 @@
  * `buildOAuthRedirectResponse`, passing the bundle's own
  * `processOAuthRedirection` as the sign-in step. Nothing else in the bundle changes.
  *
+ * The script then loads the patched bundle and calls its exported handler with
+ * a forged and a legitimate state (no code, so nothing signs in), and refuses
+ * the result unless the forged host is refused and the legitimate one works.
+ *
  * Usage: node server/scripts/patch-legacy-oauth-redirect.mjs <in oauthRedirect.js> <out oauthRedirect.js>
  */
 import fs from "node:fs";
@@ -56,10 +60,13 @@ export function patchBundle(source, moduleSource) {
   );
   const functions = new Map();
   const bindings = new Map();
+  const assigned = new Set();
   const handlers = [];
   visit(file, (node) => {
     const bound = bindingName(node);
     if (bound) bindings.set(bound, (bindings.get(bound) ?? 0) + 1);
+    const target = assignedName(node);
+    if (target) assigned.add(target);
     if (ts.isFunctionDeclaration(node) && node.name) {
       const list = functions.get(node.name.text) ?? [];
       list.push(node);
@@ -142,10 +149,15 @@ export function patchBundle(source, moduleSource) {
   fn(signIn, "sign-in step");
 
   // Every name in the chain must be bound once in the whole bundle, so no
-  // scope can shadow it and point the handler somewhere else.
+  // scope can shadow it, and the functions must never be reassigned.
   for (const name of [handlers[0], callbackName, redirectName, signIn, providerVar, endpointVar]) {
     if (bindings.get(name) !== 1) {
       throw new Error(`${name} is bound ${bindings.get(name) ?? 0} times; expected once`);
+    }
+  }
+  for (const name of [handlers[0], callbackName, redirectName, signIn]) {
+    if (assigned.has(name)) {
+      throw new Error(`${name} is reassigned`);
     }
   }
 
@@ -228,6 +240,27 @@ function bindingName(node) {
   return undefined;
 }
 
+/** The identifier an assignment or update expression writes to. */
+function assignedName(node) {
+  if (
+    ts.isBinaryExpression(node) &&
+    node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+    node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+    ts.isIdentifier(node.left)
+  ) {
+    return node.left.text;
+  }
+  if (
+    (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+    (node.operator === ts.SyntaxKind.PlusPlusToken ||
+      node.operator === ts.SyntaxKind.MinusMinusToken) &&
+    ts.isIdentifier(node.operand)
+  ) {
+    return node.operand.text;
+  }
+  return undefined;
+}
+
 function propertyName(node) {
   return ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)
     ? node.name.text
@@ -248,6 +281,54 @@ function isFalse(node) {
   );
 }
 
+/**
+ * Loads a patched bundle in a child process and calls its exported Lambda
+ * handler the way API Gateway does, with no code (so nothing signs in). The
+ * patch is accepted only if a forged state host is never redirected to, and a
+ * legitimate state still reaches its host.
+ */
+export function verifyPatchedBundle(file) {
+  const script = `
+    const { handler } = require(process.argv[1]);
+    const event = (state) => ({
+      httpMethod: "GET",
+      headers: {},
+      queryStringParameters: { state },
+      pathParameters: { provider: "google" },
+      requestContext: { domainName: "api.memotron.app", httpMethod: "GET" },
+      body: null
+    });
+    (async () => {
+      const log = console.log; console.log = () => {}; console.error = () => {};
+      const forged = await handler(event("probe:evil.example/x.memotron.app"));
+      const trusted = await handler(event("probe:web.memotron.app"));
+      log(JSON.stringify({ forged, trusted }));
+    })().catch((error) => { process.stderr.write(String(error)); process.exit(1); });`;
+  const run = spawnSync(process.execPath, ["-e", script, path.resolve(file)], {
+    encoding: "utf8",
+    timeout: 60_000,
+    env: { PATH: process.env.PATH ?? "" }
+  });
+  if (run.status !== 0) {
+    throw new Error(`patched bundle did not run: ${run.stderr || run.error}`);
+  }
+  const { forged, trusted } = JSON.parse(run.stdout.trim().split("\n").pop());
+  const forgedLocation = forged?.headers?.Location ?? "";
+  if (
+    forged?.statusCode !== 302 ||
+    forgedLocation !==
+      "https://web.memotron.app/oauth/error?error=Unknown%20redirect%20host"
+  ) {
+    throw new Error(`forged state was not refused: ${JSON.stringify(forged)}`);
+  }
+  if (
+    trusted?.statusCode !== 302 ||
+    trusted?.headers?.Location !== "https://web.memotron.app/oauth"
+  ) {
+    throw new Error(`legitimate state no longer redirects: ${JSON.stringify(trusted)}`);
+  }
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [input, output] = process.argv.slice(2);
   if (!input || !output) {
@@ -258,5 +339,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   fs.writeFileSync(output, patched);
   const check = spawnSync(process.execPath, ["--check", output], { stdio: "inherit" });
   if (check.status !== 0) process.exit(check.status ?? 1);
-  console.log(`patched ${output}`);
+  try {
+    verifyPatchedBundle(output);
+  } catch (error) {
+    fs.rmSync(output, { force: true });
+    console.error(String(error));
+    process.exit(1);
+  }
+  console.log(`patched and verified ${output}`);
 }
