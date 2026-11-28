@@ -4,8 +4,10 @@
   import { toExternalHttpUrl } from "@21n/shared-utils/url.utils";
   import { internalUrlNodeTypeList, type INode } from "@nucleum/features/memory/node/node.type";
   let { item }: { item: INode } = $props();
-  // Only http(s) URLs become links: a shared node's URL is record data that
-  // another user can set to any scheme, such as `javascript:`.
+  /**
+   * Only http(s) URLs become links: a shared node's URL is record data that
+   * another user can set to any scheme, such as `javascript:`.
+   */
   const href = $derived(
     internalUrlNodeTypeList.includes(item.contentType)
       ? undefined

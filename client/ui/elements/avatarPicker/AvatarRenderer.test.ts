@@ -32,19 +32,19 @@ describe("AvatarRenderer with a stored avatar code", () => {
     const emoji = render(AvatarRenderer, {
       props: { avatar: { type: AvatarType.EMOJI, code: "&#X2764&#XFE0F&#X200D&#X1F525" } }
     });
-    expect(emoji.container.textContent?.trim()).toBe("❤️‍\u{1F525}");
+    expect(emoji.container.textContent?.trim()).toBe("\u2764\uFE0F\u200D\u{1F525}");
     const icon = render(AvatarRenderer, {
       props: { avatar: { type: AvatarType.ICON, isFilled: true, code: "&#XE88E" } }
     });
-    expect(icon.container.textContent?.trim()).toBe("");
+    expect(icon.container.textContent?.trim()).toBe("\uE88E");
   });
 });
 
 describe("avatar code text", () => {
   it("accepts icon ligature names and character references only", () => {
     expect(avatarIconText("zoom_out_map")).toBe("zoom_out_map");
-    expect(avatarIconText("&#XE88E;")).toBe("");
-    expect(avatarIconText("&#59534")).toBe("");
+    expect(avatarIconText("&#XE88E;")).toBe("\uE88E");
+    expect(avatarIconText("&#59534")).toBe("\uE88E");
     expect(avatarIconText("Info")).toBe("");
     expect(avatarIconText("&#XE88E<b>")).toBe("");
     expect(avatarIconText(undefined)).toBe("");

@@ -17,30 +17,34 @@ let harness: AccountTestHarness;
 let owner: Headers;
 let linkToken: string;
 
-async function call(path: string, headers: Headers, body?: unknown): Promise<Response> {
-  return harness.app.fetch(new Request(`${base}${path}`, {
-    method: body === undefined ? 'GET' : 'POST',
+async function post(path: string, headers: Headers, body: unknown): Promise<Response> {
+  return await harness.app.request(new URL(path, base).href, {
+    method: 'POST',
     headers: { ...json, ...headers },
-    body: body === undefined ? undefined : JSON.stringify(body)
-  }));
+    body: JSON.stringify(body)
+  });
 }
 
-/** Builds a throwaway sign-up credential at runtime that meets the password policy. */
-function generateCredential(): string {
-  return [randomUUID().toUpperCase(), randomUUID(), '!'].join('');
-}
-
-async function signUp(): Promise<Headers> {
-  const response = await call('/auth/sign-up/password', { origin: base }, {
+/** Signs up a throwaway owner with a password generated at runtime and returns its session headers. */
+async function signUpOwner(): Promise<Headers> {
+  const response = await post('/auth/sign-up/password', { origin: base }, {
     email: 'rate-limit-owner@example.test',
-    password: generateCredential(),
+    password: `${randomUUID().toUpperCase()}-${randomUUID()}!`,
     sessionMode: 'hybrid'
   });
   expect(response.status).toBe(200);
-  const cookies = response.headers.getSetCookie().map((cookie) => cookie.split(';')[0]);
-  const csrf = cookies.find((cookie) => cookie.startsWith('nucleus.csrf='))?.split('=')[1];
+  const cookies = new Map(response.headers.getSetCookie().map((header) => {
+    const pair = header.split(';', 1)[0];
+    const separator = pair.indexOf('=');
+    return [pair.slice(0, separator), pair.slice(separator + 1)] as const;
+  }));
+  const csrf = cookies.get('nucleus.csrf');
   expect(csrf).toBeTruthy();
-  return { cookie: cookies.join('; '), 'x-authfn-csrf': csrf ?? '', origin: base };
+  return {
+    cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join('; '),
+    'x-authfn-csrf': csrf ?? '',
+    origin: base
+  };
 }
 
 const sharedId = 'objective:rate-limit-shared';
@@ -49,7 +53,7 @@ const objectiveQuery = { resource: 'objective', version: 1, filters: { id: { eq:
 /** Sends queries until one is rate limited; returns how many were let through. */
 async function exhaustQueries(headers: Headers): Promise<number> {
   for (let sent = 0; sent <= QUERY_LIMIT; sent += 1) {
-    const response = await call('/datafn/query', headers, objectiveQuery);
+    const response = await post('/datafn/query', headers, objectiveQuery);
     if (response.status === 429) return sent;
   }
   throw new Error(`no query was rate limited after ${QUERY_LIMIT + 1} requests`);
@@ -59,8 +63,8 @@ beforeAll(async () => {
   harness = createAccountTestHarness({
     resolveClientIp: (request) => request.headers.get(clientIpHeader) ?? undefined
   });
-  owner = await signUp();
-  const seeded = await call('/datafn/mutation', owner, [{
+  owner = await signUpOwner();
+  const seeded = await post('/datafn/mutation', owner, [{
     resource: 'objective',
     version: 1,
     operation: 'insert',
@@ -70,7 +74,7 @@ beforeAll(async () => {
     mutationId: 'rate-limit-test-1'
   }]);
   expect(seeded.status).toBe(200);
-  const link = await call('/datafn/public-links', owner, {
+  const link = await post('/datafn/public-links', owner, {
     resource: 'objective',
     recordId: sharedId,
     scope: 'record',
@@ -87,8 +91,10 @@ afterAll(async () => {
 });
 
 describe('DataFn rate limit buckets', () => {
-  // DataFn counts requests in fixed wall-clock windows. Freeze the clock just
-  // after the next minute starts so a run never straddles two windows.
+  /**
+   * DataFn counts requests in fixed wall-clock windows. Freezing the clock just
+   * after the next minute starts keeps a run inside one window.
+   */
   beforeAll(() => {
     const minute = 60_000;
     vi.useFakeTimers({
@@ -103,10 +109,10 @@ describe('DataFn rate limit buckets', () => {
 
   it('does not lock the link owner out when public-link traffic hits the limit', async () => {
     const viewer = { 'x-datafn-public-link-token': linkToken, [clientIpHeader]: '192.0.2.10' };
-    expect((await call('/datafn/query', viewer, objectiveQuery)).status).toBe(200);
+    expect((await post('/datafn/query', viewer, objectiveQuery)).status).toBe(200);
     expect(await exhaustQueries(viewer)).toBe(QUERY_LIMIT - 1);
 
-    const ownQuery = await call('/datafn/query', owner, objectiveQuery);
+    const ownQuery = await post('/datafn/query', owner, objectiveQuery);
     expect(ownQuery.status).toBe(200);
   });
 
@@ -114,7 +120,7 @@ describe('DataFn rate limit buckets', () => {
     const first = { [clientIpHeader]: '192.0.2.20' };
     expect(await exhaustQueries(first)).toBe(QUERY_LIMIT);
 
-    const other = await call('/datafn/query', { [clientIpHeader]: '192.0.2.21' }, objectiveQuery);
+    const other = await post('/datafn/query', { [clientIpHeader]: '192.0.2.21' }, objectiveQuery);
     expect(other.status).not.toBe(429);
   });
 });

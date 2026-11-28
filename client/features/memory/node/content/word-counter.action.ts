@@ -37,9 +37,11 @@ export function wordCounter(
     return words.filter((word) => word.length > 0).length;
   }
 
+  /**
+   * Counts the visible text as it is. It comes from text nodes, so it is never
+   * parsed as HTML: a note can contain text that looks like markup.
+   */
   function updateCounts() {
-    // Already plain text from text nodes: never parse it as HTML, since a note
-    // can contain text that looks like markup.
     const visibleContent = getVisibleContent(node);
     const wordCount = countWords(visibleContent);
     const charCount = visibleContent.length;
