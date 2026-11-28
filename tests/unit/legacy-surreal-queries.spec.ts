@@ -135,6 +135,15 @@ describe("toSurqlLiteral", () => {
     expect(performance.now() - started).toBeLessThan(2000);
   });
 
+  it.each(["access", "auth", "token", "session"])("refuses the protected parameter %s", (name) => {
+    expect(() => toQueryStatements({ [name]: "x" })).toThrow(/Invalid query variable/);
+  });
+
+  it("keeps sparse array positions as null", () => {
+    expect(toSurqlLiteral(new Array(2))).toBe("[null, null]");
+    expect(toQueryStatements({ a: new Array(2) }).lets).toEqual(["LET $a = [null, null];"]);
+  });
+
   it("reserves variable names starting with __", () => {
     expect(() => toQueryStatements({ __a: "x" })).toThrow(/Invalid query variable/);
   });

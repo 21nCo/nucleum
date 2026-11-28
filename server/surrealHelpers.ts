@@ -20,6 +20,8 @@ const REGION_CODES: ReadonlySet<string> = new Set(
 );
 const IDENTIFIER = /^[A-Za-z0-9_]+$/;
 const VARIABLE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+/** Parameter names SurrealDB 2.3.3 reserves; LET refuses to set them. */
+const PROTECTED_PARAMS: ReadonlySet<string> = new Set(["access", "auth", "token", "session"]);
 
 /** True for a region the client may name: a code in deployment/regions.json or "global". */
 export function isKnownRegion(region: unknown): region is string {
@@ -135,14 +137,14 @@ function isSurrogate(codePoint: number) {
 }
 
 /**
- * Query variables, validated: names must be identifiers not starting with
- * "__" (reserved for the RPC variables), and `undefined` values are left out
- * (they read as NONE).
+ * Query variables, validated: names must be identifiers, not start with "__"
+ * (reserved for the RPC variables) and not be one of SurrealDB's protected
+ * parameters; `undefined` values are left out (they read as NONE).
  */
 export function toQueryVars(vars?: QueryVars) {
   const result: QueryVars = {};
   for (const [name, value] of Object.entries(vars ?? {})) {
-    if (!VARIABLE_NAME.test(name) || name.startsWith("__")) {
+    if (!VARIABLE_NAME.test(name) || name.startsWith("__") || PROTECTED_PARAMS.has(name)) {
       throw new ValidationError(`Invalid query variable ${name}`);
     }
     if (value !== undefined) result[name] = value;
@@ -169,7 +171,7 @@ export function toSurqlLiteral(value: unknown): string {
   }
   if (value instanceof Date) return JSON.stringify(value.toISOString());
   if (Array.isArray(value)) {
-    return `[${value.map((item) => (item === undefined ? "null" : toSurqlLiteral(item))).join(", ")}]`;
+    return `[${Array.from(value, (item) => (item === undefined ? "null" : toSurqlLiteral(item))).join(", ")}]`;
   }
   if (typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
     const entries = Object.entries(value as Record<string, unknown>)
@@ -208,7 +210,7 @@ export function toQueryStatements(vars?: QueryVars) {
     }
     if (value instanceof Date) return expression(value.toISOString());
     if (Array.isArray(value)) {
-      return `[${value.map((item) => (item === undefined ? "null" : expression(item))).join(", ")}]`;
+      return `[${Array.from(value, (item) => (item === undefined ? "null" : expression(item))).join(", ")}]`;
     }
     if (typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype) {
       const entries = Object.entries(value as Record<string, unknown>)
