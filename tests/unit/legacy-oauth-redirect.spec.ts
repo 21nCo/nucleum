@@ -172,7 +172,9 @@ describe("buildOAuthRedirectResponse", () => {
       vi.fn().mockResolvedValue(signedIn),
       allowlist
     );
-    expect(response.headers.Location).toContain("https://web.memotron.app/oauth?token=");
+    expect(response.headers).toEqual({
+      Location: expect.stringContaining("https://web.memotron.app/oauth?token=")
+    });
   });
 
   it("answers 400 when neither state nor the API host gives a trusted target", async () => {
