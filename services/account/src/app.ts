@@ -52,6 +52,8 @@ import type { AccountFileProcessing } from "./files/processing.js";
 import { createAccountFileFn } from "./files/server.js";
 import { registerAccountFileRoutes } from "./files/routes.js";
 import { registerInterfaceApiRoutes } from "./api/routes.js";
+import { registerInterfaceMcpRoutes } from "./mcp/routes.js";
+import type { InterfaceApiServices } from "./api/router.js";
 
 /** Required infrastructure dependencies for the account app. */
 export type AccountSyncDatabaseProvider =
@@ -498,20 +500,19 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
     getSyncServer
   });
   registerAccountFileRoutes({ app, getFileFn });
-  registerInterfaceApiRoutes({
-    app,
-    services: {
-      authenticate: (request) => auth.provider.authenticate(request),
-      getSyncServer,
-      regionId,
-      idempotencyStore: services.infra.stores.atomicKv,
-      getSearchIndex: () => services.getSyncSearchIndex?.(),
-      readStored: services.readSyncRecord,
-      findStored: services.findSyncRecords,
-      inWriteTransaction: services.inSyncWriteTransaction,
-      logError: (message, failure) => logger.error(message, { failure })
-    }
-  });
+  const interfaceServices: InterfaceApiServices = {
+    authenticate: (request) => auth.provider.authenticate(request),
+    getSyncServer,
+    regionId,
+    idempotencyStore: services.infra.stores.atomicKv,
+    getSearchIndex: () => services.getSyncSearchIndex?.(),
+    readStored: services.readSyncRecord,
+    findStored: services.findSyncRecords,
+    inWriteTransaction: services.inSyncWriteTransaction,
+    logError: (message, failure) => logger.error(message, { failure })
+  };
+  registerInterfaceApiRoutes({ app, services: interfaceServices });
+  registerInterfaceMcpRoutes({ app, services: interfaceServices });
   registerAccountAuthRoutes({ app, auth });
 }
 
