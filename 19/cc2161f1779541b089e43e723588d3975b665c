@@ -1,0 +1,40 @@
+tests/unit/legacy-surreal-queries.spec.ts
+  s_69892bdd7e1600::t_cf8e38c6b90d31 1-177
+  s_69892bdd7e1600::t_3783ad2f32febb 178-183
+server/common/account/account.type.ts
+  s_69892bdd7e1600::t_75abfe9b7a5671 6-7,10-12
+server/common/account/index.ts
+  s_69892bdd7e1600::t_b33def9f4c4681 14,138-139
+server/common/plan/modify/index.ts
+  s_69892bdd7e1600::t_703c0133e04a10 130
+server/common/plan/plan.utils.ts
+  s_69892bdd7e1600::t_84f1d469a2d862 7-12
+server/common/plan/restore/index.ts
+  s_69892bdd7e1600::t_7d99cb16c9ce40 56,64-65
+server/common/plan/subscribe/index.ts
+  s_69892bdd7e1600::t_d71669657aff20 1,21-27,29,129-139,143-151
+server/common/plan/verify/index.ts
+  s_69892bdd7e1600::t_badba277ec2971 258-259,282
+server/common/user/user.ts
+  s_69892bdd7e1600::t_b8427b6c1db7cc 2,4-8,10
+server/database/providers/surreal.provider.ts
+  s_69892bdd7e1600::t_3f0506bbd2b026 18,40-46,70-80,82,84,86,137,152-153,162-163,178-183,191-205,220-221,228,238-239,254-255,265-273,282-289,298,314-315,327-331,340,342,345-350,360-361,371-375,384-385,395-399
+server/surrealHelpers.ts
+  s_69892bdd7e1600::t_3a7ac2b1fc19ad 8-9,13-14,17-77,93,96,104,108-109,124-128,132-133,146-150,153-155,159-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "19cc2161f1779541b089e43e723588d3975b665c",
+  "prompts": {},
+  "sessions": {
+    "s_69892bdd7e1600": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9539d20f-ea7d-473b-88ed-1aa7389830e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
