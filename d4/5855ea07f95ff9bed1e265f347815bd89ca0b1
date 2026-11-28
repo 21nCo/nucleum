@@ -1,0 +1,23 @@
+services/account/src/app.ts
+  s_c50be67c2560d2::t_04209c9ce61f53 515
+services/account/src/mcp/mcp.test.ts
+  s_c50be67c2560d2::t_1a678ba5b832f8 289-360
+services/account/src/mcp/routes.ts
+  s_c50be67c2560d2::t_5f2e13bfae113b 16-21,42,48,61-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d45855ea07f95ff9bed1e265f347815bd89ca0b1",
+  "prompts": {},
+  "sessions": {
+    "s_c50be67c2560d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7c1efe12-3b9a-4056-8ed2-fe31abb68d2c",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
