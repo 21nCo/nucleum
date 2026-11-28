@@ -10,9 +10,9 @@ import {
   expectPinnedGoalVisible,
   getPinnedGoal,
   openQuickFocusPanelViaTopNav,
+  readPersistedSessionSnapshot,
   waitForSessionElapsed
 } from "./focus-test-helpers";
-import { readPersistedSessionSnapshot } from "./active-session/session-test-support";
 
 let e2eSeed: E2ESeed;
 

@@ -3,6 +3,7 @@ import { ensureInAppOnHome } from "../../utils/helpers";
 import {
   addAdvancedFocusItems,
   collectPageErrors,
+  readPersistedSessionSnapshot,
   readSessionRuntime,
   reloadActiveSession,
   resetFocusSession,
@@ -154,9 +155,22 @@ test("restores the active session in a second tab", async ({
   await startAdvancedFocus(page);
   await waitForSessionElapsed(page, 1);
   const firstState = await readSessionRuntime(page);
+  expect(firstState.currentSessionId).toBeTruthy();
+  await expect
+    .poll(() => readPersistedSessionSnapshot(page), {
+      message:
+        "The first tab saves the running session before the second tab opens"
+    })
+    .toMatchObject({
+      currentSessionId: firstState.currentSessionId,
+      isSessionRunning: true
+    });
 
   const secondPage = await context.newPage();
-  await ensureInAppOnHome(secondPage);
+  await secondPage.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(
+    secondPage.getByRole("button", { name: "Finish", exact: true })
+  ).toBeVisible({ timeout: 20_000 });
   await expect
     .poll(async () => (await readSessionRuntime(secondPage)).currentSessionId, {
       message:
@@ -168,9 +182,9 @@ test("restores the active session in a second tab", async ({
   const secondState = await readSessionRuntime(secondPage);
   expect(secondState.currentFocusItem?.id).toBe(fixture.objective.id);
   expect(secondState.isSessionRunning).toBe(true);
-  await expect(
-    secondPage.getByRole("button", { name: /^\d{2}:\d{2}(?::\d{2})?$/ }).last()
-  ).toBeVisible({ timeout: 15_000 });
+  await expect(secondPage.getByText(/^Session: \d{2}:\d{2}/)).toBeVisible({
+    timeout: 15_000
+  });
   await expect(
     getCurrentFocusItemRow(secondPage, fixture.objective.label)
   ).toBeVisible();

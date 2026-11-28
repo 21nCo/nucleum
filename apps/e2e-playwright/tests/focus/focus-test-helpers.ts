@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { Action } from "@nucleum/client/config/action.enum";
+import { Resource } from "@nucleum/schema";
 import {
   ensureInAppOnHome,
   LibraryTab,
@@ -11,6 +12,9 @@ import { resolveRepoFsImportPath } from "../utils/repo-fs";
 
 const sessionStorePath = resolveRepoFsImportPath(
   "client/features/focus/session.store.ts"
+);
+const datafnStorePath = resolveRepoFsImportPath(
+  "client/datafn/datafn.store.ts"
 );
 const pointronStorePath = resolveRepoFsImportPath(
   "client/features/focus/preferences.store.ts"
@@ -231,13 +235,55 @@ export async function showFocusFullscreen(page: Page) {
   ).toBeVisible({ timeout: 15_000 });
 }
 
-/** Reloads the app and waits for the restored active-session UI. */
+/** Reads the durable snapshot used to restore Focus after reload. */
+export async function readPersistedSessionSnapshot(page: Page) {
+  return page.evaluate(
+    async ({ modulePath, key }) => {
+      const { datafn } = await import(modulePath);
+      const snapshot = await datafn.kv.get(key);
+      if (!snapshot || typeof snapshot !== "object") return undefined;
+      return {
+        currentFocusItemId: snapshot.currentFocusItem?.id?.toString(),
+        currentSessionId: snapshot.currentSessionId?.toString(),
+        isQuickStartOn: Boolean(snapshot.isQuickStartOn),
+        isSessionRunning: Boolean(snapshot.isSessionRunning)
+      };
+    },
+    { modulePath: datafnStorePath, key: Resource.pointSessionSnapshotv2 }
+  );
+}
+
+/** Reloads and waits for the same session to return in the player or top bar. */
 export async function reloadActiveSession(page: Page) {
+  const before = await readSessionRuntime(page);
+  expect(before.currentSessionId).toBeTruthy();
+  await expect
+    .poll(() => readPersistedSessionSnapshot(page), {
+      message: "The running session is persisted before reload"
+    })
+    .toMatchObject({
+      currentSessionId: before.currentSessionId,
+      isSessionRunning: true
+    });
   await page.reload({ waitUntil: "domcontentloaded" });
-  await ensureInAppOnHome(page);
-  await expect(
-    page.getByRole("button", { name: /^\d{2}:\d{2}(?::\d{2})?$/ }).last()
-  ).toBeVisible({ timeout: 15_000 });
+  await expectAnyLocatorVisible(
+    [
+      page.getByRole("button", { name: "Finish", exact: true }),
+      page.getByTestId("focus-top-nav-timer"),
+      page.getByTestId("top-bar").getByRole("button", {
+        name: /^\d{2}:\d{2}(?::\d{2})?$/
+      })
+    ],
+    { timeout: 20_000 }
+  );
+  await expect
+    .poll(() => readSessionRuntime(page), {
+      message: "The same running session is restored after reload"
+    })
+    .toMatchObject({
+      currentSessionId: before.currentSessionId,
+      isSessionRunning: true
+    });
 }
 
 /**
