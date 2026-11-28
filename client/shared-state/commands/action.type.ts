@@ -24,6 +24,8 @@ export type IAction = {
    * If true, the action will not be shown in command bar.
    */
   isMeta?: boolean;
+  /** Only shown with a matching resource context; receives that record's id. */
+  resourceContext?: Resource;
   /**
    * @deprecated -
    * TODO - check the need for this

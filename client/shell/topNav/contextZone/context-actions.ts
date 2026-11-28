@@ -17,6 +17,8 @@ export type ContextActionsRegistration = {
   resource: string;
   /** Resolves the same groups the resource's "..." menu shows. */
   resolve: () => IContextMenu;
+  /** Supplies record identity only when the pane has no resource menu. */
+  isFallback?: boolean;
   /** Called with the item value after an item runs, as the menu does. */
   onAction?: (value: IContextMenuItem["value"]) => void;
 };
@@ -39,7 +41,18 @@ let nextKey = 0;
 export const contextActions = {
   active: derived(
     [entries, contextZone.activePaneId, contextZone.visibleLayers],
-    ([list, pane, visible]) => resolveContextZoneEntry(list, pane, visible)
+    ([list, pane, visible]) =>
+      resolveContextZoneEntry(
+        list.filter(
+          (entry) =>
+            !entry.isFallback ||
+            !list.some(
+              (other) => other.pane.id === entry.pane.id && !other.isFallback
+            )
+        ),
+        pane,
+        visible
+      )
   ),
   /** Registers a resource's actions for a pane; returns its unregister function. */
   register(pane: ContextZonePane, registration: ContextActionsRegistration) {
@@ -50,6 +63,7 @@ export const contextActions = {
         id: { get: () => registration.id, enumerable: true },
         resource: { get: () => registration.resource, enumerable: true },
         resolve: { get: () => registration.resolve, enumerable: true },
+        isFallback: { get: () => registration.isFallback, enumerable: true },
         onAction: { get: () => registration.onAction, enumerable: true }
       }
     );

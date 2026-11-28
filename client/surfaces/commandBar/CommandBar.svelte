@@ -352,6 +352,7 @@
         search={value}
         {scope}
         {isContextShown}
+        hasContextRecord={!!(contextRecord && $contextRecord?.resource)}
         isCommandsOnly={isCommandsMode}
         bind:this={resultsRef}
         bind:selectedKind

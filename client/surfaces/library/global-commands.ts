@@ -52,6 +52,7 @@ export const libraryCommands = {
     component: DatafnSharePanel,
     label: "Share",
     icon: "share",
+    resourceContext: resource,
     type: ActionType.MODAL,
     componentParams: {
       resource
