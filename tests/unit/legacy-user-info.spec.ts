@@ -17,6 +17,11 @@ describe("frameNonSensitiveUserInfo", () => {
     expect(stringify(framed)).not.toContain("$NONE");
   });
 
+  it("leaves out unset email parts too", () => {
+    const { emailParts, ...rest } = base;
+    expect(frameNonSensitiveUserInfo(rest as any)).toEqual(rest);
+  });
+
   it("returns region, bootstrap state and picture once they are set", () => {
     expect(
       frameNonSensitiveUserInfo({

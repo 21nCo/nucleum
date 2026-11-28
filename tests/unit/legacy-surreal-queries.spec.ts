@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   decodeLegacyStringLiteral,
   isKnownRegion,
+  toLetStatements,
   toQueryVars,
+  toSurqlLiteral,
   userRecord,
   performQueryOnMasterDb,
   performQueryOnRegionalDb,
@@ -13,19 +15,24 @@ import { SurrealDatabaseProvider } from "../../server/database/providers/surreal
 import { performUserAccountAction } from "../../server/common/account";
 import { CONTEXT } from "../../server/common/account/account.type";
 
+const authorizeMock = vi.fn(async (): Promise<any> => null);
+
 vi.mock("$lib/server/common/auth", () => ({
-  authorize: vi.fn(async () => null),
-  generateToken: vi.fn()
+  authorize: () => authorizeMock(),
+  generateToken: vi.fn(async () => ({ token: "test-session-token" }))
 }));
 
 const INJECTION = 'x"); DELETE user; --';
 
-type Sent = { url: URL; body: string; vars: Record<string, unknown> };
+/** The request as the database sees it: the query with its USE line, and the LET-bound variables. */
+type Sent = { url: URL; body: string; vars: Record<string, unknown>; lets: string[] };
 let sent: Sent[];
 let answer: (sent: Sent) => unknown[];
 
 beforeEach(() => {
   sent = [];
+  authorizeMock.mockReset();
+  authorizeMock.mockResolvedValue(null);
   answer = () => [{ result: [] }, { result: [] }];
   vi.stubEnv("DOMAIN", "db-test.example");
   vi.stubEnv("ADMIN_NS", "admin");
@@ -37,11 +44,30 @@ beforeEach(() => {
       const url = new URL(String(input));
       const rpc = JSON.parse(String(init?.body ?? "{}"));
       expect(rpc.method).toBe("query");
-      const request = { url, body: rpc.params[0], vars: rpc.params[1] };
+      expect(rpc.params[1]).toEqual({});
+      const lines = String(rpc.params[0]).split("\n");
+      const literal = (line: string) => {
+        const match = /^LET \$(\w+) = (.*);$/.exec(line);
+        if (!match) return undefined;
+        try {
+          return [match[1], JSON.parse(match[2])] as const;
+        } catch {
+          return undefined;
+        }
+      };
+      const lets = lines.filter((line) => literal(line));
+      const vars = Object.fromEntries(lets.map((line) => literal(line)!));
+      const body = lines.filter((line) => !literal(line)).join(" ");
+      const request = { url, body, vars, lets };
       sent.push(request);
       return new Response(
         JSON.stringify({
-          result: [{ result: null }, { result: null }, ...answer(request)]
+          result: [
+            { result: null },
+            { result: null },
+            ...lets.map(() => ({ result: null })),
+            ...answer(request)
+          ]
         }),
         { headers: { "Content-Type": "application/json" } }
       );
@@ -55,6 +81,32 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+describe("toSurqlLiteral", () => {
+  it("writes plain values as JSON-compatible SurrealQL literals", () => {
+    expect(toSurqlLiteral("secret:123456")).toBe('"secret:123456"');
+    expect(toSurqlLiteral(INJECTION)).toBe(JSON.stringify(INJECTION));
+    expect(toSurqlLiteral({ a: [1, "a:b", null, true], skip: undefined })).toBe(
+      '{"a": [1, "a:b", null, true]}'
+    );
+    expect(toSurqlLiteral(new Date("2026-01-01T00:00:00.000Z"))).toBe(
+      '"2026-01-01T00:00:00.000Z"'
+    );
+  });
+
+  it.each([NaN, Infinity, () => 1, Symbol("x"), BigInt(1), new Map()])(
+    "refuses %s",
+    (value) => {
+      expect(() => toSurqlLiteral(value)).toThrow();
+    }
+  );
+
+  it("never lets a literal span lines", () => {
+    expect(toLetStatements({ a: "line\nnext", b: undefined })).toEqual([
+      'LET $a = "line\\nnext";'
+    ]);
+  });
 });
 
 describe("toQueryVars", () => {
@@ -90,6 +142,7 @@ describe("decodeLegacyStringLiteral", () => {
     expect(decodeLegacyStringLiteral("a\\u{}b")).toBe("a\u0000b");
     expect(decodeLegacyStringLiteral("\\uD83D\\uDE00")).toBe("😀");
     expect(decodeLegacyStringLiteral("\\uD83Dx")).toBeUndefined();
+    expect(decodeLegacyStringLiteral("\\uD83D\\u0041")).toBe(String.fromCodePoint(0x11841));
     expect(decodeLegacyStringLiteral("\\uDE00")).toBeUndefined();
     expect(decodeLegacyStringLiteral("\\u{D83D}")).toBeUndefined();
     expect(decodeLegacyStringLiteral("\\u{110000}")).toBeUndefined();
@@ -139,12 +192,18 @@ describe("database host by region", () => {
   });
 
   it("bootstraps an account that names no region into the global database", async () => {
-    await performUserAccountAction("Bearer test-token", {
+    authorizeMock.mockResolvedValue({ id: "abc", region: "global" });
+    answer = ({ body }) =>
+      body.includes("update type::record($user)")
+        ? [{ result: [{ id: "user:abc", region: "global" }] }, { result: [] }]
+        : [{ result: [] }];
+    const response = await performUserAccountAction("Bearer test-token", {
       action: "bootstrap",
       context: { host: "web.memotron.app" }
-    }).catch(() => undefined);
-    const { authorize } = await import("$lib/server/common/auth");
-    expect(authorize).toHaveBeenCalled();
+    });
+    expect(response).toEqual({ token: "test-session-token" });
+    const update = sent.find(({ body }) => body.includes("update type::record($user)"));
+    expect(update?.vars).toMatchObject({ user: "user:abc", region: "global" });
   });
 
   it.each([false, 0, null])("refuses a bootstrap region of %s", async (region) => {
@@ -170,7 +229,7 @@ describe("database host by region", () => {
 });
 
 describe("bound queries", () => {
-  it("sends variables in the URL and keeps them out of the query text", async () => {
+  it("sets variables with LET literals and sends nothing in the URL", async () => {
     await performQueryOnMasterDb("SELECT * FROM user WHERE email = $email", {
       email: INJECTION
     });
@@ -179,6 +238,7 @@ describe("bound queries", () => {
     expect(sent[0].url.search).toBe("");
     expect(sent[0].url.host).toBe("db.db-test.example");
     expect(sent[0].vars).toEqual({ email: INJECTION });
+    expect(sent[0].lets).toEqual([`LET $email = ${JSON.stringify(INJECTION)};`]);
     expect(sent[0].body).toBe(
       "USE NAMESPACE admin; USE DATABASE ADMIN; SELECT * FROM user WHERE email = $email"
     );
