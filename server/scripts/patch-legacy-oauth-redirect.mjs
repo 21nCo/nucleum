@@ -37,7 +37,8 @@ export async function compileRedirectModule() {
 /**
  * Returns the patched bundle source, or throws if the bundle does not have the
  * expected shape. The chain is resolved on the parsed bundle, starting from the
- * exported Lambda handler: `handler:()=>H`; H returns a call `L(e,W,!1)`; W is
+ * exported Lambda handler: `handler:()=>H`; H's only return statement ends in
+ * the call `L(e,W,!1)` (the last operand of a comma expression); W is
  * `async function W(e){return R(e,p,d)}`; R reads `e.state.split(":")[1]` and
  * awaits the sign-in step S exactly once with its own arguments. Each name must
  * be declared by exactly one function in the bundle.
@@ -83,19 +84,17 @@ export function patchBundle(source, moduleSource) {
   }
   const handler = fn(handlers[0], "Lambda handler");
   const [event] = paramNames(handler, 1, "Lambda handler");
-  const dispatches = callsIn(handler.body, (call) => {
-    const [a, b, c] = call.arguments;
-    return (
-      call.arguments.length === 3 &&
-      isIdentifier(a, event) &&
-      ts.isIdentifier(b) &&
-      isFalse(c)
-    );
-  });
-  if (dispatches.length !== 1) {
-    throw new Error(`expected one unauthenticated dispatch in ${handlers[0]}, found ${dispatches.length}`);
+  const dispatch = returnedCall(handler);
+  if (
+    !dispatch ||
+    dispatch.arguments.length !== 3 ||
+    !isIdentifier(dispatch.arguments[0], event) ||
+    !ts.isIdentifier(dispatch.arguments[1]) ||
+    !isFalse(dispatch.arguments[2])
+  ) {
+    throw new Error(`${handlers[0]} does not return an unauthenticated dispatch L(e,W,!1)`);
   }
-  const callbackName = dispatches[0].arguments[1].text;
+  const callbackName = dispatch.arguments[1].text;
 
   const wrapper = fn(callbackName, "wrapper");
   const [wrapperEvent] = paramNames(wrapper, 1, "wrapper");
@@ -156,16 +155,35 @@ function visit(node, callback) {
   ts.forEachChild(node, (child) => visit(child, callback));
 }
 
-/** Calls in `body` that match, not counting calls inside nested functions. */
-function callsIn(body, matches) {
-  const found = [];
-  const walk = (node) => {
-    if (node !== body && ts.isFunctionLike(node)) return;
-    if (ts.isCallExpression(node) && matches(node)) found.push(node);
-    ts.forEachChild(node, walk);
+/**
+ * The call whose result a function returns: its body must have exactly one
+ * return statement (outside nested functions), as its last statement, and the
+ * returned expression (or the last operand of a comma expression) must be a call.
+ */
+function returnedCall(node) {
+  const returns = [];
+  const walk = (child) => {
+    if (child !== node.body && ts.isFunctionLike(child)) return;
+    if (ts.isReturnStatement(child)) returns.push(child);
+    ts.forEachChild(child, walk);
   };
-  if (body) walk(body);
-  return found;
+  walk(node.body);
+  const statements = node.body.statements;
+  if (returns.length !== 1 || statements[statements.length - 1] !== returns[0]) {
+    return undefined;
+  }
+  let expression = returns[0].expression;
+  while (expression && ts.isParenthesizedExpression(expression)) {
+    expression = expression.expression;
+  }
+  while (
+    expression &&
+    ts.isBinaryExpression(expression) &&
+    expression.operatorToken.kind === ts.SyntaxKind.CommaToken
+  ) {
+    expression = expression.right;
+  }
+  return expression && ts.isCallExpression(expression) ? expression : undefined;
 }
 
 function paramNames(node, count, what) {

@@ -23,7 +23,9 @@ function legacyBundleWith(names: { signIn: string; handler: string; wrapper: str
     // A decoy with the same shape that the Lambda handler never calls.
     `async function decoy(e){return ${handler}(e,ev,hO)}`,
     "async function run(e,t){return t(e.body)}",
-    `async function lambdaHandler(e){return ev=e.provider,hO=e.domain,run(e,${wrapper},!1)}`,
+    "function record(){}",
+    // A call of the same shape that is not the handler's return value.
+    `async function lambdaHandler(e){record(e,decoy,!1);return ev=e.provider,hO=e.domain,run(e,${wrapper},!1)}`,
     // Same dispatch shape outside the exported handler: must not be followed.
     "var later=(e)=>run(e,decoy,!1);",
     `async function ${wrapper}(e){return ${handler}(e,ev,hO);}`,
@@ -91,6 +93,15 @@ describe("patch-legacy-oauth-redirect", () => {
       "async function pYe(e){return __legacyOAuthRedirect.buildOAuthRedirectResponse(e,ev,hO,ine);}"
     );
     expect(patched).toContain("async function decoy(e){return ane(e,ev,hO)}");
+  });
+
+  it("refuses a handler whose return value is not the dispatch", () => {
+    expect(() =>
+      patchBundle(
+        legacyBundle.replace("run(e,pYe,!1)}", "run(e,pYe)}"),
+        ""
+      )
+    ).toThrow(/does not return an unauthenticated dispatch/);
   });
 
   it("keeps the strict-mode prologue first", async () => {
