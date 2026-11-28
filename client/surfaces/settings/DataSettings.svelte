@@ -11,7 +11,7 @@
   import StorageActions from "./data/StorageActions.svelte";
 </script>
 
-<main class="flex flex-col gap-12 text-left">
+<main class="flex w-full min-w-0 flex-col gap-12 text-left">
   <BackupAndRestore />
   <E2eeSettings />
   <section class="flex flex-col gap-4">
