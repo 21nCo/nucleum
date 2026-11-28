@@ -1,6 +1,6 @@
 import { BillingCycle } from "@nucleum/schema/account/subscription";
 import { PlanType } from "@nucleum/schema/account/subscription";
-import { performQueryOnMasterDb, recordKey } from "$lib/server/surrealHelpers";
+import { performQueryOnMasterDb, userRecord } from "$lib/server/surrealHelpers";
 import { Agent } from "../../account/account.type";
 import {
   resolvePromotePlanQuery,
@@ -61,9 +61,9 @@ async function retrieveUserPlan(id: string) {
 }
 
 async function retrieveUserTransactions(userId: string) {
-  const query = `SELECT * FROM transaction WHERE userId = type::thing("user", $userId) ORDER BY createdAt DESC`;
+  const query = `SELECT * FROM transaction WHERE userId = type::record($user) ORDER BY createdAt DESC`;
   const transactionResult = await performQueryOnMasterDb(query, {
-    userId: recordKey(userId)
+    user: userRecord(userId)
   });
   if (!transactionResult || !transactionResult[0]?.result) {
     return [];

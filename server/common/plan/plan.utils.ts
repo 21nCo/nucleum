@@ -3,13 +3,13 @@ import { BillingCycle } from "@nucleum/schema/account/subscription";
 import { PlanType } from "@nucleum/schema/account/subscription";
 import { PaymentProvider } from "@nucleum/schema/account/payment-provider";
 import { paymentProductsList } from "./paymentProducts";
-import { recordKey } from "$lib/server/surrealHelpers";
+import { userRecord } from "$lib/server/surrealHelpers";
 
 /** Query and bound variables that read a user's plan. */
-export function resolvePlanQuery(userId: string): [string, { userId: string }] {
+export function resolvePlanQuery(userId: string): [string, { user: string }] {
   return [
-    `select id, context, userPlan.* as userPlan from type::thing("user", $userId);`,
-    { userId: recordKey(userId) }
+    `select id, context, userPlan.* as userPlan from type::record($user);`,
+    { user: userRecord(userId) }
   ];
 }
 

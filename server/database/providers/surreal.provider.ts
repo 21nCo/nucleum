@@ -19,7 +19,7 @@ import {
   decodeLegacyStringLiteral,
   performQueryOnMasterDb,
   performQueryOnRegionalDb,
-  recordKey
+  userRecord
 } from "$lib/server/surrealHelpers";
 import { performQueryOnBehalfOfUser } from "$lib/server/common/user/user";
 import { resolvePlanQuery } from "$lib/server/common/plan/plan.utils";
@@ -39,9 +39,9 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    */
   async log(userId: string, context: IActivity): Promise<any> {
     const timestamp = new Date().toISOString();
-    const query = `select id from type::thing("user", $userId); create activity set userId = type::thing("user", $userId), timestamp = $timestamp, context = $context, activity = $activity;`;
+    const query = `select id from type::record($user); create activity set userId = type::record($user), timestamp = $timestamp, context = $context, activity = $activity;`;
     return performQueryOnMasterDb(query, {
-      userId: recordKey(userId),
+      user: userRecord(userId),
       timestamp,
       context,
       activity: context.activity ?? "unknown"
@@ -83,7 +83,7 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
     if (isOAuth) {
       query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5($email); IF count($user) == 0 THEN (CREATE type::thing("user", $guestId) SET emailhash = crypto::md5($email), emailParts = $emailParts, nickName = $nickName, oAuthId = $oAuthId, isOAuth = true, profilePictureUrl = $profilePictureUrl, joinDate = $joinDate, context = $context) ELSE (RETURN {userCount: count($user), user: $user}) END`;
     } else {
-      query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5($email); IF count($user) == 0 THEN (CREATE type::thing("user", $guestId) SET emailhash = crypto::md5($email), pass = crypto::argon2::generate($password), passhash = crypto::md5($password), emailParts = $emailParts, nickName = $nickName, profilePictureUrl = $profilePictureUrl, joinDate = $joinDate, context = $context) ELSE (RETURN {userCount: count($user), user: $user}) END`;
+      query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5($email); IF count($user) == 0 THEN (CREATE type::thing("user", $guestId) SET emailhash = crypto::md5($email), pass = crypto::argon2::generate($password), passhash = crypto::md5($password), passVersion = 2, emailParts = $emailParts, nickName = $nickName, profilePictureUrl = $profilePictureUrl, joinDate = $joinDate, context = $context) ELSE (RETURN {userCount: count($user), user: $user}) END`;
     }
     const response = await performQueryOnMasterDb(query, vars);
     if (response?.[1]?.result && response[1].result.userCount === undefined) {
@@ -177,9 +177,9 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    * @returns Promise resolving to the updated user data
    */
   async bootstrapUser(userId: string, updates: any): Promise<any> {
-    const query = `update type::thing("user", $userId) set region = $region, userPlan = type::thing("userPlan", $userPlanId), isBootstrapped = true; select context.guest.* as guest from type::thing("user", $userId);`;
+    const query = `update type::record($user) set region = $region, userPlan = type::thing("userPlan", $userPlanId), isBootstrapped = true; select context.guest.* as guest from type::record($user);`;
     const response = await performQueryOnMasterDb(query, {
-      userId: recordKey(userId),
+      user: userRecord(userId),
       region: updates.region,
       userPlanId: updates.userPlanId
     });
@@ -238,26 +238,38 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    */
   async authenticateUser(email: string, password: string): Promise<any> {
     const query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5($email); IF count($user) == 1 AND crypto::argon2::compare($user[0].pass, $password) THEN (SELECT * FROM $user) ELSE IF count($user) == 1 THEN (RETURN -1) ELSE (RETURN count($user)) END`;
-    const check = async (candidate: string) => {
-      const result = await performQueryOnMasterDb(query, {
-        email,
-        password: candidate
-      });
-      return result?.[1]?.result?.[0] ?? result[1].result;
-    };
-    const outcome = await check(password);
-    // Passwords used to be pasted into a string literal, so a stored hash may
-    // be of the escape-decoded password. Accept that once and rehash.
-    const legacy = outcome === -1 ? decodeLegacyStringLiteral(password) : undefined;
-    if (legacy === undefined || legacy === password) return outcome;
-    const legacyOutcome = await check(legacy);
-    if (legacyOutcome?.id) {
+    const result = await performQueryOnMasterDb(query, { email, password });
+    const outcome = result?.[1]?.result?.[0] ?? result[1].result;
+    if (outcome?.id && outcome.passVersion === undefined) {
       await performQueryOnMasterDb(
-        `UPDATE type::record($id) SET pass = crypto::argon2::generate($password), passhash = crypto::md5($password)`,
-        { id: legacyOutcome.id, password }
+        `UPDATE type::record($id) SET passVersion = 2 WHERE passVersion IS NONE`,
+        { id: outcome.id }
       );
     }
-    return legacyOutcome;
+    if (outcome !== -1) return outcome;
+    return this.authenticateLegacyPassword(email, password, outcome);
+  }
+
+  /**
+   * Passwords used to be pasted into a SurrealQL string literal, so a hash
+   * stored before `passVersion` 2 may be of the escape-decoded password. For
+   * those accounts only, accept the decoded form once and, in the same
+   * statement, store a hash of the password as typed and mark it version 2.
+   */
+  private async authenticateLegacyPassword(
+    email: string,
+    password: string,
+    outcome: unknown
+  ) {
+    const legacy = decodeLegacyStringLiteral(password);
+    if (legacy === undefined || legacy === password) return outcome;
+    const query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5($email) AND passVersion IS NONE; IF count($user) == 1 AND crypto::argon2::compare($user[0].pass, $legacy) THEN (UPDATE $user[0].id SET pass = crypto::argon2::generate($password), passhash = crypto::md5($password), passVersion = 2 WHERE passVersion IS NONE RETURN AFTER) ELSE (RETURN -1) END`;
+    const result = await performQueryOnMasterDb(query, {
+      email,
+      legacy,
+      password
+    });
+    return result?.[1]?.result?.[0] ?? outcome;
   }
 
   /**
@@ -295,10 +307,10 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    * @returns Promise resolving to the created user plan
    */
   async createUserPlan(planData: UserPlanCreateData): Promise<any> {
-    const query = `create userPlan content { id: type::thing("userPlan", $id), userId: type::thing("user", $userId), plan: $plan, trialPlan: $trialPlan, discount: $discount }`;
+    const query = `create userPlan content { id: type::thing("userPlan", $id), userId: type::record($user), plan: $plan, trialPlan: $trialPlan, discount: $discount }`;
     return performQueryOnMasterDb(query, {
       id: planData.id,
-      userId: recordKey(planData.userId),
+      user: userRecord(planData.userId),
       plan: planData.plan,
       trialPlan: planData.trialPlan,
       discount: planData.discount
@@ -364,7 +376,6 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
       email: subscriptionData.email,
       context: subscriptionData.context
     });
-    // Callers read the RELATE result first; the LET results come before it.
     return Array.isArray(response) ? response.slice(-1) : response;
   }
 

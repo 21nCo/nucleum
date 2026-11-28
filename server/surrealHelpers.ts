@@ -57,17 +57,13 @@ export function assertIdentifier(value: unknown, label = "id"): string {
 }
 
 /**
- * The key of a record id as the account code passes it around: the part after
- * `user:` of a serialized id, which SurrealDB wraps in `⟨…⟩` (or backticks)
- * when the key is not a plain identifier. Returns the bare key for
- * `type::thing(table, key)`.
+ * The serialized `user:<id>` record id for an account id as the account code
+ * passes it around (the part after `user:`, which keeps SurrealDB's `⟨…⟩`
+ * escaping and numeric keys). Bind it and convert it with `type::record($user)`
+ * so it resolves to the same record the old inline `user:${id}` did.
  */
-export function recordKey(id: string) {
-  const bracketed = /^⟨([\s\S]*)⟩$/.exec(id);
-  if (bracketed) return bracketed[1].replace(/\\([\\⟩])/g, "$1");
-  const backticked = /^`([\s\S]*)`$/.exec(id);
-  if (backticked) return backticked[1].replace(/\\([\\`])/g, "$1");
-  return id;
+export function userRecord(id: string) {
+  return `user:${id}`;
 }
 
 /**
@@ -193,6 +189,11 @@ export async function performAgentProxyQuery(
   });
 }
 
+/**
+ * Runs a query with root credentials through SurrealDB's RPC `query` method.
+ * Returns the per-statement results (the shape /sql returned) without the two
+ * USE statements, or the RPC error.
+ */
 async function performRootQuery(params: DatabaseQueryParams) {
   try {
     let headers = new Headers();
@@ -239,8 +240,6 @@ async function performRootQuery(params: DatabaseQueryParams) {
     } else {
       json = await response.json();
     }
-    // RPC wraps the per-statement results (the same shape /sql returned) in
-    // `result`; the first two are the USE statements.
     if (json && Array.isArray(json.result)) {
       return json.result.slice(2);
     }

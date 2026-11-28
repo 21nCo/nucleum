@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   decodeLegacyStringLiteral,
   isKnownRegion,
-  recordKey,
   toQueryVars,
+  userRecord,
   performQueryOnMasterDb,
   performQueryOnRegionalDb,
   resolveDatabaseInstance
@@ -22,7 +22,6 @@ const INJECTION = 'x"); DELETE user; --';
 
 type Sent = { url: URL; body: string; vars: Record<string, unknown> };
 let sent: Sent[];
-// Per-statement results the stubbed database answers with, after the two USE statements.
 let answer: (sent: Sent) => unknown[];
 
 beforeEach(() => {
@@ -71,12 +70,11 @@ describe("toQueryVars", () => {
   });
 });
 
-describe("recordKey", () => {
-  it("unwraps escaped record keys", () => {
-    expect(recordKey("abc123")).toBe("abc123");
-    expect(recordKey("⟨test-user⟩")).toBe("test-user");
-    expect(recordKey("⟨a\\⟩b⟩")).toBe("a⟩b");
-    expect(recordKey("`test-user`")).toBe("test-user");
+describe("userRecord", () => {
+  it("keeps the serialized key so type::record resolves the same record", () => {
+    expect(userRecord("abc123")).toBe("user:abc123");
+    expect(userRecord("⟨test-user⟩")).toBe("user:⟨test-user⟩");
+    expect(userRecord("123")).toBe("user:123");
   });
 });
 
@@ -160,26 +158,54 @@ describe("bound queries", () => {
 
   const provider = () => new SurrealDatabaseProvider();
 
-  it("binds record keys without their escaping", async () => {
+  it("binds the serialized user record for type::record", async () => {
     await provider().getUserAndPlan("⟨test-user⟩");
-    expect(sent[0].vars).toEqual({ userId: "test-user" });
+    expect(sent[0].vars).toEqual({ user: "user:⟨test-user⟩" });
+    expect(sent[0].body).toContain("type::record($user)");
   });
 
-  it("accepts a password stored from its escape-decoded form once and rehashes it", async () => {
-    answer = ({ vars, body }) => {
-      if (body.includes("UPDATE")) return [{ result: [] }];
-      const matches = vars.password === "a\nb";
-      return [{ result: null }, { result: matches ? [{ id: "user:abc" }] : -1 }];
-    };
+  it("accepts a legacy hash of the escape-decoded password once, rehashing it in the same statement", async () => {
+    answer = ({ body }) =>
+      body.includes("passVersion IS NONE")
+        ? [{ result: null }, { result: [{ id: "user:abc", passVersion: 2 }] }]
+        : [{ result: null }, { result: -1 }];
     const user = await provider().authenticateUser("a@example.com", "a\\nb");
-    expect(user).toEqual({ id: "user:abc" });
-    expect(sent.map((request) => request.vars.password)).toEqual([
-      "a\\nb",
-      "a\nb",
-      "a\\nb"
-    ]);
-    expect(sent[2].body).toContain("crypto::argon2::generate($password)");
-    expect(sent[2].vars.id).toBe("user:abc");
+    expect(user).toEqual({ id: "user:abc", passVersion: 2 });
+    expect(sent).toHaveLength(2);
+    expect(sent[0].vars).toEqual({ email: "a@example.com", password: "a\\nb" });
+    expect(sent[1].vars).toEqual({
+      email: "a@example.com",
+      legacy: "a\nb",
+      password: "a\\nb"
+    });
+    expect(sent[1].body).toContain("AND passVersion IS NONE");
+    expect(sent[1].body).toContain(
+      "SET pass = crypto::argon2::generate($password), passhash = crypto::md5($password), passVersion = 2 WHERE passVersion IS NONE"
+    );
+  });
+
+  it("marks a legacy account as version 2 when its literal password matches", async () => {
+    answer = ({ body }) =>
+      body.includes("UPDATE")
+        ? [{ result: [] }]
+        : [{ result: null }, { result: [{ id: "user:abc" }] }];
+    expect(await provider().authenticateUser("a@example.com", "a\\nb")).toEqual({
+      id: "user:abc"
+    });
+    expect(sent).toHaveLength(2);
+    expect(sent[1].body).toContain("SET passVersion = 2 WHERE passVersion IS NONE");
+    expect(sent[1].vars).toEqual({ id: "user:abc" });
+  });
+
+  it("stores new password hashes as version 2", async () => {
+    await provider().createUserIfNotExists({
+      email: "a@example.com",
+      password: "test-password",
+      guestId: "abc",
+      isOAuth: false,
+      context: {}
+    } as any);
+    expect(sent[0].body).toContain("passVersion = 2");
   });
 
   it("does not retry a wrong password that has no escapes", async () => {
@@ -252,7 +278,6 @@ describe("bound queries", () => {
       expect(request.body).not.toContain("DELETE user");
       expect(request.body).not.toContain(INJECTION);
     }
-    // getDbDefinitions lowercases the app name, so compare case-insensitively.
     expect(
       JSON.stringify(sent.map((request) => request.vars)).toLowerCase()
     ).toContain(JSON.stringify(INJECTION).slice(1, -1).toLowerCase());

@@ -1,5 +1,5 @@
 import { BillingCycle, PlanType } from "@nucleum/schema/account/subscription";
-import { performQueryOnMasterDb, recordKey } from "$lib/server/surrealHelpers";
+import { performQueryOnMasterDb, userRecord } from "$lib/server/surrealHelpers";
 import { PaymentProvider } from "@nucleum/schema/account/payment-provider";
 import { generateSHA256Hash } from "$lib/shared/utils/crypto.utils";
 import { Agent } from "../../account/account.type";
@@ -126,9 +126,9 @@ async function createTransaction(params: {
   status: "pending" | "completed" | "cancelled" | "failed";
 }) {
   const query = `
-    INSERT INTO transaction [{ userId: type::thing("user", $userId), productId: $productId, plan: $plan, cycle: $cycle, discount: $discount, status: $status, createdAt: time::now(), nonce: $nonce, provider: $provider }]`;
+    INSERT INTO transaction [{ userId: type::record($user), productId: $productId, plan: $plan, cycle: $cycle, discount: $discount, status: $status, createdAt: time::now(), nonce: $nonce, provider: $provider }]`;
   const transaction = await performQueryOnMasterDb(query, {
-    userId: recordKey(params.userId),
+    user: userRecord(params.userId),
     productId: params.productId,
     plan: params.plan,
     cycle: params.cycle,
