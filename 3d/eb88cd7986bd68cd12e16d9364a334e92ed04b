@@ -1,0 +1,29 @@
+server/common/plan/plan.utils.ts
+  s_69892bdd7e1600::t_87e14660046e5e 6,12
+server/common/plan/restore/index.ts
+  s_69892bdd7e1600::t_fdd369fa79ccd8 3,65-67
+server/common/plan/subscribe/index.ts
+  s_69892bdd7e1600::t_686184818eae7b 2,131
+server/database/providers/surreal.provider.ts
+  s_69892bdd7e1600::t_4bf8b0939a3556 19,21-22,44,182,224,241-258,260,301,361,367-368
+server/surrealHelpers.ts
+  s_69892bdd7e1600::t_8c692ca617e7cd 60-63,65-127,132,134,199,217-220,224-228,242-245,247
+tests/unit/legacy-surreal-queries.spec.ts
+  s_69892bdd7e1600::t_19e24d8395155d 4,6-7,25-26,30,39-42,44-46,61-66,70-95,152-153,162-210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3deb88cd7986bd68cd12e16d9364a334e92ed04b",
+  "prompts": {},
+  "sessions": {
+    "s_69892bdd7e1600": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9539d20f-ea7d-473b-88ed-1aa7389830e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
