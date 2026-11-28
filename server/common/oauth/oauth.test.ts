@@ -5,7 +5,7 @@ describe("oauthRedirect", () => {
   it("should handle Apple OAuth redirect", async () => {
     const response = await handleOAuthRedirection(
       {
-        state: "guestsix:localredirect.memotron.io",
+        state: "guestsix:localredirect.web.memotron.app",
         user: {
           email: "testrun6@bla.ink",
           name: {
@@ -15,7 +15,7 @@ describe("oauthRedirect", () => {
         }
       },
       "apple",
-      "testrun"
+      "api.memotron.app"
     );
     expect(response).toEqual({
       statusCode: 302,
@@ -31,17 +31,17 @@ describe("oauthRedirect", () => {
   it("should handle Google OAuth redirect", async () => {
     const response = await handleOAuthRedirection(
       {
-        state: "lypm9lzwmd53tbycw7f7xuow:dev2.pointron.io",
+        state: "lypm9lzwmd53tbycw7f7xuow:dev.pointron.app",
         code: "4/0AcvDMrC2Lw0J8c6OSne_SgnbVCi8Xx8MjeVBmN3KGert5S5Q5YxZrYCwT87Gj8sN7VXfRw"
       },
       "google",
-      "testrun"
+      "api.memotron.app"
     );
     expect(response).toEqual({
       statusCode: 302,
       headers: {
         Location: expect.stringMatching(
-          /^https:\/\/dev2\.pointron\.io\/(oauth\?token=.*|error\?error=.*)$/
+          /^https:\/\/dev\.pointron\.app\/oauth(\?token=.*|\/error\?error=.*)$/
         )
       },
       body: ""
