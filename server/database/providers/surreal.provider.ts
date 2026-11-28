@@ -16,8 +16,10 @@ import { DatabaseError } from "$lib/server/common/errors";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
   assertIdentifier,
+  decodeLegacyStringLiteral,
   performQueryOnMasterDb,
-  performQueryOnRegionalDb
+  performQueryOnRegionalDb,
+  recordKey
 } from "$lib/server/surrealHelpers";
 import { performQueryOnBehalfOfUser } from "$lib/server/common/user/user";
 import { resolvePlanQuery } from "$lib/server/common/plan/plan.utils";
@@ -39,7 +41,7 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
     const timestamp = new Date().toISOString();
     const query = `select id from type::thing("user", $userId); create activity set userId = type::thing("user", $userId), timestamp = $timestamp, context = $context, activity = $activity;`;
     return performQueryOnMasterDb(query, {
-      userId,
+      userId: recordKey(userId),
       timestamp,
       context,
       activity: context.activity ?? "unknown"
@@ -177,7 +179,7 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
   async bootstrapUser(userId: string, updates: any): Promise<any> {
     const query = `update type::thing("user", $userId) set region = $region, userPlan = type::thing("userPlan", $userPlanId), isBootstrapped = true; select context.guest.* as guest from type::thing("user", $userId);`;
     const response = await performQueryOnMasterDb(query, {
-      userId,
+      userId: recordKey(userId),
       region: updates.region,
       userPlanId: updates.userPlanId
     });
@@ -218,8 +220,8 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    */
   async deleteUser(agent: Agent): Promise<any> {
     const query = `DELETE user WHERE meta::id(id) = $userId;`;
-    const dbRemovalQuery = `USE NAMESPACE ${assertIdentifier(process.env.USER_NS, "namespace")}; REMOVE DATABASE ${assertIdentifier(agent.id, "database")};`;
     if (this.isSurrealSyncProvider) {
+      const dbRemovalQuery = `USE NAMESPACE ${assertIdentifier(process.env.USER_NS ?? "user", "namespace")}; REMOVE DATABASE ${assertIdentifier(agent.id, "database")};`;
       await performQueryOnRegionalDb(dbRemovalQuery, {
         region: agent.region,
         db: agent.id
@@ -236,12 +238,26 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    */
   async authenticateUser(email: string, password: string): Promise<any> {
     const query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5($email); IF count($user) == 1 AND crypto::argon2::compare($user[0].pass, $password) THEN (SELECT * FROM $user) ELSE IF count($user) == 1 THEN (RETURN -1) ELSE (RETURN count($user)) END`;
-    const result = await performQueryOnMasterDb(query, { email, password });
-    if (result?.[1]?.result?.[0]) {
-      return result[1].result[0];
-    } else {
-      return result[1].result;
+    const check = async (candidate: string) => {
+      const result = await performQueryOnMasterDb(query, {
+        email,
+        password: candidate
+      });
+      return result?.[1]?.result?.[0] ?? result[1].result;
+    };
+    const outcome = await check(password);
+    // Passwords used to be pasted into a string literal, so a stored hash may
+    // be of the escape-decoded password. Accept that once and rehash.
+    const legacy = outcome === -1 ? decodeLegacyStringLiteral(password) : undefined;
+    if (legacy === undefined || legacy === password) return outcome;
+    const legacyOutcome = await check(legacy);
+    if (legacyOutcome?.id) {
+      await performQueryOnMasterDb(
+        `UPDATE type::record($id) SET pass = crypto::argon2::generate($password), passhash = crypto::md5($password)`,
+        { id: legacyOutcome.id, password }
+      );
     }
+    return legacyOutcome;
   }
 
   /**
@@ -282,7 +298,7 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
     const query = `create userPlan content { id: type::thing("userPlan", $id), userId: type::thing("user", $userId), plan: $plan, trialPlan: $trialPlan, discount: $discount }`;
     return performQueryOnMasterDb(query, {
       id: planData.id,
-      userId: planData.userId,
+      userId: recordKey(planData.userId),
       plan: planData.plan,
       trialPlan: planData.trialPlan,
       discount: planData.discount
@@ -342,12 +358,14 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
       createQuery = `let $product = type::thing("product", $productId); let $user = create user set createdAt = time::now(), email = $email; relate $product->subscribedBy->$user set context = $context, subscribedAt = time::now();`;
     }
 
-    return performQueryOnMasterDb(createQuery, {
+    const response = await performQueryOnMasterDb(createQuery, {
       productId: subscriptionData.productId,
       userId: userResponse[0].result[0],
       email: subscriptionData.email,
       context: subscriptionData.context
     });
+    // Callers read the RELATE result first; the LET results come before it.
+    return Array.isArray(response) ? response.slice(-1) : response;
   }
 
   /**

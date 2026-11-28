@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  encodeQueryVars,
+  decodeLegacyStringLiteral,
   isKnownRegion,
+  recordKey,
+  toQueryVars,
   performQueryOnMasterDb,
   performQueryOnRegionalDb,
   resolveDatabaseInstance
@@ -20,9 +22,12 @@ const INJECTION = 'x"); DELETE user; --';
 
 type Sent = { url: URL; body: string; vars: Record<string, unknown> };
 let sent: Sent[];
+// Per-statement results the stubbed database answers with, after the two USE statements.
+let answer: (sent: Sent) => unknown[];
 
 beforeEach(() => {
   sent = [];
+  answer = () => [{ result: [] }, { result: [] }];
   vi.stubEnv("DOMAIN", "db-test.example");
   vi.stubEnv("ADMIN_NS", "admin");
   vi.stubEnv("USER_NS", "user");
@@ -31,12 +36,14 @@ beforeEach(() => {
     "fetch",
     vi.fn(async (input: string | URL, init?: RequestInit) => {
       const url = new URL(String(input));
-      const vars = Object.fromEntries(
-        [...url.searchParams].map(([name, value]) => [name, JSON.parse(value)])
-      );
-      sent.push({ url, body: String(init?.body ?? ""), vars });
+      const rpc = JSON.parse(String(init?.body ?? "{}"));
+      expect(rpc.method).toBe("query");
+      const request = { url, body: rpc.params[0], vars: rpc.params[1] };
+      sent.push(request);
       return new Response(
-        JSON.stringify([{ result: null }, { result: null }, { result: [] }, { result: [] }]),
+        JSON.stringify({
+          result: [{ result: null }, { result: null }, ...answer(request)]
+        }),
         { headers: { "Content-Type": "application/json" } }
       );
     })
@@ -51,21 +58,41 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("encodeQueryVars", () => {
-  it("sends every value as JSON and leaves out undefined", () => {
-    const query = new URLSearchParams(
-      encodeQueryVars({ email: INJECTION, n: 5, ctx: { a: [1] }, none: undefined }).slice(1)
-    );
-    expect(Object.fromEntries(query)).toEqual({
-      email: JSON.stringify(INJECTION),
-      n: "5",
-      ctx: '{"a":[1]}'
-    });
-    expect(encodeQueryVars()).toBe("");
+describe("toQueryVars", () => {
+  it("keeps values as they are and leaves out undefined", () => {
+    expect(
+      toQueryVars({ email: INJECTION, n: 5, ctx: { a: [1] }, none: undefined })
+    ).toEqual({ email: INJECTION, n: 5, ctx: { a: [1] } });
+    expect(toQueryVars()).toEqual({});
   });
 
   it("refuses variable names that are not identifiers", () => {
-    expect(() => encodeQueryVars({ "a&b": 1 })).toThrow(/Invalid query variable/);
+    expect(() => toQueryVars({ "a&b": 1 })).toThrow(/Invalid query variable/);
+  });
+});
+
+describe("recordKey", () => {
+  it("unwraps escaped record keys", () => {
+    expect(recordKey("abc123")).toBe("abc123");
+    expect(recordKey("⟨test-user⟩")).toBe("test-user");
+    expect(recordKey("⟨a\\⟩b⟩")).toBe("a⟩b");
+    expect(recordKey("`test-user`")).toBe("test-user");
+  });
+});
+
+describe("decodeLegacyStringLiteral", () => {
+  it("decodes the escapes SurrealQL string literals accepted", () => {
+    expect(decodeLegacyStringLiteral("plain")).toBe("plain");
+    expect(decodeLegacyStringLiteral("a\\nb")).toBe("a\nb");
+    expect(decodeLegacyStringLiteral("a\\\\b\\/\\t")).toBe("a\\b/\t");
+    expect(decodeLegacyStringLiteral("\\u0041\\u{1F600}")).toBe("A😀");
+  });
+
+  it("returns undefined where the old literal would not have parsed", () => {
+    expect(decodeLegacyStringLiteral('a"b')).toBeUndefined();
+    expect(decodeLegacyStringLiteral("a\\qb")).toBeUndefined();
+    expect(decodeLegacyStringLiteral("a\\")).toBeUndefined();
+    expect(decodeLegacyStringLiteral("\\u12")).toBeUndefined();
   });
 });
 
@@ -122,7 +149,8 @@ describe("bound queries", () => {
       email: INJECTION
     });
     expect(sent).toHaveLength(1);
-    expect(sent[0].url.pathname).toBe("/sql");
+    expect(sent[0].url.pathname).toBe("/rpc");
+    expect(sent[0].url.search).toBe("");
     expect(sent[0].url.host).toBe("db.db-test.example");
     expect(sent[0].vars).toEqual({ email: INJECTION });
     expect(sent[0].body).toBe(
@@ -131,6 +159,55 @@ describe("bound queries", () => {
   });
 
   const provider = () => new SurrealDatabaseProvider();
+
+  it("binds record keys without their escaping", async () => {
+    await provider().getUserAndPlan("⟨test-user⟩");
+    expect(sent[0].vars).toEqual({ userId: "test-user" });
+  });
+
+  it("accepts a password stored from its escape-decoded form once and rehashes it", async () => {
+    answer = ({ vars, body }) => {
+      if (body.includes("UPDATE")) return [{ result: [] }];
+      const matches = vars.password === "a\nb";
+      return [{ result: null }, { result: matches ? [{ id: "user:abc" }] : -1 }];
+    };
+    const user = await provider().authenticateUser("a@example.com", "a\\nb");
+    expect(user).toEqual({ id: "user:abc" });
+    expect(sent.map((request) => request.vars.password)).toEqual([
+      "a\\nb",
+      "a\nb",
+      "a\\nb"
+    ]);
+    expect(sent[2].body).toContain("crypto::argon2::generate($password)");
+    expect(sent[2].vars.id).toBe("user:abc");
+  });
+
+  it("does not retry a wrong password that has no escapes", async () => {
+    answer = () => [{ result: null }, { result: -1 }];
+    expect(await provider().authenticateUser("a@example.com", "wrong")).toBe(-1);
+    expect(sent).toHaveLength(1);
+  });
+
+  it("returns the RELATE result first from createSubscription", async () => {
+    answer = ({ body }) =>
+      body.startsWith("USE NAMESPACE admin; USE DATABASE ADMIN; select")
+        ? [{ result: ["abc"] }, { result: ["memotron"] }]
+        : [{ result: null }, { result: null }, { result: [{ subscribedAt: "now" }] }];
+    const response = await provider().createSubscription({
+      email: "a@example.com",
+      app: "memotron.io",
+      productId: "memotron",
+      context: "landing"
+    } as any);
+    expect(response).toEqual([{ result: [{ subscribedAt: "now" }] }]);
+  });
+
+  it("deletes the account without a regional query when Surreal sync is off", async () => {
+    vi.stubEnv("USER_NS", undefined as unknown as string);
+    await provider().deleteUser({ id: "⟨test-user⟩", region: "useast" } as any);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].body).toContain("DELETE user WHERE meta::id(id) = $userId");
+  });
   const cases: [string, () => Promise<unknown>][] = [
     ["authenticateUser", () => provider().authenticateUser(INJECTION, INJECTION)],
     ["getUserByEmail", () => provider().getUserByEmail(INJECTION)],
