@@ -203,6 +203,26 @@ describe("bound queries", () => {
     );
   });
 
+  it("checks the password as typed again when a concurrent sign-in migrated the hash first", async () => {
+    let literalChecks = 0;
+    answer = ({ body, vars }) => {
+      if (body.includes("passVersion IS NONE;")) return [{ result: null }, { result: -1 }];
+      if (vars.password === "a\\nb" && !body.includes("UPDATE")) {
+        literalChecks++;
+        return [
+          { result: null },
+          { result: literalChecks === 1 ? -1 : [{ id: "user:abc", passVersion: 2 }] }
+        ];
+      }
+      return [{ result: [] }];
+    };
+    expect(await provider().authenticateUser("a@example.com", "a\\nb")).toEqual({
+      id: "user:abc",
+      passVersion: 2
+    });
+    expect(literalChecks).toBe(2);
+  });
+
   it("marks a legacy account as version 2 when its literal password matches", async () => {
     answer = ({ body }) =>
       body.includes("UPDATE")

@@ -237,6 +237,17 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    * @returns Promise resolving to the user data if authentication succeeds, or error code if it fails
    */
   async authenticateUser(email: string, password: string): Promise<any> {
+    const outcome = await this.verifyPassword(email, password);
+    if (outcome !== -1) return outcome;
+    return this.authenticateLegacyPassword(email, password, outcome);
+  }
+
+  /**
+   * Checks the password as typed and marks an unmarked (legacy) account that
+   * matches as `passVersion` 2. Returns the user, -1 for a wrong password, or
+   * the number of accounts found when it is not exactly one.
+   */
+  private async verifyPassword(email: string, password: string) {
     const query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5($email); IF count($user) == 1 AND crypto::argon2::compare($user[0].pass, $password) THEN (SELECT * FROM $user) ELSE IF count($user) == 1 THEN (RETURN -1) ELSE (RETURN count($user)) END`;
     const result = await performQueryOnMasterDb(query, { email, password });
     const outcome = result?.[1]?.result?.[0] ?? result[1].result;
@@ -246,8 +257,7 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
         { id: outcome.id }
       );
     }
-    if (outcome !== -1) return outcome;
-    return this.authenticateLegacyPassword(email, password, outcome);
+    return outcome;
   }
 
   /**
@@ -255,6 +265,8 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
    * stored before `passVersion` 2 may be of the escape-decoded password. For
    * those accounts only, accept the decoded form once and, in the same
    * statement, store a hash of the password as typed and mark it version 2.
+   * When no unmarked account matches (another sign-in may have just migrated
+   * it), the password as typed is checked once more.
    */
   private async authenticateLegacyPassword(
     email: string,
@@ -269,7 +281,9 @@ export class SurrealDatabaseProvider implements IDatabaseProvider {
       legacy,
       password
     });
-    return result?.[1]?.result?.[0] ?? outcome;
+    const migrated = result?.[1]?.result?.[0];
+    if (migrated?.id) return migrated;
+    return this.verifyPassword(email, password);
   }
 
   /**
