@@ -23,7 +23,7 @@ function legacyBundleWith(names: { signIn: string; handler: string; wrapper: str
     'var ev="",hO="";',
     // A decoy with the same shape that the Lambda handler never calls.
     `async function decoy(e){return ${handler}(e,ev,hO)}`,
-    "async function run(e,t){return t(e.queryStringParameters)}",
+    'async function run(e,t){return t(e.httpMethod==="POST"?Object.fromEntries(new URLSearchParams(e.body)):e.queryStringParameters)}',
     "function record(){}",
     // A call of the same shape that is not the handler's return value.
     `async function lambdaHandler(e){record(e,decoy,!1);return ev=e.pathParameters.provider,hO=e.requestContext.domainName,run(e,${wrapper},!1)}`,
@@ -85,6 +85,15 @@ describe("patch-legacy-oauth-redirect", () => {
     ).toThrow(/did not run/);
     expect(() => verifyPatchedBundle(writeBundle("module.exports={};"))).toThrow(
       /did not run/
+    );
+    // A bundle whose POST path still runs the old redirect fails on POST.
+    const postBypass = (await compileRedirectModule()) + "\n" +
+      patchBundle(legacyBundle, "").replace(
+        "async function run(e,t){",
+        'async function run(e,t){if(e.httpMethod==="POST")return ane(Object.fromEntries(new URLSearchParams(e.body)),ev,hO);'
+      );
+    expect(() => verifyPatchedBundle(writeBundle(postBypass))).toThrow(
+      /forged state was not refused \(POST\)/
     );
     const patched = await patchedFile();
     expect(() => verifyPatchedBundle(patched)).not.toThrow();

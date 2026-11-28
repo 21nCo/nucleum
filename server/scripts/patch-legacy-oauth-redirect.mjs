@@ -283,26 +283,43 @@ function isFalse(node) {
 
 /**
  * Loads a patched bundle in a child process and calls its exported Lambda
- * handler the way API Gateway does, with no code (so nothing signs in). The
+ * handler the way API Gateway does, for GET and for a form-encoded POST, with
+ * no code (so nothing signs in). The
  * patch is accepted only if a forged state host is never redirected to, and a
  * legitimate state still reaches its host.
  */
 export function verifyPatchedBundle(file) {
   const script = `
     const { handler } = require(process.argv[1]);
-    const event = (state) => ({
+    const requestContext = { domainName: "api.memotron.app" };
+    const get = (state) => ({
       httpMethod: "GET",
       headers: {},
       queryStringParameters: { state },
       pathParameters: { provider: "google" },
-      requestContext: { domainName: "api.memotron.app", httpMethod: "GET" },
-      body: null
+      requestContext: { ...requestContext, httpMethod: "GET" },
+      body: null,
+      isBase64Encoded: false
+    });
+    const post = (state) => ({
+      httpMethod: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      queryStringParameters: null,
+      pathParameters: { provider: "google" },
+      requestContext: { ...requestContext, httpMethod: "POST" },
+      body: new URLSearchParams({ state }).toString(),
+      isBase64Encoded: false
     });
     (async () => {
       const log = console.log; console.log = () => {}; console.error = () => {};
-      const forged = await handler(event("probe:evil.example/x.memotron.app"));
-      const trusted = await handler(event("probe:web.memotron.app"));
-      log(JSON.stringify({ forged, trusted }));
+      const results = {};
+      for (const [method, event] of [["GET", get], ["POST", post]]) {
+        results[method] = {
+          forged: await handler(event("probe:evil.example/x.memotron.app")),
+          trusted: await handler(event("probe:web.memotron.app"))
+        };
+      }
+      log(JSON.stringify(results));
     })().catch((error) => { process.stderr.write(String(error)); process.exit(1); });`;
   const run = spawnSync(process.execPath, ["-e", script, path.resolve(file)], {
     encoding: "utf8",
@@ -312,20 +329,24 @@ export function verifyPatchedBundle(file) {
   if (run.status !== 0) {
     throw new Error(`patched bundle did not run: ${run.stderr || run.error}`);
   }
-  const { forged, trusted } = JSON.parse(run.stdout.trim().split("\n").pop());
-  const forgedLocation = forged?.headers?.Location ?? "";
-  if (
-    forged?.statusCode !== 302 ||
-    forgedLocation !==
-      "https://web.memotron.app/oauth/error?error=Unknown%20redirect%20host"
-  ) {
-    throw new Error(`forged state was not refused: ${JSON.stringify(forged)}`);
-  }
-  if (
-    trusted?.statusCode !== 302 ||
-    trusted?.headers?.Location !== "https://web.memotron.app/oauth"
-  ) {
-    throw new Error(`legitimate state no longer redirects: ${JSON.stringify(trusted)}`);
+  const results = JSON.parse(run.stdout.trim().split("\n").pop());
+  for (const method of ["GET", "POST"]) {
+    const { forged, trusted } = results[method] ?? {};
+    if (
+      forged?.statusCode !== 302 ||
+      forged?.headers?.Location !==
+        "https://web.memotron.app/oauth/error?error=Unknown%20redirect%20host"
+    ) {
+      throw new Error(`forged state was not refused (${method}): ${JSON.stringify(forged)}`);
+    }
+    if (
+      trusted?.statusCode !== 302 ||
+      trusted?.headers?.Location !== "https://web.memotron.app/oauth"
+    ) {
+      throw new Error(
+        `legitimate state no longer redirects (${method}): ${JSON.stringify(trusted)}`
+      );
+    }
   }
 }
 
