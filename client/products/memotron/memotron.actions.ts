@@ -2,47 +2,38 @@ import { ActionType } from "@nucleum/client/config/action.type";
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
 import { Size } from "@21n/ui/elements/size.enum";
-import Capture from "@nucleum/features/memory/capture/Capture.svelte";
-import Node from "@nucleum/features/memory/node/Node.svelte";
 import NodeLoadingPulse from "@21n/ui/elements/feedback/animations/NodeLoadingPulse.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import MemotronLibrary from "@nucleum/products/memotron/library/MemotronLibrary.svelte";
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
-import PasteConfirmationModal from "@nucleum/features/memory/capture/PasteConfirmationModal.svelte";
-import Chat from "@nucleum/products/memotron/taco/Chat.svelte";
-import CaptureDnD from "@nucleum/features/memory/capture/CaptureDnD.svelte";
-import MemotronOnboarding from "@nucleum/products/memotron/base/MemotronOnboarding.svelte";
 import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
-import MemotronGreenUse from "@nucleum/products/memotron/base/MemotronGreenUse.svelte";
-import CalloutSettings from "@nucleum/features/memory/markdown/callout/CalloutSettings.svelte";
-import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
-import MemotronOverview from "@nucleum/products/memotron/overview/MemotronOverview.svelte";
-import { Action } from "@nucleum/client/config/action.enum";
-import ImportAppData from "@nucleum/products/memotron/import/ImportAppData.svelte";
-import MemotronImportSettings from "@nucleum/products/memotron/import/MemotronImportSettings.svelte";
-import MemotronHomeOnMobile from "@nucleum/products/memotron/home/MemotronHomeOnMobile.svelte";
-import EditCaptureShortcuts from "@nucleum/features/memory/capture/EditCaptureShortcuts.svelte";
-import CaptureSettings from "@nucleum/features/memory/capture/CaptureSettings.svelte";
-import LinkTagsControlPanel from "@nucleum/features/memory/linking/LinkTagsControlPanel.svelte";
-import LibraryPanelContentResolver from "@nucleum/surfaces/library/LibraryPanelContentResolver.svelte";
+import Capture from "@nucleum/features/memory/capture/Capture.svelte";
+import CaptureDnD from "@nucleum/features/memory/capture/CaptureDnD.svelte";
+import PasteConfirmationModal from "@nucleum/features/memory/capture/PasteConfirmationModal.svelte";
+import Node from "@nucleum/features/memory/node/Node.svelte";
 import PreviewImageUploader from "@nucleum/features/memory/node/PreviewImageUploader.svelte";
-import NodeSettings from "@nucleum/features/memory/node/NodeSettings.svelte";
+import { Action } from "@nucleum/client/config/action.enum";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
 import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
 import { createLibraryViewActions } from "@nucleum/surfaces/library/library-route";
 import { memotronLibraryResources } from "@nucleum/products/memotron/library/memotron-library";
 import { resolveMemotronOverviewViewSegments } from "@nucleum/products/memotron/overview/memotron-overview-views";
 
+const loadMemotronLibrary = () =>
+  import("@nucleum/products/memotron/library/MemotronLibrary.svelte");
+const loadResourceBrowser = () =>
+  import("@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte");
+
 const libraryAction: IAction = {
   action: MemotronAction.LIBRARY,
   label: appMenuActionLabelsByAction[Action.LIBRARY],
   icon: "library",
-  component: LibraryPanelContentResolver,
-  panel: MemotronLibrary,
+  loadComponent: () =>
+    import("@nucleum/surfaces/library/LibraryPanelContentResolver.svelte"),
+  panel: loadMemotronLibrary,
   type: ActionType.PAGE,
   componentParams: {
     defaultResource: Resource.node,
@@ -60,7 +51,7 @@ const libraryPortraitAction: IAction = {
   action: Action.LIBRARY_PORTRAIT,
   label: appMenuActionLabelsByAction[Action.LIBRARY_PORTRAIT],
   icon: "library",
-  component: MemotronLibrary,
+  loadComponent: loadMemotronLibrary,
   type: ActionType.PAGE
 };
 
@@ -69,7 +60,8 @@ const overviewAction: IAction = {
   type: ActionType.PAGE,
   label: appMenuActionLabelsByAction[Action.OVERVIEW],
   icon: "overview",
-  component: MemotronOverview
+  loadComponent: () =>
+    import("@nucleum/products/memotron/overview/MemotronOverview.svelte")
 };
 
 export const memotronActions: IAction[] = [
@@ -88,14 +80,16 @@ export const memotronActions: IAction[] = [
   },
   {
     action: Action.MOBILEHOME,
-    component: MemotronHomeOnMobile,
+    loadComponent: () =>
+      import("@nucleum/products/memotron/home/MemotronHomeOnMobile.svelte"),
     type: ActionType.PAGE,
     isMeta: true,
     isMenuHidden: true
   },
   {
     action: MemotronAction.OPEN_CHAT,
-    component: Chat,
+    loadComponent: () =>
+      import("@nucleum/products/memotron/taco/Chat.svelte"),
     type: ActionType.MODAL,
     isInactive: true,
     modalParams: {
@@ -187,7 +181,7 @@ export const memotronActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.node, ResourceActionType.BROWSE),
-    component: ResourceBrowser,
+    loadComponent: loadResourceBrowser,
     label: "Nodes",
     icon: "hexagon",
     type: ActionType.PAGE,
@@ -227,7 +221,7 @@ export const memotronActions: IAction[] = [
     type: ActionType.PAGE,
     label: "Relations",
     icon: "relation",
-    component: ResourceBrowser,
+    loadComponent: loadResourceBrowser,
     componentParams: {
       resource: Resource.relation
     }
@@ -238,7 +232,8 @@ export const memotronActions: IAction[] = [
     label: "Relations",
     isMeta: true,
     icon: "relation",
-    component: LinkTagsControlPanel
+    loadComponent: () =>
+      import("@nucleum/features/memory/linking/LinkTagsControlPanel.svelte")
   },
   overviewAction,
   ...createPageViewActions(
@@ -252,7 +247,8 @@ export const memotronActions: IAction[] = [
     isMenuHidden: true,
     label: "Onboarding",
     icon: "ph:rocket",
-    component: MemotronOnboarding
+    loadComponent: () =>
+      import("@nucleum/products/memotron/base/MemotronOnboarding.svelte")
   },
   {
     action: "green",
@@ -260,13 +256,15 @@ export const memotronActions: IAction[] = [
     isMeta: true,
     label: "Green usage",
     icon: "ph:leaf-light",
-    component: MemotronGreenUse
+    loadComponent: () =>
+      import("@nucleum/products/memotron/base/MemotronGreenUse.svelte")
   },
   {
     action: MemotronAction.CALLOUT_SETTINGS,
     type: ActionType.MODAL,
     label: "Callout Settings",
-    component: CalloutSettings,
+    loadComponent: () =>
+      import("@nucleum/features/memory/markdown/callout/CalloutSettings.svelte"),
     modalParams: {
       title: "Callout Settings",
       layout: {
@@ -280,7 +278,8 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.IMPORT_APP_DATA,
     isMeta: true,
     type: ActionType.MODAL,
-    component: ImportAppData,
+    loadComponent: () =>
+      import("@nucleum/products/memotron/import/ImportAppData.svelte"),
     modalParams: {
       layout: {
         size: Size.lg,
@@ -293,7 +292,8 @@ export const memotronActions: IAction[] = [
     action: Action.IMPORT_FROM_OTHER_APPS,
     label: "Import from other apps",
     type: ActionType.MODAL,
-    component: MemotronImportSettings,
+    loadComponent: () =>
+      import("@nucleum/products/memotron/import/MemotronImportSettings.svelte"),
     modalParams: {
       layout: {
         size: Size.xl,
@@ -306,7 +306,8 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.EDIT_CAPTURE_SHORTCUTS,
     label: "Edit Capture Shortcuts",
     type: ActionType.MODAL,
-    component: EditCaptureShortcuts,
+    loadComponent: () =>
+      import("@nucleum/features/memory/capture/EditCaptureShortcuts.svelte"),
     modalParams: {
       title: "Capture Shortcuts",
       layout: {
@@ -320,7 +321,8 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.CAPTURE_SETTINGS,
     label: "Capture Settings",
     type: ActionType.MODAL,
-    component: CaptureSettings,
+    loadComponent: () =>
+      import("@nucleum/features/memory/capture/CaptureSettings.svelte"),
     modalParams: {
       title: "Capture Settings",
       layout: {
@@ -334,7 +336,8 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.NODE_SETTINGS,
     label: "Node Settings",
     type: ActionType.MODAL,
-    component: NodeSettings,
+    loadComponent: () =>
+      import("@nucleum/features/memory/node/NodeSettings.svelte"),
     modalParams: {
       title: "Node Settings",
       layout: {

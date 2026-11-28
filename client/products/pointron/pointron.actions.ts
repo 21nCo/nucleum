@@ -1,23 +1,8 @@
 import { navigation } from "@nucleum/shell/navigation/navigation";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-import StorageSettings from "@nucleum/products/pointron/settings/data/StorageSettings.svelte";
-import WidgetSettings from "@nucleum/products/pointron/settings/WidgetSettings.svelte";
-import TrackingSettings from "@nucleum/products/pointron/settings/targets/TrackingSettings.svelte";
-import Focus from "@nucleum/features/focus/Focus.svelte";
-import Zen from "@nucleum/features/focus/zen/Zen.svelte";
-import FocusPlayer from "@nucleum/features/focus/player/FocusPlayer.svelte";
 import { ActionType } from "@nucleum/client/config/action.type";
 import type { IAction, IActionFnParams } from "@nucleum/shared-state/commands/action.type";
-import ImportAppData from "@nucleum/products/pointron/settings/ImportAppData/ImportAppData.svelte";
-import EditPresetView from "@nucleum/features/focus/advanced/presets/EditPresetModal.svelte";
-import PointronOnboarding from "@nucleum/products/pointron/base/PointronOnboarding.svelte";
-import ComposeByEndTimeModal from "@nucleum/features/focus/advanced/composition/ComposeByEndTimeModal.svelte";
-import ComposeModal from "@nucleum/features/focus/advanced/composition/ComposeModal.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
-import PresetSaveConfirmationModal from "@nucleum/features/focus/advanced/presets/PresetSaveConfirmationModal.svelte";
-import SessionFinishedModal from "@nucleum/features/focus/elements/SessionFinishedModal.svelte";
-import Think from "@nucleum/features/focus/Think.svelte";
-import BackgroundMusic from "@nucleum/features/focus/backgroundMusic/BackgroundMusic.svelte";
 import { Size } from "@21n/ui/elements/size.enum";
 import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
 import { get } from "svelte/store";
@@ -26,28 +11,18 @@ import {
   toasts,
   confirmationNotification
 } from "@nucleum/shared-state/notifications/notification.store";
-import FocusItemsModal from "@nucleum/features/focus/advanced/FocusItemsModal.svelte";
-import BreakReminderModal from "@nucleum/features/focus/elements/BreakReminderModal.svelte";
-import PredefinedIntervalNotifierOverlay from "@nucleum/features/focus/elements/PredefinedIntervalNotifierOverlay.svelte";
 import { manualLogStore } from "@nucleum/features/focus/logs/log.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
-import ControlPanelLogsPane from "@nucleum/features/focus/logs/ControlPanelLogsPane.svelte";
-import SessionLogPage from "@nucleum/features/focus/logs/logPage/SessionLogPage.svelte";
-import ManualLogPane from "@nucleum/features/focus/logs/manualLog/ManualLogPane.svelte";
-import LogsPane from "@nucleum/features/focus/logs/LogsPane.svelte";
-import AnalyticsV2 from "@nucleum/features/focus/analytics/AnalyticsV2.svelte";
 import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
-import PresetSettings from "@nucleum/features/focus/advanced/presets/PresetSettings.svelte";
 import { activeSession } from "@nucleum/features/focus/session.store";
 import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
-import AnalyticsViewsPageEditMobile from "@nucleum/features/focus/analytics/AnalyticsViewsPageEditMobile.svelte";
 
 import { Embed } from "@nucleum/client/runtime/context.type";
-import ImportOnboarding from "@nucleum/products/pointron/settings/data/ImportOnboarding.svelte";
 import { Action } from "@nucleum/client/config/action.enum";
-import PointronLibrary from "@nucleum/products/pointron/library/PointronLibrary.svelte";
 import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
+import CreateTask from "@nucleum/features/focus/tasks/CreateTask.svelte";
+import FocusPlayer from "@nucleum/features/focus/player/FocusPlayer.svelte";
 import { SessionState } from "@nucleum/features/focus/sessionState.enum";
 import {
   isSameResource,
@@ -55,7 +30,6 @@ import {
   resourceAction,
   resourceInList
 } from "@nucleum/datafn/resource.utils";
-import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import NodeLoadingPulse from "@21n/ui/elements/feedback/animations/NodeLoadingPulse.svelte";
@@ -64,9 +38,6 @@ import { createLibraryViewActions } from "@nucleum/surfaces/library/library-rout
 import { resolveProductConfig } from "@nucleum/products/product.config";
 import { Product } from "@nucleum/client/config/product.type";
 
-import Task from "@nucleum/features/focus/tasks/Task.svelte";
-import CreateTask from "@nucleum/features/focus/tasks/CreateTask.svelte";
-import Objective from "@nucleum/features/focus/goals/Goal.svelte";
 import ObjectiveTitleLabelPart from "@nucleum/features/focus/goals/GoalTitleLabelPart.svelte";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import {
@@ -75,9 +46,12 @@ import {
   type IObjective
 } from "@nucleum/features/focus/goals/goal.type";
 import { updateObjectiveParent } from "@nucleum/features/focus/goals/goal.utils";
-import LibraryPanelContentResolver from "@nucleum/surfaces/library/LibraryPanelContentResolver.svelte";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
-import PointronHomeOnMobile from "@nucleum/products/pointron/home/PointronHomeOnMobile.svelte";
+
+const loadPointronLibrary = () =>
+  import("@nucleum/products/pointron/library/PointronLibrary.svelte");
+const loadResourceBrowser = () =>
+  import("@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte");
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
@@ -188,8 +162,9 @@ const libraryAction: IAction = {
   action: Action.LIBRARY,
   label: appMenuActionLabelsByAction[Action.LIBRARY],
   icon: "library",
-  panel: PointronLibrary,
-  component: LibraryPanelContentResolver,
+  panel: loadPointronLibrary,
+  loadComponent: () =>
+    import("@nucleum/surfaces/library/LibraryPanelContentResolver.svelte"),
   type: ActionType.PAGE,
   componentParams: {
     defaultResource: Resource.objective,
@@ -207,21 +182,23 @@ const libraryPortraitAction: IAction = {
   action: Action.LIBRARY_PORTRAIT,
   label: appMenuActionLabelsByAction[Action.LIBRARY_PORTRAIT],
   icon: "library",
-  component: PointronLibrary,
+  loadComponent: loadPointronLibrary,
   type: ActionType.PAGE
 };
 
 export const pointronActions: IAction[] = [
   {
     action: Action.MOBILEHOME,
-    component: PointronHomeOnMobile,
+    loadComponent: () =>
+      import("@nucleum/products/pointron/home/PointronHomeOnMobile.svelte"),
     type: ActionType.PAGE,
     isMeta: true,
     isMenuHidden: true
   },
   {
     action: PointronAction.ANALYTICS_VIEWS_PAGE_EDIT_MOBILE,
-    component: AnalyticsViewsPageEditMobile,
+    loadComponent: () =>
+      import("@nucleum/features/focus/analytics/AnalyticsViewsPageEditMobile.svelte"),
     type: ActionType.MODAL,
     modalParams: {
       title: "Edit Pages",
@@ -235,7 +212,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.FULL_SCREEN_FOCUS,
-    component: Zen,
+    loadComponent: () =>
+      import("@nucleum/features/focus/zen/Zen.svelte"),
     icon: "zen",
     type: ActionType.MODAL,
     isMeta: true,
@@ -249,7 +227,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronEvent.SESSION_FINISHED,
-    component: SessionFinishedModal,
+    loadComponent: () =>
+      import("@nucleum/features/focus/elements/SessionFinishedModal.svelte"),
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
@@ -273,7 +252,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.SAVE_PRESET_MODAL,
-    component: PresetSaveConfirmationModal,
+    loadComponent: () =>
+      import("@nucleum/features/focus/advanced/presets/PresetSaveConfirmationModal.svelte"),
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
@@ -285,7 +265,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: Resource.session,
-    component: SessionLogPage,
+    loadComponent: () =>
+      import("@nucleum/features/focus/logs/logPage/SessionLogPage.svelte"),
     type: ActionType.RESOURCE,
     isMeta: true,
     modalParams: {
@@ -299,7 +280,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.COMPOSE_BY_END_TIME_MODAL,
-    component: ComposeByEndTimeModal,
+    loadComponent: () =>
+      import("@nucleum/features/focus/advanced/composition/ComposeByEndTimeModal.svelte"),
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
@@ -313,7 +295,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.COMPOSE_TIME_MODAL,
-    component: ComposeModal,
+    loadComponent: () =>
+      import("@nucleum/features/focus/advanced/composition/ComposeModal.svelte"),
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
@@ -331,7 +314,8 @@ export const pointronActions: IAction[] = [
 
   {
     action: PointronAction.MANUAL_FOCUS_ENTRY,
-    component: ManualLogPane,
+    loadComponent: () =>
+      import("@nucleum/features/focus/logs/manualLog/ManualLogPane.svelte"),
     get label() {
       return this.modalParams?.title;
     },
@@ -360,7 +344,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.EDIT_PRESET,
-    component: EditPresetView,
+    loadComponent: () =>
+      import("@nucleum/features/focus/advanced/presets/EditPresetModal.svelte"),
     type: ActionType.MODAL,
     label: "Create a new preset",
     modalParams: {
@@ -373,7 +358,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronEvent.BREAK_REMINDER,
-    component: BreakReminderModal,
+    loadComponent: () =>
+      import("@nucleum/features/focus/elements/BreakReminderModal.svelte"),
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
@@ -393,7 +379,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY,
-    component: PredefinedIntervalNotifierOverlay,
+    loadComponent: () =>
+      import("@nucleum/features/focus/elements/PredefinedIntervalNotifierOverlay.svelte"),
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
@@ -406,7 +393,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.IMPORT_APP_DATA,
-    component: ImportAppData,
+    loadComponent: () =>
+      import("@nucleum/products/pointron/settings/ImportAppData/ImportAppData.svelte"),
     type: ActionType.MODAL,
     modalParams: {
       layout: {
@@ -417,7 +405,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.LOGS,
-    component: LogsPane,
+    loadComponent: () =>
+      import("@nucleum/features/focus/logs/LogsPane.svelte"),
     isMenuHidden: true,
     get label() {
       return this.modalParams?.title;
@@ -435,7 +424,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: "onboarding",
-    component: PointronOnboarding,
+    loadComponent: () =>
+      import("@nucleum/products/pointron/base/PointronOnboarding.svelte"),
     isMenuHidden: true,
     label: "Onboarding",
     type: ActionType.PAGE,
@@ -443,7 +433,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: "cplogs",
-    component: ControlPanelLogsPane,
+    loadComponent: () =>
+      import("@nucleum/features/focus/logs/ControlPanelLogsPane.svelte"),
     path: "cp/logs",
     label: "Logs",
     type: ActionType.PAGE,
@@ -458,7 +449,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.FOCUS,
-    component: Focus,
+    loadComponent: () =>
+      import("@nucleum/features/focus/Focus.svelte"),
     icon: "focus",
     type: ActionType.LIVE,
     label: appMenuActionLabelsByAction[PointronAction.FOCUS],
@@ -469,7 +461,8 @@ export const pointronActions: IAction[] = [
   },
   {
     action: Action.OVERVIEW,
-    component: AnalyticsV2,
+    loadComponent: () =>
+      import("@nucleum/features/focus/analytics/AnalyticsV2.svelte"),
     type: ActionType.PAGE,
 
     icon: "overview",
@@ -491,7 +484,8 @@ export const pointronActions: IAction[] = [
     path: "cp/presets",
     icon: "folder",
     type: ActionType.MODAL,
-    component: PresetSettings,
+    loadComponent: () =>
+      import("@nucleum/features/focus/advanced/presets/PresetSettings.svelte"),
     modalParams: {
       title: "Presets",
       layout: {
@@ -509,7 +503,8 @@ export const pointronActions: IAction[] = [
     path: "cp/importexport",
     icon: "data",
     type: ActionType.MODAL,
-    component: StorageSettings,
+    loadComponent: () =>
+      import("@nucleum/products/pointron/settings/data/StorageSettings.svelte"),
     modalParams: {
       title: "Import / Export data",
       layout: {
@@ -524,7 +519,8 @@ export const pointronActions: IAction[] = [
     label: "Import onboarding",
     type: ActionType.MODAL,
     isMeta: true,
-    component: ImportOnboarding,
+    loadComponent: () =>
+      import("@nucleum/products/pointron/settings/data/ImportOnboarding.svelte"),
     modalParams: {
       layout: {
         size: Size.md,
@@ -557,7 +553,8 @@ export const pointronActions: IAction[] = [
     icon: "widget",
     type: ActionType.PAGE,
     isInactive: true,
-    component: WidgetSettings
+    loadComponent: () =>
+      import("@nucleum/products/pointron/settings/WidgetSettings.svelte")
   },
   {
     action: PointronAction.SET_TARGETS,
@@ -569,7 +566,8 @@ export const pointronActions: IAction[] = [
     isInactive: true,
     icon: "fire",
     type: ActionType.MODAL,
-    component: TrackingSettings,
+    loadComponent: () =>
+      import("@nucleum/products/pointron/settings/targets/TrackingSettings.svelte"),
     modalParams: {
       title: "Target Settings"
     }
@@ -580,7 +578,8 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     isInactive: true,
     preCondition: isSessionRunningPreCondition,
-    component: BackgroundMusic,
+    loadComponent: () =>
+      import("@nucleum/features/focus/backgroundMusic/BackgroundMusic.svelte"),
     modalParams: {
       layout: {
         size: Size.lg,
@@ -705,7 +704,8 @@ export const pointronActions: IAction[] = [
     icon: "think",
     type: ActionType.MODAL,
     preCondition: isSessionRunningPreCondition,
-    component: Think,
+    loadComponent: () =>
+      import("@nucleum/features/focus/Think.svelte"),
     modalParams: {
       layout: {
         size: Size.full,
@@ -753,7 +753,8 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.SHOW_FOCUSITEMS_MODAL,
     type: ActionType.MODAL,
-    component: FocusItemsModal,
+    loadComponent: () =>
+      import("@nucleum/features/focus/advanced/FocusItemsModal.svelte"),
     modalParams: {
       title: "Focus Items",
       isShowAsSheet: false,
@@ -773,7 +774,7 @@ export const pointronActions: IAction[] = [
   }),
   {
     action: resourceAction(Resource.objective, ResourceActionType.BROWSE),
-    component: ResourceBrowser,
+    loadComponent: loadResourceBrowser,
     label: "Objectives",
     icon: resolveResourceIcon(Resource.objective),
     type: ActionType.PAGE,
@@ -796,7 +797,8 @@ export const pointronActions: IAction[] = [
   {
     action: Resource.objective,
     type: ActionType.MODAL,
-    component: Objective,
+    loadComponent: () =>
+      import("@nucleum/features/focus/goals/Goal.svelte"),
     resourceLabelRenderer: ObjectiveTitleLabelPart,
     modalParams: {
       layout: {
@@ -854,7 +856,8 @@ export const pointronActions: IAction[] = [
     action: Resource.task,
     isMeta: true,
     type: ActionType.RESOURCE,
-    component: Task,
+    loadComponent: () =>
+      import("@nucleum/features/focus/tasks/Task.svelte"),
     modalParams: {
       layout: {
         isDynamicSize: true,
@@ -864,7 +867,7 @@ export const pointronActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.task, ResourceActionType.BROWSE),
-    component: ResourceBrowser,
+    loadComponent: loadResourceBrowser,
     label: "Tasks",
     icon: resolveResourceIcon(Resource.task),
     type: ActionType.PAGE,
