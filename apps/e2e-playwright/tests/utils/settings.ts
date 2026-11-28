@@ -7,13 +7,7 @@ import {
 
 /** Opens root Settings by selecting its exact command result. */
 export async function openRootSettingsFromCommand(page: Page) {
-  await page.getByRole("button", { name: /command bar/i }).click();
-  const input = page.getByTestId("command-bar-input");
-  await expect(input).toBeVisible();
-  await input.fill("Settings");
-  await page
-    .getByRole("button", { name: "Settings action", exact: true })
-    .click();
+  await runCommand(page, "Settings");
   await expect(page.getByTestId("settings-sidebar")).toBeVisible();
 }
 
