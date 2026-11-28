@@ -13,8 +13,13 @@ const base = {
 describe("frameNonSensitiveUserInfo", () => {
   it("leaves out optional fields that are not set, so no $NONE reaches the client", () => {
     const framed = frameNonSensitiveUserInfo(base as any);
-    expect(framed).toEqual(base);
+    expect(framed).toStrictEqual(base);
     expect(stringify(framed)).not.toContain("$NONE");
+  });
+
+  it("leaves out unset email parts too", () => {
+    const { emailParts, ...rest } = base;
+    expect(frameNonSensitiveUserInfo(rest as any)).toStrictEqual(rest);
   });
 
   it("returns region, bootstrap state and picture once they are set", () => {

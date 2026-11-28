@@ -17,7 +17,7 @@ export function frameNonSensitiveUserInfo(userInfo: IUserProfileInfo) {
   } = userInfo;
   return {
     id,
-    emailParts,
+    ...(emailParts != null ? { emailParts } : {}),
     nickName,
     joinDate,
     ...(profilePictureUrl != null ? { profilePictureUrl } : {}),

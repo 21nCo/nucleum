@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   decodeLegacyStringLiteral,
   isKnownRegion,
+  toQueryStatements,
   toQueryVars,
+  toSurqlLiteral,
   userRecord,
   performQueryOnMasterDb,
   performQueryOnRegionalDb,
@@ -13,19 +15,31 @@ import { SurrealDatabaseProvider } from "../../server/database/providers/surreal
 import { performUserAccountAction } from "../../server/common/account";
 import { CONTEXT } from "../../server/common/account/account.type";
 
+const authorizeMock = vi.fn(async (): Promise<any> => null);
+
 vi.mock("$lib/server/common/auth", () => ({
-  authorize: vi.fn(async () => null),
-  generateToken: vi.fn()
+  authorize: () => authorizeMock(),
+  generateToken: vi.fn(async () => ({ token: "test-session-token" }))
 }));
 
 const INJECTION = 'x"); DELETE user; --';
 
-type Sent = { url: URL; body: string; vars: Record<string, unknown> };
+/** The request as the database sees it: the query with its USE line, and the LET-bound variables. */
+type Sent = {
+  url: URL;
+  body: string;
+  sql: string;
+  vars: Record<string, unknown>;
+  lets: string[];
+  bindings: Record<string, string>;
+};
 let sent: Sent[];
 let answer: (sent: Sent) => unknown[];
 
 beforeEach(() => {
   sent = [];
+  authorizeMock.mockReset();
+  authorizeMock.mockResolvedValue(null);
   answer = () => [{ result: [] }, { result: [] }];
   vi.stubEnv("DOMAIN", "db-test.example");
   vi.stubEnv("ADMIN_NS", "admin");
@@ -37,11 +51,35 @@ beforeEach(() => {
       const url = new URL(String(input));
       const rpc = JSON.parse(String(init?.body ?? "{}"));
       expect(rpc.method).toBe("query");
-      const request = { url, body: rpc.params[0], vars: rpc.params[1] };
+      const bindings: Record<string, string> = rpc.params[1];
+      for (const value of Object.values(bindings)) expect(value.startsWith("\u0001")).toBe(true);
+      const sql = String(rpc.params[0]);
+      const lines = sql.split("\n");
+      const literal = (line: string) => {
+        const match = /^LET \$(\w+) = (.*);$/.exec(line);
+        if (!match) return undefined;
+        const json = match[2].replace(/string::slice\(\$(__v\d+), 1\)/g, (_, name) =>
+          JSON.stringify(bindings[name].slice(1))
+        );
+        try {
+          return [match[1], JSON.parse(json)] as const;
+        } catch {
+          return undefined;
+        }
+      };
+      const lets = lines.filter((line) => literal(line));
+      const vars = Object.fromEntries(lets.map((line) => literal(line)!));
+      const body = lines.filter((line) => !literal(line)).join(" ");
+      const request = { url, body, sql, vars, lets, bindings };
       sent.push(request);
       return new Response(
         JSON.stringify({
-          result: [{ result: null }, { result: null }, ...answer(request)]
+          result: [
+            { result: null },
+            { result: null },
+            ...lets.map(() => ({ result: null })),
+            ...answer(request)
+          ]
         }),
         { headers: { "Content-Type": "application/json" } }
       );
@@ -55,6 +93,60 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+describe("toSurqlLiteral", () => {
+  it("writes plain values as JSON-compatible SurrealQL literals", () => {
+    expect(toSurqlLiteral("secret:123456")).toBe('"secret:123456"');
+    expect(toSurqlLiteral(INJECTION)).toBe(JSON.stringify(INJECTION));
+    expect(toSurqlLiteral({ a: [1, "a:b", null, true], skip: undefined })).toBe(
+      '{"a": [1, "a:b", null, true]}'
+    );
+    expect(toSurqlLiteral(new Date("2026-01-01T00:00:00.000Z"))).toBe(
+      '"2026-01-01T00:00:00.000Z"'
+    );
+  });
+
+  it.each([NaN, Infinity, () => 1, Symbol("x"), BigInt(1), new Map()])(
+    "refuses %s",
+    (value) => {
+      expect(() => toSurqlLiteral(value)).toThrow();
+    }
+  );
+
+  it("sends strings as marked RPC variables and other values as one-line literals", () => {
+    expect(
+      toQueryStatements({ a: "line\nnext", n: 5, o: { s: "x:y\nz" }, skip: undefined })
+    ).toEqual({
+      lets: [
+        "LET $a = string::slice($__v0, 1);",
+        "LET $n = 5;",
+        'LET $o = {"s": string::slice($__v1, 1)};'
+      ],
+      bindings: { __v0: "\u0001line\nnext", __v1: "\u0001x:y\nz" }
+    });
+  });
+
+  it("binds many nested strings in linear time", () => {
+    const context = Object.fromEntries(Array.from({ length: 20000 }, (_, i) => [`k${i}`, `v${i}`]));
+    const started = performance.now();
+    const { bindings } = toQueryStatements({ context, again: context });
+    expect(Object.keys(bindings)).toHaveLength(40000);
+    expect(performance.now() - started).toBeLessThan(2000);
+  });
+
+  it.each(["access", "auth", "token", "session"])("refuses the protected parameter %s", (name) => {
+    expect(() => toQueryStatements({ [name]: "x" })).toThrow(/Invalid query variable/);
+  });
+
+  it("keeps sparse array positions as null", () => {
+    expect(toSurqlLiteral(new Array(2))).toBe("[null, null]");
+    expect(toQueryStatements({ a: new Array(2) }).lets).toEqual(["LET $a = [null, null];"]);
+  });
+
+  it("reserves variable names starting with __", () => {
+    expect(() => toQueryStatements({ __a: "x" })).toThrow(/Invalid query variable/);
+  });
 });
 
 describe("toQueryVars", () => {
@@ -90,6 +182,7 @@ describe("decodeLegacyStringLiteral", () => {
     expect(decodeLegacyStringLiteral("a\\u{}b")).toBe("a\u0000b");
     expect(decodeLegacyStringLiteral("\\uD83D\\uDE00")).toBe("😀");
     expect(decodeLegacyStringLiteral("\\uD83Dx")).toBeUndefined();
+    expect(decodeLegacyStringLiteral("\\uD83D\\u0041")).toBe(String.fromCodePoint(0x11841));
     expect(decodeLegacyStringLiteral("\\uDE00")).toBeUndefined();
     expect(decodeLegacyStringLiteral("\\u{D83D}")).toBeUndefined();
     expect(decodeLegacyStringLiteral("\\u{110000}")).toBeUndefined();
@@ -139,12 +232,18 @@ describe("database host by region", () => {
   });
 
   it("bootstraps an account that names no region into the global database", async () => {
-    await performUserAccountAction("Bearer test-token", {
+    authorizeMock.mockResolvedValue({ id: "abc", region: "global" });
+    answer = ({ body }) =>
+      body.includes("update type::record($user)")
+        ? [{ result: [{ id: "user:abc", region: "global" }] }, { result: [] }]
+        : [{ result: [] }];
+    const response = await performUserAccountAction("Bearer test-token", {
       action: "bootstrap",
       context: { host: "web.memotron.app" }
-    }).catch(() => undefined);
-    const { authorize } = await import("$lib/server/common/auth");
-    expect(authorize).toHaveBeenCalled();
+    });
+    expect(response).toEqual({ token: "test-session-token" });
+    const update = sent.find(({ body }) => body.includes("update type::record($user)"));
+    expect(update?.vars).toMatchObject({ user: "user:abc", region: "global" });
   });
 
   it.each([false, 0, null])("refuses a bootstrap region of %s", async (region) => {
@@ -170,7 +269,7 @@ describe("database host by region", () => {
 });
 
 describe("bound queries", () => {
-  it("sends variables in the URL and keeps them out of the query text", async () => {
+  it("sets variables with LET literals and sends nothing in the URL", async () => {
     await performQueryOnMasterDb("SELECT * FROM user WHERE email = $email", {
       email: INJECTION
     });
@@ -179,6 +278,9 @@ describe("bound queries", () => {
     expect(sent[0].url.search).toBe("");
     expect(sent[0].url.host).toBe("db.db-test.example");
     expect(sent[0].vars).toEqual({ email: INJECTION });
+    expect(sent[0].lets).toEqual(["LET $email = string::slice($__v0, 1);"]);
+    expect(sent[0].bindings).toEqual({ __v0: "\u0001" + INJECTION });
+    expect(sent[0].sql).not.toContain("DELETE user");
     expect(sent[0].body).toBe(
       "USE NAMESPACE admin; USE DATABASE ADMIN; SELECT * FROM user WHERE email = $email"
     );
@@ -324,7 +426,7 @@ describe("bound queries", () => {
     expect(sent.length).toBeGreaterThan(0);
     for (const request of sent) {
       expect(request.body).not.toContain("DELETE user");
-      expect(request.body).not.toContain(INJECTION);
+      expect(request.sql).not.toContain("DELETE user");
     }
     expect(
       JSON.stringify(sent.map((request) => request.vars)).toLowerCase()

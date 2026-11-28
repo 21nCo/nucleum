@@ -20,6 +20,8 @@ const REGION_CODES: ReadonlySet<string> = new Set(
 );
 const IDENTIFIER = /^[A-Za-z0-9_]+$/;
 const VARIABLE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+/** Parameter names SurrealDB 2.3.3 reserves; LET refuses to set them. */
+const PROTECTED_PARAMS: ReadonlySet<string> = new Set(["access", "auth", "token", "session"]);
 
 /** True for a region the client may name: a code in deployment/regions.json or "global". */
 export function isKnownRegion(region: unknown): region is string {
@@ -68,8 +70,9 @@ export function userRecord(id: string) {
 
 /**
  * How SurrealQL 2.3.3 read a value that used to be pasted into a
- * double-quoted string literal: escapes decoded (\\u{} is U+0000, a bare
- * leading surrogate must be followed by a bare trailing one), or undefined
+ * double-quoted string literal: escapes decoded (\\u{} is U+0000; a bare
+ * leading surrogate is combined with the next bare escape using 2.3.3's own
+ * arithmetic, which does not check that it is a trailing surrogate), or undefined
  * when that literal would not have parsed. Used only to recognise credentials
  * stored by the old queries.
  */
@@ -110,10 +113,14 @@ export function decodeLegacyStringLiteral(value: string) {
       i += 4;
       if (unit >= 0xdc00 && unit <= 0xdfff) return undefined;
       if (unit >= 0xd800 && unit <= 0xdbff) {
-        const low = /^\\u([0-9a-fA-F]{4})/.exec(value.slice(i + 1));
-        const lowUnit = low ? parseInt(low[1], 16) : -1;
-        if (lowUnit < 0xdc00 || lowUnit > 0xdfff) return undefined;
-        out += String.fromCharCode(unit, lowUnit);
+        const next = /^\\u([0-9a-fA-F]{4})/.exec(value.slice(i + 1));
+        if (!next) return undefined;
+        const codePoint =
+          ((unit - 0xd800) << 10) + (parseInt(next[1], 16) - 0xdc00) + 0x10000;
+        if (codePoint < 0 || codePoint > 0x10ffff || isSurrogate(codePoint)) {
+          return undefined;
+        }
+        out += String.fromCodePoint(codePoint);
         i += 6;
       } else {
         out += String.fromCharCode(unit);
@@ -130,21 +137,93 @@ function isSurrogate(codePoint: number) {
 }
 
 /**
- * Query variables for SurrealDB's RPC `query` method, which binds them to
- * `$name` in the query. They travel as JSON in the request body, so they are
- * bound as values and never parsed as query text, and never appear in a URL
- * (or a proxy's access log). `undefined` values are left out (they read as
- * NONE).
+ * Query variables, validated: names must be identifiers, not start with "__"
+ * (reserved for the RPC variables) and not be one of SurrealDB's protected
+ * parameters; `undefined` values are left out (they read as NONE).
  */
 export function toQueryVars(vars?: QueryVars) {
   const result: QueryVars = {};
   for (const [name, value] of Object.entries(vars ?? {})) {
-    if (!VARIABLE_NAME.test(name)) {
+    if (!VARIABLE_NAME.test(name) || name.startsWith("__") || PROTECTED_PARAMS.has(name)) {
       throw new ValidationError(`Invalid query variable ${name}`);
     }
     if (value !== undefined) result[name] = value;
   }
   return result;
+}
+
+/**
+ * A SurrealQL literal for a plain value: strings are JSON-quoted (every
+ * escape JSON writes is one SurrealQL accepts, and SurrealQL strings have no
+ * interpolation, so the literal cannot end early or run code), finite numbers,
+ * booleans, null, arrays and plain objects. Anything else is refused.
+ *
+ * A quoted literal stays a string in SurrealDB 2.3.3, including inside
+ * arrays and objects, as it did in the old queries.
+ */
+export function toSurqlLiteral(value: unknown): string {
+  if (value === null) return "null";
+  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new ValidationError("Invalid number");
+    return JSON.stringify(value);
+  }
+  if (value instanceof Date) return JSON.stringify(value.toISOString());
+  if (Array.isArray(value)) {
+    return `[${Array.from(value, (item) => (item === undefined ? "null" : toSurqlLiteral(item))).join(", ")}]`;
+  }
+  if (typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, item]) => item !== undefined)
+      .map(([key, item]) => `${JSON.stringify(key)}: ${toSurqlLiteral(item)}`);
+    return `{${entries.join(", ")}}`;
+  }
+  throw new ValidationError("Unsupported query value");
+}
+
+const STRING_MARKER = "\u0001";
+
+/**
+ * The statements and RPC variables that set a query's variables.
+ *
+ * Every string, including strings nested in arrays and objects (passwords,
+ * emails, OAuth profile data), travels as an RPC variable and never appears in
+ * the query text, so a SurrealDB query trace cannot show it. SurrealDB 2.3.3
+ * parses JSON RPC variables with legacy strands, which would turn a string such
+ * as "secret:123456" into a record id, so each is sent with a leading
+ * "\u0001" (which no SurrealQL value can start with) and read back with
+ * `string::slice($__vN, 1)`. Arrays and objects are written as SurrealQL
+ * literals whose string leaves are those expressions; numbers, booleans and
+ * null are literals (see toSurqlLiteral for what is accepted). JSON never
+ * writes a raw line break, so each LET is one line.
+ */
+export function toQueryStatements(vars?: QueryVars) {
+  const lets: string[] = [];
+  const bindings: Record<string, string> = {};
+  let next = 0;
+  const expression = (value: unknown): string => {
+    if (typeof value === "string") {
+      const name = `__v${next++}`;
+      bindings[name] = STRING_MARKER + value;
+      return `string::slice($${name}, 1)`;
+    }
+    if (value instanceof Date) return expression(value.toISOString());
+    if (Array.isArray(value)) {
+      return `[${Array.from(value, (item) => (item === undefined ? "null" : expression(item))).join(", ")}]`;
+    }
+    if (typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype) {
+      const entries = Object.entries(value as Record<string, unknown>)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => `${JSON.stringify(key)}: ${expression(item)}`);
+      return `{${entries.join(", ")}}`;
+    }
+    return toSurqlLiteral(value);
+  };
+  for (const [name, value] of Object.entries(toQueryVars(vars))) {
+    lets.push(`LET $${name} = ${expression(value)};`);
+  }
+  return { lets, bindings };
 }
 
 // }
@@ -208,8 +287,11 @@ export async function performAgentProxyQuery(
 
 /**
  * Runs a query with root credentials through SurrealDB's RPC `query` method.
- * Returns the per-statement results (the shape /sql returned) without the two
- * USE statements, or the RPC error.
+ * Variables are set by LET statements before the query (see
+ * toQueryStatements): strings from RPC variables, other values from literals.
+ * Nothing is in the URL. Returns the per-statement results
+ * (the shape /sql returned) without the USE and LET statements, or the RPC
+ * error.
  */
 async function performRootQuery(params: DatabaseQueryParams) {
   try {
@@ -234,7 +316,12 @@ async function performRootQuery(params: DatabaseQueryParams) {
     headers.append("DB", db);
     headers.append("Surreal-NS", namespace);
     headers.append("Surreal-DB", db);
-    const sql = `USE NAMESPACE ${namespace}; USE DATABASE ${db}; ${params.query}`;
+    const { lets, bindings } = toQueryStatements(params.vars);
+    const sql = [
+      `USE NAMESPACE ${namespace}; USE DATABASE ${db};`,
+      ...lets,
+      params.query
+    ].join("\n");
     const endPoint = "https://" + params.instance + "/rpc";
     console.log({ instance: params.instance, namespace, db });
     const response = await fetch(endPoint, {
@@ -242,7 +329,7 @@ async function performRootQuery(params: DatabaseQueryParams) {
       body: JSON.stringify({
         id: 1,
         method: "query",
-        params: [sql, toQueryVars(params.vars)]
+        params: [sql, bindings]
       }),
       headers
     });
@@ -258,7 +345,7 @@ async function performRootQuery(params: DatabaseQueryParams) {
       json = await response.json();
     }
     if (json && Array.isArray(json.result)) {
-      return json.result.slice(2);
+      return json.result.slice(2 + lets.length);
     }
     return json?.error ?? json;
   } catch (e) {
