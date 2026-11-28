@@ -37,17 +37,14 @@ export function wordCounter(
     return words.filter((word) => word.length > 0).length;
   }
 
-  function stripHtml(html: string): string {
-    const tmp = document.createElement("DIV");
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
-  }
-
+  /**
+   * Counts the visible text as it is. It comes from text nodes, so it is never
+   * parsed as HTML: a note can contain text that looks like markup.
+   */
   function updateCounts() {
     const visibleContent = getVisibleContent(node);
-    const strippedContent = stripHtml(visibleContent);
-    const wordCount = countWords(strippedContent);
-    const charCount = strippedContent.length;
+    const wordCount = countWords(visibleContent);
+    const charCount = visibleContent.length;
     onUpdate({ words: wordCount, characters: charCount });
   }
 

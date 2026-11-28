@@ -10,8 +10,10 @@ const authority = 'http://127.0.0.1:18788';
 const email = 'existing-user@example.test';
 /**
  * First @authfn/social-oauth release that takes the Apple email only from the
- * verified identity token. 0.2.0 does not contain the fix and 0.2.1 failed to
- * build and was never published, so the guard trips at 0.2.2.
+ * verified identity token. 0.2.0 creates new accounts with the email from the
+ * unsigned `user` field of the Apple callback, marked verified; 0.2.1 failed to
+ * build and was never published. The account service must not run anything
+ * older than 0.2.2.
  */
 const FIRST_FIXED_SOCIAL_OAUTH = '0.2.2';
 
@@ -30,17 +32,19 @@ describe('OAuth sign-in linking by verified email', () => {
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).toEqual(['google']);
   });
 
-  it(`keeps Apple out of email linking until @authfn/social-oauth ${FIRST_FIXED_SOCIAL_OAUTH} or later is installed`, () => {
+  it(`runs @authfn/social-oauth ${FIRST_FIXED_SOCIAL_OAUTH} or later, which takes the Apple email only from the verified identity token`, () => {
     const version = installedSocialOAuthVersion();
-    const fixed = compareVersions(version, FIRST_FIXED_SOCIAL_OAUTH) >= 0;
     expect(
-      fixed,
-      `@authfn/social-oauth ${version} is installed. ${FIRST_FIXED_SOCIAL_OAUTH} is the first release that takes the Apple email only from the verified identity token. Decide whether to add "apple" back to OAUTH_EMAIL_LINKING_PROVIDERS and update this test.`
-    ).toBe(false);
+      compareVersions(version, FIRST_FIXED_SOCIAL_OAUTH),
+      `@authfn/social-oauth ${version} is installed. Releases before ${FIRST_FIXED_SOCIAL_OAUTH} create Apple accounts with an unsigned, caller-chosen email marked verified.`
+    ).toBeGreaterThanOrEqual(0);
+  });
+
+  it('keeps Apple out of email linking', () => {
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).not.toContain('apple');
   });
 
-  it(`compares versions so the guard trips at the stable ${FIRST_FIXED_SOCIAL_OAUTH} release`, () => {
+  it(`compares versions so the floor holds at the stable ${FIRST_FIXED_SOCIAL_OAUTH} release`, () => {
     expect(compareVersions('0.1.8', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
     expect(compareVersions('0.2.0', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
     expect(compareVersions('0.2.1', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);

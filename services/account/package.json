@@ -61,7 +61,7 @@
     "@authfn/multi-region": "0.2.4",
     "@authfn/native-handoff": "0.2.0",
     "@authfn/password": "0.1.9",
-    "@authfn/social-oauth": "0.2.0",
+    "@authfn/social-oauth": "0.2.2",
     "@authfn/two-factor": "0.1.8",
     "@aws-sdk/client-dynamodb": "^3.1037.0",
     "@aws-sdk/lib-dynamodb": "^3.1037.0",

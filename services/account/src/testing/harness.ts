@@ -12,6 +12,7 @@ import { resolveNucleumDatafnSearchResourceFields } from "@nucleum/schema";
 import {
   buildAccountServices,
   registerCoreRoutes,
+  type AccountDeployment,
   type AccountFilesInfra,
   type AccountServices
 } from "../app.js";
@@ -59,6 +60,7 @@ export function createAccountTestHarness(
     enableRateLimit?: boolean;
     corsOrigins?: string[];
     files?: AccountFilesInfra;
+    resolveClientIp?: AccountDeployment["resolveClientIp"];
   } = {}
 ): AccountTestHarness {
   const regionId = input.regionId ?? "local";
@@ -135,7 +137,8 @@ export function createAccountTestHarness(
       regionId,
       regionLookupStore,
       regions,
-      corsOrigins: input.corsOrigins
+      corsOrigins: input.corsOrigins,
+      resolveClientIp: input.resolveClientIp
     },
     integrations: {
       delivery,
