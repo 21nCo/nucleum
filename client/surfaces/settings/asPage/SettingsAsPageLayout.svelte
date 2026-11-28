@@ -19,6 +19,8 @@
   import SettingsFooter from "@nucleum/surfaces/settings/SettingsFooter.svelte";
   import { requireSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
   import OfflineStatusIndicator from "@nucleum/surfaces/settings/sync/OfflineStatusIndicator.svelte";
+  import { isPortraitMiniPlayerDocked } from "@nucleum/shell/overlays/portrait-dock";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     isShowBackButton = false,
     children = undefined,
@@ -44,19 +46,29 @@
 </script>
 
 {#if $view.isPortrait && !isCpHome}
-  <div class="flex flex-col h-full w-full gap-2 px-4 py-2 otop:pt-12">
+  <div
+    class={cn(
+      "flex flex-col h-full min-h-0 w-full gap-2 px-4 pt-2 otop:pt-12",
+      $isPortraitMiniPlayerDocked ? "pb-44" : "pb-24"
+    )}
+  >
     <NavigationHeader
       label={selectedSettingLabel}
       backCallback={() => {
         navigation.toggleSearchParam([AppSearchParam.SETTING]);
       }}
     />
-    <div class="flex flex-col flex-grow">
+    <div class="flex min-h-0 flex-col flex-grow">
       {@render children?.()}
     </div>
   </div>
 {:else if isCpHome || !$view.isPortrait}
-  <div class="flex w-full h-full bg-bgs2">
+  <div
+    class={cn(
+      "flex w-full h-full bg-bgs2",
+      $view.isPortrait && ($isPortraitMiniPlayerDocked ? "pb-44" : "pb-24")
+    )}
+  >
     <Panel
       title="Settings"
       {isShowBackButton}
@@ -66,9 +78,7 @@
       }}
     >
       {#snippet nonPadded()}
-        <div
-          class="flex flex-col gap-8 grow overflow-auto portrait:pb-40 pb-20"
-        >
+        <div class="flex flex-col gap-8 grow overflow-auto pb-20">
           <div class="pt-4">
             <ProfileCpSection
               onclick={() =>
