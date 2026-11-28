@@ -98,7 +98,7 @@ export interface FailureSummary {
   status?: number;
 }
 
-type Access = 'read' | 'write';
+export type Access = 'read' | 'write';
 type Row = Record<string, unknown>;
 
 interface Caller {
@@ -466,21 +466,27 @@ function grantCovers(grant: AppGrant, app: InterfaceApp): boolean {
   return grant === 'all' || (app !== 'nucleum' && grant.has(app));
 }
 
+/** A personal access token that holds an app's scope, as `authenticateAppToken` accepts it. */
+export interface AppToken {
+  session: AuthFnSession;
+  /** The request authfn saw: the caller's headers without cookies. */
+  tokenRequest: Request;
+  /** The app's scopes the token holds: its read scope, and its write scope when granted. */
+  scopes: string[];
+}
+
 /**
  * Authenticates the bearer token alone (cookies are dropped, so a browser
- * session never authorizes a call), accepts only a personal access token,
- * checks it holds this app's scope for the access, and narrows it to this
- * app's scopes for DataFn.
+ * session never authorizes a call), accepts only a personal access token and
+ * checks it holds this app's scope for the access. Throws the API's 401 or
+ * 403 problem otherwise; any other failure is left to `toProblem`.
  */
-async function resolveCaller(
+export async function authenticateAppToken(
   app: InterfaceApp,
   access: Access,
   request: Request,
-  services: InterfaceApiServices | undefined
-): Promise<Caller> {
-  if (!services) {
-    throw new ApiProblem(503, 'unavailable', 'This router only describes the API.');
-  }
+  services: Pick<InterfaceApiServices, 'authenticate'>
+): Promise<AppToken> {
   const challenge = { 'www-authenticate': `Bearer realm="${app}"` };
   if (!/^bearer\s+\S+$/i.test(request.headers.get('authorization')?.trim() ?? '')) {
     throw new ApiProblem(401, 'unauthenticated', 'Send a personal access token as a Bearer token.', {}, challenge);
@@ -513,7 +519,25 @@ async function resolveCaller(
       'www-authenticate': `Bearer realm="${app}", error="insufficient_scope", scope="${needed.join(' ')}"`
     });
   }
-  const narrowed = { ...session, scopes: grantCovers(grants.write, app) ? [scopes.read, scopes.write] : [scopes.read] };
+  return {
+    session,
+    tokenRequest,
+    scopes: grantCovers(grants.write, app) ? [scopes.read, scopes.write] : [scopes.read]
+  };
+}
+
+/** Authenticates the caller as `authenticateAppToken` does and narrows its session to this app's scopes for DataFn. */
+async function resolveCaller(
+  app: InterfaceApp,
+  access: Access,
+  request: Request,
+  services: InterfaceApiServices | undefined
+): Promise<Caller> {
+  if (!services) {
+    throw new ApiProblem(503, 'unavailable', 'This router only describes the API.');
+  }
+  const { session, tokenRequest, scopes } = await authenticateAppToken(app, access, request, services);
+  const narrowed = { ...session, scopes };
   const server = await services.getSyncServer();
   return {
     executor: server.executor,
@@ -1034,7 +1058,7 @@ function encryptionEnabled(stored: Row | null): boolean {
   return typeof settings === 'object' && settings !== null && (settings as { enabled?: unknown }).enabled === true;
 }
 
-function notVisible(contract: InterfaceResourceContract, id: string): ApiProblem {
+export function notVisible(contract: InterfaceResourceContract, id: string): ApiProblem {
   return new ApiProblem(404, 'not_found', `No ${contract.resource} ${id} is visible to this token.`);
 }
 
@@ -1569,12 +1593,21 @@ function statusKind(status: number | undefined): FailureKind {
   }
 }
 
-function toProblem(error: unknown, services: InterfaceApiServices | undefined): ApiProblem {
+/**
+ * The problem a request's failure answers with: an API problem as is, an
+ * authfn client error (such as a rate limit) with its status and code, and
+ * anything else as a 500 that logs only the failure's class under `label`.
+ */
+export function toProblem(
+  error: unknown,
+  services: Pick<InterfaceApiServices, 'logError'> | undefined,
+  label = 'v1 API request failed'
+): ApiProblem {
   if (error instanceof ApiProblem) return error;
   if (error instanceof AuthFnError && error.status < 500) {
     return new ApiProblem(error.status, error.code.toLowerCase(), error.message);
   }
-  services?.logError?.('v1 API request failed', failureSummary(error));
+  services?.logError?.(label, failureSummary(error));
   return new ApiProblem(500, 'internal', 'The request could not be completed.');
 }
 
