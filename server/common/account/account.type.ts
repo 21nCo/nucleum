@@ -3,7 +3,12 @@ export type DatabaseQueryParams = {
   dbType: CONTEXT;
   db?: string;
   instance?: string;
+  /** Values bound to `$name` variables in the query. */
+  vars?: QueryVars;
 };
+
+/** Values bound to `$name` variables of a SurrealQL query. */
+export type QueryVars = Record<string, unknown>;
 
 export enum CONTEXT {
   ADMIN = "ADMIN",

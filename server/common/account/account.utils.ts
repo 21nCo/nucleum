@@ -1,5 +1,10 @@
 import { IUserProfileInfo } from "@nucleum/schema/account/profile.type";
 
+/**
+ * The user fields returned to legacy clients. Optional fields are left out
+ * when they are not set, so the response never carries an undefined value
+ * (which the legacy JSON replacer would send as the truthy string "$NONE").
+ */
 export function frameNonSensitiveUserInfo(userInfo: IUserProfileInfo) {
   const {
     id,
@@ -14,10 +19,10 @@ export function frameNonSensitiveUserInfo(userInfo: IUserProfileInfo) {
     id,
     emailParts,
     nickName,
-    profilePictureUrl,
     joinDate,
-    region,
-    isBootstrapped
+    ...(profilePictureUrl != null ? { profilePictureUrl } : {}),
+    ...(region != null ? { region } : {}),
+    ...(isBootstrapped != null ? { isBootstrapped } : {})
   };
 }
 

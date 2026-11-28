@@ -1,6 +1,6 @@
 import { BillingCycle } from "@nucleum/schema/account/subscription";
 import { PlanType } from "@nucleum/schema/account/subscription";
-import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
+import { performQueryOnMasterDb, userRecord } from "$lib/server/surrealHelpers";
 import { Agent } from "../../account/account.type";
 import {
   resolvePromotePlanQuery,
@@ -53,7 +53,7 @@ export async function restore(body: any, agent: Agent) {
 }
 
 async function retrieveUserPlan(id: string) {
-  const userDataResult = await performQueryOnMasterDb(resolvePlanQuery(id));
+  const userDataResult = await performQueryOnMasterDb(...resolvePlanQuery(id));
   if (!userDataResult || !userDataResult[0]) {
     throw new ValidationError("User not found");
   }
@@ -61,8 +61,10 @@ async function retrieveUserPlan(id: string) {
 }
 
 async function retrieveUserTransactions(userId: string) {
-  const query = `SELECT * FROM transaction WHERE userId = user:${userId} ORDER BY createdAt DESC`;
-  const transactionResult = await performQueryOnMasterDb(query);
+  const query = `SELECT * FROM transaction WHERE userId = type::record($user) ORDER BY createdAt DESC`;
+  const transactionResult = await performQueryOnMasterDb(query, {
+    user: userRecord(userId)
+  });
   if (!transactionResult || !transactionResult[0]?.result) {
     return [];
   }

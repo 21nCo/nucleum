@@ -11,6 +11,7 @@ import {
 import { getEmailParts } from "./account.utils";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 import { SyncProviderFactory } from "../sync/providers";
+import { isKnownRegion } from "$lib/server/surrealHelpers";
 
 export async function signup(data: any, isOAuth = false) {
   console.log("signup", { data, isOAuth });
@@ -133,7 +134,10 @@ async function createGuest(body: any) {
 }
 
 async function bootstrapUserAccount(authHeader: any, body: any) {
-  const { region, context } = body;
+  const { context } = body;
+  const region =
+    body.region === undefined || body.region === "" ? "global" : body.region;
+  if (!isKnownRegion(region)) throw new ValidationError("Unknown region");
   let token = authHeader?.split(" ")[1];
   let agent = await authorize({ token, host: context.host });
   if (!agent) throw new AuthenticationError("Unauthorized");

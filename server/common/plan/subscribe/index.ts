@@ -1,5 +1,5 @@
-import { BillingCycle } from "@nucleum/schema/account/subscription";
-import { performQueryOnMasterDb } from "$lib/server/surrealHelpers";
+import { BillingCycle, PlanType } from "@nucleum/schema/account/subscription";
+import { performQueryOnMasterDb, userRecord } from "$lib/server/surrealHelpers";
 import { PaymentProvider } from "@nucleum/schema/account/payment-provider";
 import { generateSHA256Hash } from "$lib/shared/utils/crypto.utils";
 import { Agent } from "../../account/account.type";
@@ -18,8 +18,15 @@ async function newSubscription(body: any, agent: Agent) {
   const { plan, cycle, context, product, billing, provider } = body;
   if (!plan) throw new ValidationError("No plan provided");
   if (!cycle) throw new ValidationError("No cycle provided");
+  if (!isEnumValue(PlanType, plan)) throw new ValidationError("Unknown plan");
+  if (!isEnumValue(BillingCycle, cycle))
+    throw new ValidationError("Unknown cycle");
+  if (provider != null && !isEnumValue(PaymentProvider, provider))
+    throw new ValidationError("Unknown provider");
+  if (provider && !isProductSlug(product))
+    throw new ValidationError("Unknown product");
   const userDataResult = await performQueryOnMasterDb(
-    resolvePlanQuery(agent.id)
+    ...resolvePlanQuery(agent.id)
   );
   if (!userDataResult || !userDataResult[0])
     throw new ValidationError("User not found");
@@ -119,9 +126,27 @@ async function createTransaction(params: {
   status: "pending" | "completed" | "cancelled" | "failed";
 }) {
   const query = `
-    INSERT INTO transaction [{ userId: user:${params.userId}, productId: "${params.productId}", plan: "${params.plan}", cycle: "${params.cycle}", discount: ${params.discount}, status: "${params.status}", createdAt: time::now(), nonce: "${params.nonce}", provider: "${params.provider}"}]`;
-  const transaction = await performQueryOnMasterDb(query);
+    INSERT INTO transaction [{ userId: type::record($user), productId: $productId, plan: $plan, cycle: $cycle, discount: $discount, status: $status, createdAt: time::now(), nonce: $nonce, provider: $provider }]`;
+  const transaction = await performQueryOnMasterDb(query, {
+    user: userRecord(params.userId),
+    productId: params.productId,
+    plan: params.plan,
+    cycle: params.cycle,
+    discount: params.discount,
+    status: params.status,
+    nonce: params.nonce,
+    provider: params.provider
+  });
   return transaction;
+}
+
+function isEnumValue(values: Record<string, string>, value: unknown) {
+  return Object.values(values).includes(value as string);
+}
+
+/** Product slugs go into `app.<product>.<plan>.<cycle>` store product ids. */
+function isProductSlug(value: unknown) {
+  return typeof value === "string" && /^[a-z0-9]+$/.test(value);
 }
 
 async function updateTransaction(id: string, props: any) {

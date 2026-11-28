@@ -1,7 +1,11 @@
 import { performAgentProxyQuery } from "../../surrealHelpers";
-import { Agent } from "../account/account.type";
+import { Agent, QueryVars } from "../account/account.type";
 
-export async function performQueryOnBehalfOfUser(query: string, agent: Agent) {
+export async function performQueryOnBehalfOfUser(
+  query: string,
+  agent: Agent,
+  vars?: QueryVars
+) {
   //TODO - check if the agent has permissions to perform the query if the context is space
-  return performAgentProxyQuery(query, agent);
+  return performAgentProxyQuery(query, agent, vars);
 }
