@@ -331,27 +331,22 @@ test.describe("nodes - record page (opening, visibility, tab switching) @record-
     });
 
     const contentTab = page
-      .getByRole("tablist")
-      .first()
-      .getByRole("tab")
-      .first();
-    await expect(contentTab).toBeVisible({ timeout: 10_000 });
-    await contentTab.click({ timeout: 5_000 });
-    await expect(contentTab).toHaveAttribute("aria-selected", "true", {
-      timeout: 5_000
-    });
+      .getByTestId("top-bar-context-zone")
+      .getByRole("tab", { name: "Content", exact: true });
+    await expect(contentTab).toBeVisible();
+    await contentTab.click({ noWaitAfter: true, timeout: 10_000 });
+    await expect(contentTab).toHaveAttribute("aria-selected", "true");
 
     const editor = page
-      .getByRole("textbox", { name: /Markdown editor/i })
-      .or(
-        page
-          .locator('[contenteditable="true"]')
-          .filter({ hasNot: page.locator("#capture-title") })
-      )
+      .getByRole("textbox", { name: "Markdown editor", exact: true })
+      .getByRole("textbox")
       .first();
-    await editor.waitFor({ state: "visible", timeout: 15_000 });
+    await expect(editor).toBeVisible();
     await editor.click({ timeout: 5_000 });
-    await page.keyboard.type(` Focused ${token}`, { delay: 20 });
+    await expect(editor).toBeFocused();
+    await editor.press("End");
+    await editor.pressSequentially(` Focused ${token}`);
+    await expect(editor).toContainText(`Focused ${token}`);
 
     await openNodePanel(page, /^Links$/i);
 
