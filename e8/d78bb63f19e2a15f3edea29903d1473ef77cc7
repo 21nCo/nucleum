@@ -1,0 +1,21 @@
+server/surrealHelpers.ts
+  s_69892bdd7e1600::t_802705b9328d0b 138-140,145,159-160,183-184,186-196,198-209,273-275,302,315
+tests/unit/legacy-surreal-queries.spec.ts
+  s_69892bdd7e1600::t_da1a0fcc511fa1 6,28-35,54-57,59-60,72,116-130,263-265,411
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e8d78bb63f19e2a15f3edea29903d1473ef77cc7",
+  "prompts": {},
+  "sessions": {
+    "s_69892bdd7e1600": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9539d20f-ea7d-473b-88ed-1aa7389830e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
