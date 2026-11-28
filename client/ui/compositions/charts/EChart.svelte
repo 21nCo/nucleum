@@ -1,7 +1,74 @@
+<script module lang="ts">
+  import type { ContinuousVisualMapComponentOption } from "echarts";
+  import { init, use, type ComposeOption, type ECharts } from "echarts/core";
+  import {
+    BarChart,
+    HeatmapChart,
+    LineChart,
+    PieChart,
+    SunburstChart,
+    TreemapChart,
+    type BarSeriesOption,
+    type HeatmapSeriesOption,
+    type LineSeriesOption,
+    type PieSeriesOption,
+    type SunburstSeriesOption,
+    type TreemapSeriesOption
+  } from "echarts/charts";
+  import {
+    CalendarComponent,
+    GraphicComponent,
+    GridComponent,
+    LegendScrollComponent,
+    MarkLineComponent,
+    TooltipComponent,
+    VisualMapContinuousComponent,
+    type CalendarComponentOption,
+    type GraphicComponentOption,
+    type GridComponentOption,
+    type LegendComponentOption,
+    type TooltipComponentOption
+  } from "echarts/components";
+  import { LabelLayout, LegacyGridContainLabel } from "echarts/features";
+  import { CanvasRenderer } from "echarts/renderers";
+
+  use([
+    BarChart,
+    HeatmapChart,
+    LineChart,
+    PieChart,
+    SunburstChart,
+    TreemapChart,
+    CalendarComponent,
+    GraphicComponent,
+    GridComponent,
+    LegendScrollComponent,
+    MarkLineComponent,
+    TooltipComponent,
+    VisualMapContinuousComponent,
+    LabelLayout,
+    LegacyGridContainLabel,
+    CanvasRenderer
+  ]);
+
+  type EChartsOption = ComposeOption<
+    | BarSeriesOption
+    | HeatmapSeriesOption
+    | LineSeriesOption
+    | PieSeriesOption
+    | SunburstSeriesOption
+    | TreemapSeriesOption
+    | CalendarComponentOption
+    | GraphicComponentOption
+    | GridComponentOption
+    | LegendComponentOption
+    | TooltipComponentOption
+    | (ContinuousVisualMapComponentOption & { type?: "continuous" })
+  >;
+</script>
+
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import * as echarts from "echarts";
-  import type { ECharts, EChartsOption } from "echarts";
   import { ChartType } from "@21n/ui/compositions/charts/analytics.type";
   import { retrieveCurrentColors } from "@21n/theme/color-presentation";
   import { elementAppearance as appearance } from "@21n/ui/environment/element-environment.store";
@@ -283,7 +350,7 @@
         };
       });
 
-      const seriesOption: echarts.BarSeriesOption = {
+      const seriesOption: BarSeriesOption = {
         name: group,
         type: "bar",
         stack: isStacked ? "total" : undefined,
@@ -482,7 +549,7 @@
         .filter((entry): entry is [number, number] => Array.isArray(entry));
       seriesData.sort((a, b) => a[0] - b[0]);
 
-      const baseSeries: echarts.LineSeriesOption = {
+      const baseSeries: LineSeriesOption = {
         name: group,
         type: "line",
         smooth: true,
@@ -1326,7 +1393,7 @@
         ? options.donutFormatter(total)
         : formattedTotal;
 
-    const series: echarts.PieSeriesOption = {
+    const series: PieSeriesOption = {
       type: "pie",
       radius: isDonut ? ["45%", "70%"] : "70%",
       center: ["45%", "50%"],
@@ -1482,7 +1549,7 @@
 
   function ensureChart() {
     if (!shouldRenderChart || chart || !container) return;
-    chart = echarts.init(container);
+    chart = init(container);
     resizeObserver = new ResizeObserver(() => {
       chart?.resize();
     });
