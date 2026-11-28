@@ -67,9 +67,11 @@ export function userRecord(id: string) {
 }
 
 /**
- * How SurrealQL read a value that used to be pasted into a double-quoted
- * string literal: escapes decoded, or undefined when that literal would not
- * have parsed. Used only to recognise credentials stored by the old queries.
+ * How SurrealQL 2.3.3 read a value that used to be pasted into a
+ * double-quoted string literal: escapes decoded (\\u{} is U+0000, a bare
+ * leading surrogate must be followed by a bare trailing one), or undefined
+ * when that literal would not have parsed. Used only to recognise credentials
+ * stored by the old queries.
  */
 export function decodeLegacyStringLiteral(value: string) {
   const simple: Record<string, string> = {
@@ -96,20 +98,35 @@ export function decodeLegacyStringLiteral(value: string) {
       out += simple[next];
     } else if (next === "u" && value[i + 1] === "{") {
       const end = value.indexOf("}", i + 2);
-      const hex = end > 0 ? value.slice(i + 2, end) : "";
-      if (!/^[0-9a-fA-F]{1,6}$/.test(hex) || parseInt(hex, 16) > 0x10ffff) {
-        return undefined;
-      }
-      out += String.fromCodePoint(parseInt(hex, 16));
+      if (end < 0) return undefined;
+      const hex = value.slice(i + 2, end);
+      if (!/^[0-9a-fA-F]{0,6}$/.test(hex)) return undefined;
+      const codePoint = hex ? parseInt(hex, 16) : 0;
+      if (codePoint > 0x10ffff || isSurrogate(codePoint)) return undefined;
+      out += String.fromCodePoint(codePoint);
       i = end;
     } else if (next === "u" && /^[0-9a-fA-F]{4}$/.test(value.slice(i + 1, i + 5))) {
-      out += String.fromCharCode(parseInt(value.slice(i + 1, i + 5), 16));
+      const unit = parseInt(value.slice(i + 1, i + 5), 16);
       i += 4;
+      if (unit >= 0xdc00 && unit <= 0xdfff) return undefined;
+      if (unit >= 0xd800 && unit <= 0xdbff) {
+        const low = /^\\u([0-9a-fA-F]{4})/.exec(value.slice(i + 1));
+        const lowUnit = low ? parseInt(low[1], 16) : -1;
+        if (lowUnit < 0xdc00 || lowUnit > 0xdfff) return undefined;
+        out += String.fromCharCode(unit, lowUnit);
+        i += 6;
+      } else {
+        out += String.fromCharCode(unit);
+      }
     } else {
       return undefined;
     }
   }
   return out;
+}
+
+function isSurrogate(codePoint: number) {
+  return codePoint >= 0xd800 && codePoint <= 0xdfff;
 }
 
 /**

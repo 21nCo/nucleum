@@ -86,6 +86,15 @@ describe("decodeLegacyStringLiteral", () => {
     expect(decodeLegacyStringLiteral("\\u0041\\u{1F600}")).toBe("A😀");
   });
 
+  it("matches SurrealDB 2.3.3 for empty braced escapes and surrogate pairs", () => {
+    expect(decodeLegacyStringLiteral("a\\u{}b")).toBe("a\u0000b");
+    expect(decodeLegacyStringLiteral("\\uD83D\\uDE00")).toBe("😀");
+    expect(decodeLegacyStringLiteral("\\uD83Dx")).toBeUndefined();
+    expect(decodeLegacyStringLiteral("\\uDE00")).toBeUndefined();
+    expect(decodeLegacyStringLiteral("\\u{D83D}")).toBeUndefined();
+    expect(decodeLegacyStringLiteral("\\u{110000}")).toBeUndefined();
+  });
+
   it("returns undefined where the old literal would not have parsed", () => {
     expect(decodeLegacyStringLiteral('a"b')).toBeUndefined();
     expect(decodeLegacyStringLiteral("a\\qb")).toBeUndefined();
