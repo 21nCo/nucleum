@@ -30,7 +30,10 @@ interface McpAuthInfo {
  * HTTP, answering with JSON. Every request must carry a personal access
  * token as a Bearer token that holds the app's read scope (a `nucleum`
  * token covers every app); tools/list then shows the tools the token's
- * scopes allow. Tools call the app's v1 API as the token. A failure outside
+ * scopes allow. Only POST is served: a stateless server never sends on a
+ * standalone SSE stream and keeps no session to delete, so GET, DELETE and
+ * every other method answer 405 before any token check or server is built.
+ * Tools call the app's v1 API as the token. A failure outside
  * a tool answers with the problem the v1 API would give, and only its class
  * is logged, never its message, which can quote stored content.
  */
@@ -58,6 +61,7 @@ export function registerInterfaceMcpRoutes(input: RegisterInterfaceMcpRoutesInpu
     const app = c.req.param('app') as InterfaceApp;
     const router = routers.get(app);
     if (!router) return new ApiProblem(404, 'not_found', 'No MCP server is served at this path.').toResponse();
+    if (c.req.method !== 'POST') return methodNotAllowed();
     try {
       const authInfo = await authenticate(app, c.req.raw, input.services, (request) => router.handle(request));
       return await (await handlerFor(app))(c.req.raw, { authInfo });
@@ -65,6 +69,11 @@ export function registerInterfaceMcpRoutes(input: RegisterInterfaceMcpRoutesInpu
       return toProblem(error, input.services, `MCP ${app} request failed`).toResponse();
     }
   });
+}
+
+/** The 405 answer to any method but POST, naming POST in `Allow`. */
+function methodNotAllowed(): Response {
+  return new ApiProblem(405, 'method_not_allowed', 'Use POST for this path.', {}, { allow: 'POST' }).toResponse();
 }
 
 /**

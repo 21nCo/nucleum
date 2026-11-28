@@ -180,6 +180,21 @@ describe.each(interfaceApps)('/mcp/%s', (app) => {
     }
   });
 
+  it('answers 405 with Allow: POST to every method but POST, opening no stream, and still serves POST', async () => {
+    const token = await createKey([read]);
+    for (const method of ['GET', 'DELETE', 'PUT', 'PATCH']) {
+      for (const headers of [token, {}]) {
+        const response = await call(`/mcp/${app}`, { accept: 'application/json, text/event-stream', ...headers }, { method });
+        expect(response.status).toBe(405);
+        expect(response.headers.get('allow')).toBe('POST');
+        expect(response.headers.get('content-type')).not.toContain('text/event-stream');
+        expect(await response.json()).toMatchObject({ status: 405, code: 'method_not_allowed' });
+      }
+    }
+    const tools = await withClient(app, token, (client) => client.listTools());
+    expect(tools.map((tool) => tool.name).sort()).toEqual(manifestTools(app, 'read'));
+  });
+
   it('answers 403 insufficient_scope with the needed scope for a token without this app\'s read scope', async () => {
     const other = app === 'memotron' ? 'pointron' : 'memotron';
     const response = await call(`/mcp/${app}`, {
@@ -301,6 +316,16 @@ describe('/mcp failures outside a tool', () => {
     expect(response.status).toBe(429);
     expect(response.headers.get('content-type')).toContain('application/problem+json');
     expect(await response.json()).toMatchObject({ status: 429, code: 'authfn_rate_limited', detail: 'Too many requests.' });
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it('answers a GET with 405 before checking the token', async () => {
+    const { app, logError } = failingApp(new TypeError('The token check must not run for a GET.'));
+    const response = await app.fetch(new Request(`${base}/mcp/memotron`, {
+      headers: { accept: 'text/event-stream', authorization: 'Bearer test-mcp-token' }
+    }));
+    expect(response.status).toBe(405);
+    expect(response.headers.get('allow')).toBe('POST');
     expect(logError).not.toHaveBeenCalled();
   });
 
