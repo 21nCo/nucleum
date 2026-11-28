@@ -345,16 +345,17 @@ test("adds mixed objectives and tasks in one editor session", async ({
 async function expectDuplicateMainInputRejected(
   page: Page,
   input: Locator,
-  searchRoot: Page | Locator,
+  searchRoot: Locator,
   label: string,
   itemId: string
 ) {
   const before = await readSessionRuntime(page);
   await input.fill(label);
-  await expect(searchRoot.getByText(label, { exact: true }).last()).toBeVisible(
-    { timeout: 10_000 }
-  );
-  await input.press("Enter");
+  const result = searchRoot
+    .locator(".popover button")
+    .filter({ has: page.getByText(label, { exact: true }) });
+  await expect(result).toBeVisible();
+  await result.click();
 
   await readToastNotificationContent(page, {
     expectedContent: "Item already exists in focus list",
