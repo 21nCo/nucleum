@@ -1,4 +1,5 @@
 import { oauth, processOAuthRedirection } from "./oauth";
+import { buildOAuthRedirectResponse } from "./oauth-redirect";
 
 export async function handleOauth(body: any) {
   return oauth(body);
@@ -6,9 +7,10 @@ export async function handleOauth(body: any) {
 
 /**
  * OAuth redirect handler to process the auth code received from the OAuth provider if the response type of the provider is `form_post` in cases like Apple.
+ * The caller is only signed in and sent back with a token when `state` names an allowlisted client host (see `oauth-redirect.ts`).
  * @param body
  * @param provider
- * @param apiUrl
+ * @param endpoint the API host that received the callback
  * @returns
  */
 export async function handleOAuthRedirection(
@@ -16,48 +18,10 @@ export async function handleOAuthRedirection(
   provider: string,
   endpoint: string
 ) {
-  let domain = "";
-  try {
-    const domainPart = body.state.split(":")[1];
-    let isSchemeRedirect = false;
-    if (domainPart) {
-      if (domainPart.includes("localredirect")) {
-        domain = "tauri://localhost/index.html";
-      } else if (domainPart.includes("schemeredirect")) {
-        isSchemeRedirect = true;
-        const schemeData = domainPart.split("_schemeredirect.")?.[0];
-        domain = schemeData + "://oauthsignin";
-      } else {
-        domain = "https://" + domainPart + "/oauth";
-      }
-    }
-    const result = await processOAuthRedirection(body, provider, endpoint);
-    console.log({ result, domainPart, domain, body });
-    let redirectUrl = domain ?? "http://bla.ink";
-    if (result?.token && domain) {
-      redirectUrl = domain + "?token=" + result.token;
-      if (!isSchemeRedirect) {
-        redirectUrl =
-          redirectUrl + "&provider=" + provider + "&signup=" + result.isSignup;
-      }
-    } else if (result?.error) {
-      redirectUrl = domain + "/error?error=" + result.error;
-    }
-    return {
-      statusCode: 302,
-      headers: {
-        Location: redirectUrl
-      },
-      body: ""
-    };
-  } catch (e) {
-    console.error(e);
-    return {
-      statusCode: 302,
-      headers: {
-        Location: domain + "/error?error=" + "Something went wrong"
-      },
-      body: ""
-    };
-  }
+  return buildOAuthRedirectResponse(
+    body,
+    provider,
+    endpoint,
+    processOAuthRedirection
+  );
 }
