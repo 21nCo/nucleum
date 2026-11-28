@@ -1,0 +1,1107 @@
+{
+  "formatVersion": 1,
+  "server": {
+    "name": "memotron",
+    "version": "1.0.0"
+  },
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    }
+  },
+  "tools": [
+    {
+      "name": "create_collection",
+      "title": "Create a collection",
+      "description": "Create a collection. Collections and types of the app's records. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "accessLog",
+              "capture",
+              "node",
+              "vector",
+              "collection",
+              "linkTag",
+              "property",
+              "view",
+              "space",
+              "file"
+            ]
+          },
+          "typeToExtend": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "type",
+          "resource"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    },
+    {
+      "name": "create_node",
+      "title": "Create a node",
+      "description": "Create a node. Notes, links and other memory nodes. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "date": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "contentType"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    },
+    {
+      "name": "create_property",
+      "title": "Create a property",
+      "description": "Create a property. Properties defined for the app's records. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "accessLog",
+              "capture",
+              "node",
+              "vector",
+              "collection",
+              "linkTag",
+              "property",
+              "view",
+              "space",
+              "file"
+            ]
+          },
+          "propertyType": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isMulti": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "resource"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    },
+    {
+      "name": "create_space",
+      "title": "Create a space",
+      "description": "Create a space. Spaces that group items from the app. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    },
+    {
+      "name": "get_collection",
+      "title": "Get one collection",
+      "description": "Get one collection. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "get_file",
+      "title": "Get one file",
+      "description": "Get one file. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "get_link_tag",
+      "title": "Get one linkTag",
+      "description": "Get one linkTag. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "get_node",
+      "title": "Get one node",
+      "description": "Get one node. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "get_property",
+      "title": "Get one property",
+      "description": "Get one property. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "get_space",
+      "title": "Get one space",
+      "description": "Get one space. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "get_view",
+      "title": "Get one view",
+      "description": "Get one view. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "list_collections",
+      "title": "List collections",
+      "description": "List collections. Collections and types of the app's records. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "enum": [
+              "accessLog",
+              "capture",
+              "node",
+              "vector",
+              "collection",
+              "linkTag",
+              "property",
+              "view",
+              "space",
+              "file"
+            ],
+            "description": "Only records whose resource equals this value."
+          },
+          "type": {
+            "type": "string",
+            "description": "Only records whose type equals this value."
+          },
+          "typeToExtend": {
+            "type": "string",
+            "description": "Only records whose typeToExtend equals this value."
+          },
+          "isStarred": {
+            "type": "boolean",
+            "description": "Only records whose isStarred equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "list_files",
+      "title": "List files",
+      "description": "List files. File records; uploads go through the files API. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Only records whose type equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "size",
+              "-size",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "list_link_tags",
+      "title": "List link-tags",
+      "description": "List link-tags. Tags applied to links between records. Requires memotron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string",
+            "description": "Only records whose group equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "list_nodes",
+      "title": "List nodes",
+      "description": "List nodes. Notes, links and other memory nodes. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves. A record under an archived parent that is not archived itself is left out of every list; read it by id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "description": "Only records whose contentType equals this value."
+          },
+          "metaType": {
+            "type": "string",
+            "description": "Only records whose metaType equals this value."
+          },
+          "parent": {
+            "type": "string",
+            "description": "Only records whose parent equals this value."
+          },
+          "isStarred": {
+            "type": "boolean",
+            "description": "Only records whose isStarred equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "date",
+              "-date",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "list_properties",
+      "title": "List properties",
+      "description": "List properties. Properties defined for the app's records. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "enum": [
+              "accessLog",
+              "capture",
+              "node",
+              "vector",
+              "collection",
+              "linkTag",
+              "property",
+              "view",
+              "space",
+              "file"
+            ],
+            "description": "Only records whose resource equals this value."
+          },
+          "type": {
+            "type": "string",
+            "description": "Only records whose type equals this value."
+          },
+          "propertyType": {
+            "type": "string",
+            "description": "Only records whose propertyType equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "order",
+              "-order",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "list_spaces",
+      "title": "List spaces",
+      "description": "List spaces. Spaces that group items from the app. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "isStarred": {
+            "type": "boolean",
+            "description": "Only records whose isStarred equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "list_views",
+      "title": "List views",
+      "description": "List views. Saved collection views. Requires memotron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string",
+            "description": "Only records whose layout equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "search",
+      "title": "Search records",
+      "description": "Search records. Full-text search over node, file. Requires memotron:read (or nucleum).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Search text (required)."
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "node",
+              "file"
+            ],
+            "description": "Search only this resource."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20
+          }
+        },
+        "required": [
+          "q"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read"
+        ]
+      }
+    },
+    {
+      "name": "update_collection",
+      "title": "Update a collection",
+      "description": "Update a collection. Collections and types of the app's records. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    },
+    {
+      "name": "update_node",
+      "title": "Update a node",
+      "description": "Update a node. Notes, links and other memory nodes. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "date": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    },
+    {
+      "name": "update_property",
+      "title": "Update a property",
+      "description": "Update a property. Properties defined for the app's records. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isMulti": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    },
+    {
+      "name": "update_space",
+      "title": "Update a space",
+      "description": "Update a space. Spaces that group items from the app. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires memotron:write (or nucleum). Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "memotron:read",
+          "memotron:write"
+        ]
+      }
+    }
+  ],
+  "resources": [],
+  "resourceTemplates": [],
+  "prompts": [],
+  "hash": "052d17f61a72b6479a681dff5dd1724aa04236f47e1ec6f216426fd9bc64ff7d"
+}

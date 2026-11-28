@@ -1,0 +1,1917 @@
+{
+  "formatVersion": 1,
+  "server": {
+    "name": "nucleum",
+    "version": "1.0.0"
+  },
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    }
+  },
+  "tools": [
+    {
+      "name": "create_collection",
+      "title": "Create a collection",
+      "description": "Create a collection. Collections and types of the app's records. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "typeToExtend": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "type",
+          "resource"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "create_event",
+      "title": "Create a event",
+      "description": "Create a event. Calendar events. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "event": {
+            "type": "string"
+          },
+          "startUnix": {
+            "type": "number"
+          },
+          "endUnix": {
+            "type": "number"
+          },
+          "value": {},
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "create_node",
+      "title": "Create a node",
+      "description": "Create a node. Notes, links and other memory nodes. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "date": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "contentType"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "create_objective",
+      "title": "Create a objective",
+      "description": "Create a objective. Goals, projects and routines with optional parents. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INDEFINITE",
+              "DEFINITE",
+              "ROUTINE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_STARTED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
+          },
+          "description": {},
+          "startDate": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "endDate": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "color": {
+            "type": "number"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isPinnedForQuickFocus": {
+            "type": "boolean"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "type",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "create_property",
+      "title": "Create a property",
+      "description": "Create a property. Properties defined for the app's records. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "propertyType": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isMulti": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "create_space",
+      "title": "Create a space",
+      "description": "Create a space. Spaces that group items from the app. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "create_task",
+      "title": "Create a task",
+      "description": "Create a task. Dated tasks, optionally under an objective. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "dateUnix": {
+            "type": "number"
+          },
+          "estimated": {
+            "type": "number"
+          },
+          "objectiveId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isChecked": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "dateUnix"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "get_collection",
+      "title": "Get one collection",
+      "description": "Get one collection. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_event",
+      "title": "Get one event",
+      "description": "Get one event. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_file",
+      "title": "Get one file",
+      "description": "Get one file. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_link_tag",
+      "title": "Get one linkTag",
+      "description": "Get one linkTag. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_node",
+      "title": "Get one node",
+      "description": "Get one node. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_objective",
+      "title": "Get one objective",
+      "description": "Get one objective. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_property",
+      "title": "Get one property",
+      "description": "Get one property. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_session",
+      "title": "Get one session",
+      "description": "Get one session. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_session_log",
+      "title": "Get one sessionLog",
+      "description": "Get one sessionLog. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_space",
+      "title": "Get one space",
+      "description": "Get one space. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_task",
+      "title": "Get one task",
+      "description": "Get one task. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "get_view",
+      "title": "Get one view",
+      "description": "Get one view. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_collections",
+      "title": "List collections",
+      "description": "List collections. Collections and types of the app's records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "description": "Only records whose resource equals this value."
+          },
+          "type": {
+            "type": "string",
+            "description": "Only records whose type equals this value."
+          },
+          "typeToExtend": {
+            "type": "string",
+            "description": "Only records whose typeToExtend equals this value."
+          },
+          "isStarred": {
+            "type": "boolean",
+            "description": "Only records whose isStarred equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_events",
+      "title": "List events",
+      "description": "List events. Calendar events. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "Only records whose event equals this value."
+          },
+          "startUnix": {
+            "type": "number",
+            "description": "Only records whose startUnix equals this value."
+          },
+          "endUnix": {
+            "type": "number",
+            "description": "Only records whose endUnix equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "startUnix",
+              "-startUnix",
+              "endUnix",
+              "-endUnix",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_files",
+      "title": "List files",
+      "description": "List files. File records; uploads go through the files API. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Only records whose type equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "size",
+              "-size",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_link_tags",
+      "title": "List link-tags",
+      "description": "List link-tags. Tags applied to links between records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string",
+            "description": "Only records whose group equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_nodes",
+      "title": "List nodes",
+      "description": "List nodes. Notes, links and other memory nodes. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves. A record under an archived parent that is not archived itself is left out of every list; read it by id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "description": "Only records whose contentType equals this value."
+          },
+          "metaType": {
+            "type": "string",
+            "description": "Only records whose metaType equals this value."
+          },
+          "parent": {
+            "type": "string",
+            "description": "Only records whose parent equals this value."
+          },
+          "isStarred": {
+            "type": "boolean",
+            "description": "Only records whose isStarred equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "date",
+              "-date",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_objectives",
+      "title": "List objectives",
+      "description": "List objectives. Goals, projects and routines with optional parents. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves. A record under an archived parent that is not archived itself is left out of every list; read it by id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "INDEFINITE",
+              "DEFINITE",
+              "ROUTINE"
+            ],
+            "description": "Only records whose type equals this value."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_STARTED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "description": "Only records whose status equals this value."
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Only records whose parentId equals this value."
+          },
+          "isPinnedForQuickFocus": {
+            "type": "boolean",
+            "description": "Only records whose isPinnedForQuickFocus equals this value."
+          },
+          "isStarred": {
+            "type": "boolean",
+            "description": "Only records whose isStarred equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "sortOrder",
+              "-sortOrder",
+              "startDate",
+              "-startDate",
+              "endDate",
+              "-endDate",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_properties",
+      "title": "List properties",
+      "description": "List properties. Properties defined for the app's records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "description": "Only records whose resource equals this value."
+          },
+          "type": {
+            "type": "string",
+            "description": "Only records whose type equals this value."
+          },
+          "propertyType": {
+            "type": "string",
+            "description": "Only records whose propertyType equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "order",
+              "-order",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_session_logs",
+      "title": "List session-logs",
+      "description": "List session-logs. Focus time logged against sessions, objectives and tasks. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Only records whose sessionId equals this value."
+          },
+          "objectiveId": {
+            "type": "string",
+            "description": "Only records whose objectiveId equals this value."
+          },
+          "taskId": {
+            "type": "string",
+            "description": "Only records whose taskId equals this value."
+          },
+          "startUnix": {
+            "type": "number",
+            "description": "Only records whose startUnix equals this value."
+          },
+          "endUnix": {
+            "type": "number",
+            "description": "Only records whose endUnix equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "startUnix",
+              "-startUnix",
+              "endUnix",
+              "-endUnix",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_sessions",
+      "title": "List sessions",
+      "description": "List sessions. Focus sessions; started and stopped by the focus tools. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PREDEFINED_INTERVALS",
+              "COUNTDOWN",
+              "COUNTUP",
+              "MANUAL_ENTRY"
+            ],
+            "description": "Only records whose type equals this value."
+          },
+          "startUnix": {
+            "type": "number",
+            "description": "Only records whose startUnix equals this value."
+          },
+          "endUnix": {
+            "type": "number",
+            "description": "Only records whose endUnix equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "startUnix",
+              "-startUnix",
+              "endUnix",
+              "-endUnix",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_spaces",
+      "title": "List spaces",
+      "description": "List spaces. Spaces that group items from the app. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "isStarred": {
+            "type": "boolean",
+            "description": "Only records whose isStarred equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_tasks",
+      "title": "List tasks",
+      "description": "List tasks. Dated tasks, optionally under an objective. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves. A record under an archived parent that is not archived itself is left out of every list; read it by id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "isChecked": {
+            "type": "boolean",
+            "description": "Only records whose isChecked equals this value."
+          },
+          "dateUnix": {
+            "type": "number",
+            "description": "Only records whose dateUnix equals this value."
+          },
+          "objectiveId": {
+            "type": "string",
+            "description": "Only records whose objectiveId equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "dateUnix",
+              "-dateUnix",
+              "completedAtUnix",
+              "-completedAtUnix",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "list_views",
+      "title": "List views",
+      "description": "List views. Saved collection views. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string",
+            "description": "Only records whose layout equals this value."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Only records whose isArchived equals this value."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "label",
+              "-label",
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt"
+            ],
+            "default": "-createdAt",
+            "description": "Sort field; a leading `-` sorts descending."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The `nextCursor` of the previous page, with the same `sort`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "search",
+      "title": "Search records",
+      "description": "Search records. Full-text search over node, file, collection, property, view, linkTag, space, objective, task, event. Requires nucleum:read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Search text (required)."
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "node",
+              "file",
+              "collection",
+              "property",
+              "view",
+              "linkTag",
+              "space",
+              "objective",
+              "task",
+              "event"
+            ],
+            "description": "Search only this resource."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20
+          }
+        },
+        "required": [
+          "q"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read"
+        ]
+      }
+    },
+    {
+      "name": "update_collection",
+      "title": "Update a collection",
+      "description": "Update a collection. Collections and types of the app's records. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "update_event",
+      "title": "Update a event",
+      "description": "Update a event. Calendar events. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "startUnix": {
+            "type": "number"
+          },
+          "endUnix": {
+            "type": "number"
+          },
+          "value": {},
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "update_node",
+      "title": "Update a node",
+      "description": "Update a node. Notes, links and other memory nodes. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "date": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "update_objective",
+      "title": "Update a objective",
+      "description": "Update a objective. Goals, projects and routines with optional parents. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_STARTED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
+          },
+          "description": {},
+          "startDate": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "endDate": {
+            "type": "integer",
+            "description": "Unix epoch milliseconds."
+          },
+          "color": {
+            "type": "number"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isPinnedForQuickFocus": {
+            "type": "boolean"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "update_property",
+      "title": "Update a property",
+      "description": "Update a property. Properties defined for the app's records. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isMulti": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "update_space",
+      "title": "Update a space",
+      "description": "Update a space. Spaces that group items from the app. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    },
+    {
+      "name": "update_task",
+      "title": "Update a task",
+      "description": "Update a task. Dated tasks, optionally under an objective. Sets only the fields given. Fails with `not_found` if the record is deleted, trashed or hidden before the write lands, and with `conflict` if a reference field left out changes meanwhile; nothing changes then. Requires nucleum:write. Pass `idempotencyKey` to make retries safe.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The record id."
+          },
+          "label": {
+            "type": "string"
+          },
+          "dateUnix": {
+            "type": "number"
+          },
+          "estimated": {
+            "type": "number"
+          },
+          "objectiveId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isChecked": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[\\x21-\\x7e]{1,255}$",
+            "description": "Client-chosen key (1 to 255 printable ASCII characters) that makes retries safe: repeating the call with the same key and arguments does not write again and returns the record's current state. A key is remembered for 24 hours; reusing it with other arguments fails with `idempotency_key_reused`."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "metadata": {
+        "nucleum/requiredScopes": [
+          "nucleum:read",
+          "nucleum:write"
+        ]
+      }
+    }
+  ],
+  "resources": [],
+  "resourceTemplates": [],
+  "prompts": [],
+  "hash": "1d065f5fe14933574b160a130b6cb46833f0a726edefe1b34ccf46d6146b1b5f"
+}
