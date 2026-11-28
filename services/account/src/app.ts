@@ -512,7 +512,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
     logError: (message, failure) => logger.error(message, { failure })
   };
   registerInterfaceApiRoutes({ app, services: interfaceServices });
-  registerInterfaceMcpRoutes({ app, services: interfaceServices });
+  registerInterfaceMcpRoutes({ app, services: interfaceServices, allowedOrigins: corsOrigins });
   registerAccountAuthRoutes({ app, auth });
 }
 

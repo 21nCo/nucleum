@@ -286,6 +286,78 @@ describe.each(interfaceApps)('/mcp/%s', (app) => {
   });
 });
 
+describe('/mcp browser origins', () => {
+  const trusted = 'https://memotron.example.test';
+  let originHarness: AccountTestHarness;
+  let token: Headers;
+
+  /** Runs `run` with the shared helpers aimed at a harness whose CORS list holds `trusted`. */
+  async function onOriginHarness<T>(run: () => Promise<T>): Promise<T> {
+    const previous = { harness, cookie };
+    harness = originHarness;
+    try {
+      return await run();
+    } finally {
+      ({ harness, cookie } = previous);
+    }
+  }
+
+  const listTools = (origin?: string) => originHarness.app.fetch(new Request(`${base}/mcp/memotron`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+      ...token,
+      ...(origin ? { origin } : {})
+    },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
+  }));
+
+  /** Lists the tools over a full MCP session whose every request carries `origin`. */
+  const listToolsFrom = (origin: string) => McpFnTestClient.connectTarget(authenticatedHttpTarget(`${base}/mcp/memotron`, {
+    credential: { kind: 'api-key', headers: token },
+    fetch: (input, init) => {
+      const request = new Request(input, init);
+      const headers = new globalThis.Headers(request.headers);
+      headers.set('origin', origin);
+      return Promise.resolve(originHarness.app.fetch(new Request(request, { headers })));
+    }
+  })).then(async (client) => {
+    try {
+      return (await client.listTools()).map((tool) => tool.name).sort();
+    } finally {
+      await client.close();
+    }
+  });
+
+  beforeAll(async () => {
+    originHarness = createAccountTestHarness({ enableRateLimit: false, corsOrigins: [base, trusted] });
+    token = await onOriginHarness(async () => {
+      cookie = await signUp('mcp-origins@example.test');
+      return createKey([interfaceContract.memotron.scopes.read]);
+    });
+  });
+
+  it('serves a request from an origin the account allows, including the native embed origin', async () => {
+    for (const origin of [trusted, 'tauri://localhost']) {
+      expect(await listToolsFrom(origin)).toEqual(manifestTools('memotron', 'read'));
+    }
+  });
+
+  it('answers 403 to a request from an origin the account does not allow, with a valid token', async () => {
+    const response = await listTools('https://untrusted.example.test');
+    expect(response.status).toBe(403);
+    expect(JSON.stringify(await response.json())).toContain('Origin not allowed');
+  });
+
+  it('serves a request without an Origin, as native MCP clients send', async () => {
+    const response = await listTools();
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { result?: { tools?: unknown[] } }).result?.tools?.length)
+      .toBe(manifestTools('memotron', 'read').length);
+  });
+});
+
 describe('/mcp failures outside a tool', () => {
   /** An app serving only the MCP routes, whose token check fails with `failure`. */
   function failingApp(failure: Error): { app: Hono; logError: ReturnType<typeof vi.fn> } {

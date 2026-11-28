@@ -13,6 +13,12 @@ import { createInterfaceMcpServer, type McpCaller } from './tools.js';
 export interface RegisterInterfaceMcpRoutesInput {
   app: Hono;
   services: InterfaceApiServices;
+  /**
+   * Browser origins the account serves, the list its CORS layer allows. A
+   * request whose `Origin` is not listed (and is not a loopback origin equal
+   * to its own `Host`) answers 403; one without `Origin` is served.
+   */
+  allowedOrigins?: readonly string[];
 }
 
 type McpHandler = (request: Request, options?: { authInfo?: McpAuthInfo }) => Promise<Response>;
@@ -33,11 +39,13 @@ interface McpAuthInfo {
  * scopes allow. Only POST is served: a stateless server never sends on a
  * standalone SSE stream and keeps no session to delete, so GET, DELETE and
  * every other method answer 405 before any token check or server is built.
+ * A browser request must come from one of `allowedOrigins`.
  * Tools call the app's v1 API as the token. A failure outside
  * a tool answers with the problem the v1 API would give, and only its class
  * is logged, never its message, which can quote stored content.
  */
 export function registerInterfaceMcpRoutes(input: RegisterInterfaceMcpRoutesInput): void {
+  const allowedOrigins = [...input.allowedOrigins ?? []];
   const handlers = new Map<InterfaceApp, Promise<McpHandler>>();
   const handlerFor = (app: InterfaceApp): Promise<McpHandler> => {
     let handler = handlers.get(app);
@@ -50,7 +58,11 @@ export function registerInterfaceMcpRoutes(input: RegisterInterfaceMcpRoutesInpu
           `MCP ${method}${tool ? ` ${tool}` : ''} failed (${errorId})`,
           { name: error instanceof Error ? error.name : typeof error }
         )
-      }).createWebStandardHandler({ sessionIdGenerator: undefined, enableJsonResponse: true }) as Promise<McpHandler>;
+      }).createWebStandardHandler({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true,
+        allowedOrigins
+      }) as Promise<McpHandler>;
       handler.catch(() => handlers.delete(app));
       handlers.set(app, handler);
     }
