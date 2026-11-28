@@ -344,6 +344,21 @@ describe('/mcp browser origins', () => {
     }
   });
 
+  it('lets a browser on an allowed origin send the MCP headers after preflight', async () => {
+    const preflight = await originHarness.app.fetch(new Request(`${base}/mcp/memotron`, {
+      method: 'OPTIONS',
+      headers: {
+        origin: trusted,
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'authorization,content-type,mcp-protocol-version'
+      }
+    }));
+    expect(preflight.status).toBeLessThan(300);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe(trusted);
+    const allowed = (preflight.headers.get('access-control-allow-headers') ?? '').toLowerCase().split(',');
+    expect(allowed).toEqual(expect.arrayContaining(['authorization', 'content-type', 'mcp-protocol-version']));
+  });
+
   it('answers 403 to a request from an origin the account does not allow, with a valid token', async () => {
     const response = await listTools('https://untrusted.example.test');
     expect(response.status).toBe(403);

@@ -445,7 +445,8 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
           "x-filefn-client-version",
           "x-idempotency-key",
           "idempotency-key",
-          "x-upload-session-token"
+          "x-upload-session-token",
+          "mcp-protocol-version"
         ],
         exposeHeaders: [
           "x-request-id",
