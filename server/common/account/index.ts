@@ -134,9 +134,9 @@ async function createGuest(body: any) {
 }
 
 async function bootstrapUserAccount(authHeader: any, body: any) {
-  const { region, context } = body;
-  if (region !== undefined && region !== "" && !isKnownRegion(region))
-    throw new ValidationError("Unknown region");
+  const { context } = body;
+  const region = body.region || "global";
+  if (!isKnownRegion(region)) throw new ValidationError("Unknown region");
   let token = authHeader?.split(" ")[1];
   let agent = await authorize({ token, host: context.host });
   if (!agent) throw new AuthenticationError("Unauthorized");

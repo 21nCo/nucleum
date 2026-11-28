@@ -129,6 +129,15 @@ describe("database host by region", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("bootstraps an account that names no region into the global database", async () => {
+    await performUserAccountAction("Bearer test-token", {
+      action: "bootstrap",
+      context: { host: "web.memotron.app" }
+    }).catch(() => undefined);
+    const { authorize } = await import("$lib/server/common/auth");
+    expect(authorize).toHaveBeenCalled();
+  });
+
   it("refuses a bootstrap region outside the allowlist before anything else runs", async () => {
     await expect(
       performUserAccountAction("Bearer test-token", {

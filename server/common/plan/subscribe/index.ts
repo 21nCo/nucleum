@@ -21,7 +21,7 @@ async function newSubscription(body: any, agent: Agent) {
   if (!isEnumValue(PlanType, plan)) throw new ValidationError("Unknown plan");
   if (!isEnumValue(BillingCycle, cycle))
     throw new ValidationError("Unknown cycle");
-  if (provider !== undefined && !isEnumValue(PaymentProvider, provider))
+  if (provider != null && !isEnumValue(PaymentProvider, provider))
     throw new ValidationError("Unknown provider");
   if (provider && !isProductSlug(product))
     throw new ValidationError("Unknown product");
