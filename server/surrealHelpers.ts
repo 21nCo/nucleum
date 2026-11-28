@@ -199,9 +199,10 @@ const STRING_MARKER = "\u0001";
 export function toQueryStatements(vars?: QueryVars) {
   const lets: string[] = [];
   const bindings: Record<string, string> = {};
+  let next = 0;
   const expression = (value: unknown): string => {
     if (typeof value === "string") {
-      const name = `__v${Object.keys(bindings).length}`;
+      const name = `__v${next++}`;
       bindings[name] = STRING_MARKER + value;
       return `string::slice($${name}, 1)`;
     }

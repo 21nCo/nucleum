@@ -127,6 +127,14 @@ describe("toSurqlLiteral", () => {
     });
   });
 
+  it("binds many nested strings in linear time", () => {
+    const context = Object.fromEntries(Array.from({ length: 20000 }, (_, i) => [`k${i}`, `v${i}`]));
+    const started = performance.now();
+    const { bindings } = toQueryStatements({ context, again: context });
+    expect(Object.keys(bindings)).toHaveLength(40000);
+    expect(performance.now() - started).toBeLessThan(2000);
+  });
+
   it("reserves variable names starting with __", () => {
     expect(() => toQueryStatements({ __a: "x" })).toThrow(/Invalid query variable/);
   });
