@@ -1,10 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { Hono } from 'hono';
+import { AuthFnError } from 'authfn';
 import { McpFnTestClient, assertManifestContract, authenticatedHttpTarget } from '@mcpfn/testing';
 import { assertAuthRegressionSuite, createFetchAuthTarget, type McpFnAuthCredential } from '@mcpfn/testing/auth';
 import { interfaceApps, interfaceContract, type InterfaceApp } from '@nucleum/schema/interfaces';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
+import type { InterfaceApiServices } from '../api/router.js';
 import { readManifest } from './manifests.js';
+import { registerInterfaceMcpRoutes } from './routes.js';
 import { SCOPES_METADATA } from './tools.js';
 
 const base = 'http://127.0.0.1:8787';
@@ -99,7 +103,11 @@ function manifestTools(app: InterfaceApp, access: 'read' | 'write'): string[] {
     .sort();
 }
 
-/** One create and update each app's round trip exercises. */
+/**
+ * One create and update each app's round trip exercises. Pointron's update
+ * expects the completion time the v1 write derives, which a direct DataFn
+ * write would leave unset.
+ */
 const roundTrips: Record<InterfaceApp, {
   resource: string;
   create: Body;
@@ -116,7 +124,6 @@ const roundTrips: Record<InterfaceApp, {
     resource: 'task',
     create: { label: 'MCP task', dateUnix: 1_700_000_000_000 },
     update: { isChecked: true },
-    // The v1 write derives the completion time; a direct DataFn write would leave it unset.
     expectUpdated: { label: 'MCP task', isChecked: true, completedAtUnix: expect.any(Number) }
   },
   nucleum: {
@@ -243,6 +250,69 @@ describe.each(interfaceApps)('/mcp/%s', (app) => {
       expect(invalid).toMatchObject({ code: 'validation_failed', details: { status: 422 } });
       expect((invalid.details as Body).errors).toEqual([{ pointer: '', detail: 'The body must set at least one field.' }]);
     });
+  });
+
+  it('answers not_found for an id that URL parsing would move off the record route, and writes nothing', async () => {
+    const { resource, create, update } = roundTrips[app];
+    await withClient(app, await createKey([read, write]), async (client) => {
+      await ok(client, `create_${resource}`, create);
+      const before = await ok(client, `list_${plural(resource)}`, {});
+      for (const id of ['.', '..', '\ud800']) {
+        for (const [tool, args] of [[`get_${resource}`, { id }], [`update_${resource}`, { id, ...update }]] as const) {
+          expect(await failure(client, tool, args), `${tool} ${JSON.stringify(id)}`).toEqual({
+            code: 'not_found',
+            message: `No ${resource} ${id} is visible to this token.`,
+            details: { status: 404 }
+          });
+        }
+      }
+      expect(await ok(client, `list_${plural(resource)}`, {})).toEqual(before);
+    });
+  });
+});
+
+describe('/mcp failures outside a tool', () => {
+  /** An app serving only the MCP routes, whose token check fails with `failure`. */
+  function failingApp(failure: Error): { app: Hono; logError: ReturnType<typeof vi.fn> } {
+    const app = new Hono();
+    const logError = vi.fn();
+    const services = {
+      authenticate: () => { throw failure; },
+      getSyncServer: () => Promise.reject(new Error('The MCP route must not reach the sync server.')),
+      logError
+    } as unknown as InterfaceApiServices;
+    registerInterfaceMcpRoutes({ app, services });
+    return { app, logError };
+  }
+
+  const listTools = (app: Hono) => app.fetch(new Request(`${base}/mcp/memotron`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+      authorization: 'Bearer test-mcp-token'
+    },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
+  }));
+
+  it('answers an authfn client error such as a rate limit with its status and code, as the v1 API does', async () => {
+    const { app, logError } = failingApp(new AuthFnError('AUTHFN_RATE_LIMITED', 'Too many requests.', { status: 429 }));
+    const response = await listTools(app);
+    expect(response.status).toBe(429);
+    expect(response.headers.get('content-type')).toContain('application/problem+json');
+    expect(await response.json()).toMatchObject({ status: 429, code: 'authfn_rate_limited', detail: 'Too many requests.' });
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it('answers an unexpected failure with a 500 problem that withholds its message and logs only its class', async () => {
+    const { app, logError } = failingApp(new TypeError('stored note text'));
+    const response = await listTools(app);
+    expect(response.status).toBe(500);
+    const text = await response.text();
+    expect(JSON.parse(text)).toMatchObject({ status: 500, code: 'internal' });
+    expect(text).not.toContain('stored note text');
+    expect(logError).toHaveBeenCalledWith('MCP memotron request failed', { name: 'TypeError' });
+    expect(JSON.stringify(logError.mock.calls)).not.toContain('stored note text');
   });
 });
 

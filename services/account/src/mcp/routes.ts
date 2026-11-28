@@ -1,9 +1,12 @@
 import type { Hono } from 'hono';
 import { McpFnError, type McpFnRequestExtra } from '@mcpfn/core';
-import { AuthFnError, type AuthFnSession } from 'authfn';
-import { interfaceApps, interfaceContract, type InterfaceApp } from '@nucleum/schema/interfaces';
-import { resolveAppScopeAccess, type AppGrant } from '../datafn/app-scopes.js';
-import { createInterfaceApiRouter, type InterfaceApiServices } from '../api/router.js';
+import { interfaceApps, type InterfaceApp } from '@nucleum/schema/interfaces';
+import {
+  authenticateAppToken,
+  createInterfaceApiRouter,
+  toProblem,
+  type InterfaceApiServices
+} from '../api/router.js';
 import { ApiProblem } from '../api/problem.js';
 import { createInterfaceMcpServer, type McpCaller } from './tools.js';
 
@@ -27,7 +30,9 @@ interface McpAuthInfo {
  * HTTP, answering with JSON. Every request must carry a personal access
  * token as a Bearer token that holds the app's read scope (a `nucleum`
  * token covers every app); tools/list then shows the tools the token's
- * scopes allow. Tools call the app's v1 API as the token.
+ * scopes allow. Tools call the app's v1 API as the token. A failure outside
+ * a tool answers with the problem the v1 API would give, and only its class
+ * is logged, never its message, which can quote stored content.
  */
 export function registerInterfaceMcpRoutes(input: RegisterInterfaceMcpRoutesInput): void {
   const handlers = new Map<InterfaceApp, Promise<McpHandler>>();
@@ -38,7 +43,6 @@ export function registerInterfaceMcpRoutes(input: RegisterInterfaceMcpRoutesInpu
       handler = declaration.createServer({
         context: callerFromRequest,
         toolVisibility,
-        // Only the failure's class reaches the log, never its message, which can quote stored content.
         onError: ({ error, errorId, method, tool }) => input.services.logError?.(
           `MCP ${method}${tool ? ` ${tool}` : ''} failed (${errorId})`,
           { name: error instanceof Error ? error.name : typeof error }
@@ -58,21 +62,15 @@ export function registerInterfaceMcpRoutes(input: RegisterInterfaceMcpRoutesInpu
       const authInfo = await authenticate(app, c.req.raw, input.services, (request) => router.handle(request));
       return await (await handlerFor(app))(c.req.raw, { authInfo });
     } catch (error) {
-      if (error instanceof ApiProblem) return error.toResponse();
-      throw error;
+      return toProblem(error, input.services, `MCP ${app} request failed`).toResponse();
     }
   });
 }
 
-function grantCovers(grant: AppGrant, app: InterfaceApp): boolean {
-  return grant === 'all' || (app !== 'nucleum' && grant.has(app));
-}
-
 /**
- * Authenticates the bearer token alone, as the v1 API does: cookies are
- * dropped, only a user's personal access token is accepted, and it must hold
- * the app's read scope. Returns the transport's auth info, which carries the
- * scopes the token holds for the app and a v1 API client acting as it.
+ * Authenticates the bearer token as the v1 API does and requires the app's
+ * read scope. Returns the transport's auth info, which carries the scopes
+ * the token holds for the app and a v1 API client acting as it.
  */
 async function authenticate(
   app: InterfaceApp,
@@ -80,42 +78,15 @@ async function authenticate(
   services: InterfaceApiServices,
   dispatch: (request: Request) => Promise<Response>
 ): Promise<McpAuthInfo> {
-  const challenge = { 'www-authenticate': `Bearer realm="${app}"` };
+  const { session, scopes } = await authenticateAppToken(app, 'read', request, services);
   const authorization = request.headers.get('authorization')?.trim() ?? '';
-  if (!/^bearer\s+\S+$/i.test(authorization)) {
-    throw new ApiProblem(401, 'unauthenticated', 'Send a personal access token as a Bearer token.', {}, challenge);
-  }
-  const headers = new Headers({ authorization });
-  const tokenRequest = new Request(request.url, { method: request.method, headers });
-  let session: AuthFnSession | null;
-  try {
-    session = await services.authenticate(tokenRequest);
-  } catch (error) {
-    if (error instanceof AuthFnError && error.status === 401) {
-      throw new ApiProblem(401, 'unauthenticated', error.message, {}, challenge);
-    }
-    throw error;
-  }
-  if (!session || session.actorType !== 'user') {
-    throw new ApiProblem(401, 'unauthenticated', 'The token is not valid.', {}, challenge);
-  }
-  if (session.type !== 'api-key') {
-    throw new ApiProblem(401, 'unauthenticated', 'Send a personal access token, not a session token.', {}, challenge);
-  }
-  const grants = resolveAppScopeAccess(session);
-  const { read, write } = interfaceContract[app].scopes;
-  if (!grantCovers(grants.read, app)) {
-    throw new ApiProblem(403, 'insufficient_scope', `This token needs ${read}.`, { scopes: [read] }, {
-      'www-authenticate': `Bearer realm="${app}", error="insufficient_scope", scope="${read}"`
-    });
-  }
-  const scopes = grantCovers(grants.write, app) ? [read, write] : [read];
   const origin = new URL(request.url).origin;
   const caller: McpCaller = {
     app,
     scopes,
     callApi: ({ method, path, query, body, idempotencyKey }) => {
       const url = new URL(path, origin);
+      if (url.pathname !== path) throw new Error('An MCP tool built an API path that URL parsing changes.');
       if (query) url.search = query.toString();
       const apiHeaders = new Headers({ authorization, accept: 'application/json' });
       if (body) apiHeaders.set('content-type', 'application/json');

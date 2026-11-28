@@ -10,8 +10,13 @@ import { createDatafnMcpAdapter } from '@mcpfn/datafn';
 import type { DatafnExecutor } from '@datafn/server';
 import type { Route } from '@superfunctions/http';
 import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
-import { interfaceContract, resolveInterfaceResources, type InterfaceApp } from '@nucleum/schema/interfaces';
-import { createInterfaceApiRouter } from '../api/router.js';
+import {
+  interfaceContract,
+  resolveInterfaceResources,
+  type InterfaceApp,
+  type InterfaceResourceContract
+} from '@nucleum/schema/interfaces';
+import { createInterfaceApiRouter, notVisible } from '../api/router.js';
 import { resourceSegment } from '../api/resources.js';
 
 type JsonSchema = Record<string, unknown>;
@@ -105,12 +110,12 @@ export function createInterfaceMcpServer(app: InterfaceApp): InterfaceMcpServer 
     clientId: `mcp:${app}`,
     sessionScopes: (caller) => caller.scopes
   });
-  const descriptions = new Map(resolveInterfaceResources(app)
-    .map((contract) => [resourceSegment(contract.resource), contract.description]));
+  const contracts = new Map(resolveInterfaceResources(app)
+    .map((contract) => [resourceSegment(contract.resource), contract]));
   for (const route of createInterfaceApiRouter(app).getRoutes()) {
     const needed = route.method === 'GET' ? [scopes.read] : [scopes.read, scopes.write];
     const resource = (route.meta as { tags?: string[] } | undefined)?.tags?.[0] ?? '';
-    adapter.registerTool(routeTool(route, descriptions.get(resource) ?? '', needed), { scopes: needed });
+    adapter.registerTool(routeTool(route, contracts.get(resource), needed), { scopes: needed });
   }
   return {
     declaration: defineMcpFnServer<McpCaller>({
@@ -129,11 +134,20 @@ interface RouteMeta {
   body?: JsonSchema & { properties?: Record<string, JsonSchema>; required?: string[] };
 }
 
-/** The tool that calls one v1 route. */
-function routeTool(route: Route, resourceDescription: string, scopes: string[]): McpFnToolDefinition<McpCaller> {
+/**
+ * The tool that calls one v1 route, given the contract of the resource it
+ * serves (search serves none). Its `scopes` are recorded in the tool's
+ * metadata, so the manifest snapshot also catches a change of them.
+ */
+function routeTool(
+  route: Route,
+  contract: InterfaceResourceContract | undefined,
+  scopes: string[]
+): McpFnToolDefinition<McpCaller> {
   const meta = route.meta as unknown as RouteMeta;
   const name = meta.operationId.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
   const item = route.path.endsWith('/:id');
+  if (item && !contract) throw new Error(`${route.method} ${route.path} serves no resource of the contract.`);
   const idSchema: JsonSchema = { type: 'string', minLength: 1, description: 'The record id.' };
   const fields = route.method === 'GET' ? meta.query ?? {} : meta.body?.properties ?? {};
   for (const reserved of ['id', IDEMPOTENCY_ARGUMENT]) {
@@ -152,7 +166,7 @@ function routeTool(route: Route, resourceDescription: string, scopes: string[]):
   return {
     name,
     title: meta.summary,
-    description: toolDescription(route, meta, resourceDescription),
+    description: toolDescription(route, meta, contract?.description ?? ''),
     inputSchema: {
       type: 'object',
       properties,
@@ -167,11 +181,15 @@ function routeTool(route: Route, resourceDescription: string, scopes: string[]):
           idempotentHint: false,
           openWorldHint: false
         },
-    // Recorded in the manifest, so the snapshot check also catches a change of the scopes a tool needs.
     metadata: { [SCOPES_METADATA]: scopes },
     handler: async (args, caller) => {
       const { id, [IDEMPOTENCY_ARGUMENT]: key, ...rest } = args;
-      const path = item ? route.path.replace(':id', encodeURIComponent(String(id))) : route.path;
+      let path = route.path;
+      if (item && contract) {
+        const segment = idSegment(String(id));
+        if (segment === null) return toolResult(notVisible(contract, String(id)).toResponse());
+        path = route.path.replace(':id', segment);
+      }
       const call: McpApiCall = { method: route.method as McpApiCall['method'], path };
       if (route.method === 'GET') {
         call.query = new URLSearchParams(Object.entries(rest).map(([field, value]) => [field, String(value)]));
@@ -182,6 +200,21 @@ function routeTool(route: Route, resourceDescription: string, scopes: string[]):
       return toolResult(await caller.callApi(call));
     }
   };
+}
+
+/**
+ * The percent-encoded path segment of a record id, or null for an id no
+ * record can have that would not stay one segment: `.` and `..`, which URL
+ * parsing collapses into the parent route, and a string with a lone UTF-16
+ * surrogate, which has no UTF-8 encoding.
+ */
+function idSegment(id: string): string | null {
+  if (id === '.' || id === '..') return null;
+  try {
+    return encodeURIComponent(id);
+  } catch {
+    return null;
+  }
 }
 
 function toolDescription(route: Route, meta: RouteMeta, resourceDescription: string): string {
@@ -198,6 +231,8 @@ function toolDescription(route: Route, meta: RouteMeta, resourceDescription: str
  * The tool result for a v1 API response: its JSON body as structured
  * content, or a tool error that keeps the problem's code, its detail as the
  * message and its other members (such as `errors`) with the status as details.
+ * The error is thrown as a plain `{ code, message, details }` object, which
+ * reaches the client with its code; an Error's would be withheld.
  */
 async function toolResult(response: Response): Promise<CallToolResult> {
   const body = await response.json().catch(() => null) as Record<string, unknown> | null;
@@ -206,7 +241,6 @@ async function toolResult(response: Response): Promise<CallToolResult> {
   }
   const problem = body !== null && typeof body === 'object' && !Array.isArray(body) ? body : {};
   const retryAfter = response.headers.get('retry-after');
-  // A plain { code, message, details } object reaches the client with its code; an Error would be withheld.
   throw {
     code: typeof problem.code === 'string' ? problem.code : 'api_error',
     message: typeof problem.detail === 'string' ? problem.detail : `The API answered ${response.status}.`,
