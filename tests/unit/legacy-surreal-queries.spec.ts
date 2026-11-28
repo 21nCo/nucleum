@@ -56,12 +56,13 @@ beforeEach(() => {
       const sql = String(rpc.params[0]);
       const lines = sql.split("\n");
       const literal = (line: string) => {
-        const bound = /^LET \$(\w+) = string::slice\(\$__(\w+), 1\);$/.exec(line);
-        if (bound) return [bound[1], bindings[`__${bound[2]}`].slice(1)] as const;
         const match = /^LET \$(\w+) = (.*);$/.exec(line);
         if (!match) return undefined;
+        const json = match[2].replace(/string::slice\(\$(__v\d+), 1\)/g, (_, name) =>
+          JSON.stringify(bindings[name].slice(1))
+        );
         try {
-          return [match[1], JSON.parse(match[2])] as const;
+          return [match[1], JSON.parse(json)] as const;
         } catch {
           return undefined;
         }
@@ -118,11 +119,11 @@ describe("toSurqlLiteral", () => {
       toQueryStatements({ a: "line\nnext", n: 5, o: { s: "x:y\nz" }, skip: undefined })
     ).toEqual({
       lets: [
-        "LET $a = string::slice($__a, 1);",
+        "LET $a = string::slice($__v0, 1);",
         "LET $n = 5;",
-        'LET $o = {"s": "x:y\\nz"};'
+        'LET $o = {"s": string::slice($__v1, 1)};'
       ],
-      bindings: { __a: "\u0001line\nnext" }
+      bindings: { __v0: "\u0001line\nnext", __v1: "\u0001x:y\nz" }
     });
   });
 
@@ -260,8 +261,8 @@ describe("bound queries", () => {
     expect(sent[0].url.search).toBe("");
     expect(sent[0].url.host).toBe("db.db-test.example");
     expect(sent[0].vars).toEqual({ email: INJECTION });
-    expect(sent[0].lets).toEqual(["LET $email = string::slice($__email, 1);"]);
-    expect(sent[0].bindings).toEqual({ __email: "\u0001" + INJECTION });
+    expect(sent[0].lets).toEqual(["LET $email = string::slice($__v0, 1);"]);
+    expect(sent[0].bindings).toEqual({ __v0: "\u0001" + INJECTION });
     expect(sent[0].sql).not.toContain("DELETE user");
     expect(sent[0].body).toBe(
       "USE NAMESPACE admin; USE DATABASE ADMIN; SELECT * FROM user WHERE email = $email"
@@ -408,7 +409,7 @@ describe("bound queries", () => {
     expect(sent.length).toBeGreaterThan(0);
     for (const request of sent) {
       expect(request.body).not.toContain("DELETE user");
-      expect(request.sql).not.toContain(INJECTION);
+      expect(request.sql).not.toContain("DELETE user");
     }
     expect(
       JSON.stringify(sent.map((request) => request.vars)).toLowerCase()

@@ -185,26 +185,40 @@ const STRING_MARKER = "\u0001";
 /**
  * The statements and RPC variables that set a query's variables.
  *
- * Strings (passwords, emails, ids) travel as RPC variables, never in the
- * query text, so a SurrealDB query trace cannot show them. SurrealDB 2.3.3
+ * Every string, including strings nested in arrays and objects (passwords,
+ * emails, OAuth profile data), travels as an RPC variable and never appears in
+ * the query text, so a SurrealDB query trace cannot show it. SurrealDB 2.3.3
  * parses JSON RPC variables with legacy strands, which would turn a string such
  * as "secret:123456" into a record id, so each is sent with a leading
- * "\u0001" (which no SurrealQL value can start with) and the LET line strips it
- * with string::slice. Other values (numbers, booleans, null, arrays and
- * objects) are written as literals by toSurqlLiteral, which keeps nested
- * strings as strings. JSON never writes a raw line break, so each LET is one
- * line.
+ * "\u0001" (which no SurrealQL value can start with) and read back with
+ * `string::slice($__vN, 1)`. Arrays and objects are written as SurrealQL
+ * literals whose string leaves are those expressions; numbers, booleans and
+ * null are literals (see toSurqlLiteral for what is accepted). JSON never
+ * writes a raw line break, so each LET is one line.
  */
 export function toQueryStatements(vars?: QueryVars) {
   const lets: string[] = [];
   const bindings: Record<string, string> = {};
-  for (const [name, value] of Object.entries(toQueryVars(vars))) {
+  const expression = (value: unknown): string => {
     if (typeof value === "string") {
-      bindings[`__${name}`] = STRING_MARKER + value;
-      lets.push(`LET $${name} = string::slice($__${name}, 1);`);
-    } else {
-      lets.push(`LET $${name} = ${toSurqlLiteral(value)};`);
+      const name = `__v${Object.keys(bindings).length}`;
+      bindings[name] = STRING_MARKER + value;
+      return `string::slice($${name}, 1)`;
     }
+    if (value instanceof Date) return expression(value.toISOString());
+    if (Array.isArray(value)) {
+      return `[${value.map((item) => (item === undefined ? "null" : expression(item))).join(", ")}]`;
+    }
+    if (typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype) {
+      const entries = Object.entries(value as Record<string, unknown>)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => `${JSON.stringify(key)}: ${expression(item)}`);
+      return `{${entries.join(", ")}}`;
+    }
+    return toSurqlLiteral(value);
+  };
+  for (const [name, value] of Object.entries(toQueryVars(vars))) {
+    lets.push(`LET $${name} = ${expression(value)};`);
   }
   return { lets, bindings };
 }
