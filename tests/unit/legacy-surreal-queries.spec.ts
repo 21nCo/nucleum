@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   decodeLegacyStringLiteral,
   isKnownRegion,
-  toLetStatements,
+  toQueryStatements,
   toQueryVars,
   toSurqlLiteral,
   userRecord,
@@ -25,7 +25,14 @@ vi.mock("$lib/server/common/auth", () => ({
 const INJECTION = 'x"); DELETE user; --';
 
 /** The request as the database sees it: the query with its USE line, and the LET-bound variables. */
-type Sent = { url: URL; body: string; vars: Record<string, unknown>; lets: string[] };
+type Sent = {
+  url: URL;
+  body: string;
+  sql: string;
+  vars: Record<string, unknown>;
+  lets: string[];
+  bindings: Record<string, string>;
+};
 let sent: Sent[];
 let answer: (sent: Sent) => unknown[];
 
@@ -44,9 +51,13 @@ beforeEach(() => {
       const url = new URL(String(input));
       const rpc = JSON.parse(String(init?.body ?? "{}"));
       expect(rpc.method).toBe("query");
-      expect(rpc.params[1]).toEqual({});
-      const lines = String(rpc.params[0]).split("\n");
+      const bindings: Record<string, string> = rpc.params[1];
+      for (const value of Object.values(bindings)) expect(value.startsWith("\u0001")).toBe(true);
+      const sql = String(rpc.params[0]);
+      const lines = sql.split("\n");
       const literal = (line: string) => {
+        const bound = /^LET \$(\w+) = string::slice\(\$__(\w+), 1\);$/.exec(line);
+        if (bound) return [bound[1], bindings[`__${bound[2]}`].slice(1)] as const;
         const match = /^LET \$(\w+) = (.*);$/.exec(line);
         if (!match) return undefined;
         try {
@@ -58,7 +69,7 @@ beforeEach(() => {
       const lets = lines.filter((line) => literal(line));
       const vars = Object.fromEntries(lets.map((line) => literal(line)!));
       const body = lines.filter((line) => !literal(line)).join(" ");
-      const request = { url, body, vars, lets };
+      const request = { url, body, sql, vars, lets, bindings };
       sent.push(request);
       return new Response(
         JSON.stringify({
@@ -102,10 +113,21 @@ describe("toSurqlLiteral", () => {
     }
   );
 
-  it("never lets a literal span lines", () => {
-    expect(toLetStatements({ a: "line\nnext", b: undefined })).toEqual([
-      'LET $a = "line\\nnext";'
-    ]);
+  it("sends strings as marked RPC variables and other values as one-line literals", () => {
+    expect(
+      toQueryStatements({ a: "line\nnext", n: 5, o: { s: "x:y\nz" }, skip: undefined })
+    ).toEqual({
+      lets: [
+        "LET $a = string::slice($__a, 1);",
+        "LET $n = 5;",
+        'LET $o = {"s": "x:y\\nz"};'
+      ],
+      bindings: { __a: "\u0001line\nnext" }
+    });
+  });
+
+  it("reserves variable names starting with __", () => {
+    expect(() => toQueryStatements({ __a: "x" })).toThrow(/Invalid query variable/);
   });
 });
 
@@ -238,7 +260,9 @@ describe("bound queries", () => {
     expect(sent[0].url.search).toBe("");
     expect(sent[0].url.host).toBe("db.db-test.example");
     expect(sent[0].vars).toEqual({ email: INJECTION });
-    expect(sent[0].lets).toEqual([`LET $email = ${JSON.stringify(INJECTION)};`]);
+    expect(sent[0].lets).toEqual(["LET $email = string::slice($__email, 1);"]);
+    expect(sent[0].bindings).toEqual({ __email: "\u0001" + INJECTION });
+    expect(sent[0].sql).not.toContain("DELETE user");
     expect(sent[0].body).toBe(
       "USE NAMESPACE admin; USE DATABASE ADMIN; SELECT * FROM user WHERE email = $email"
     );
@@ -384,7 +408,7 @@ describe("bound queries", () => {
     expect(sent.length).toBeGreaterThan(0);
     for (const request of sent) {
       expect(request.body).not.toContain("DELETE user");
-      expect(request.body).not.toContain(INJECTION);
+      expect(request.sql).not.toContain(INJECTION);
     }
     expect(
       JSON.stringify(sent.map((request) => request.vars)).toLowerCase()

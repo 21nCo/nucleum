@@ -135,13 +135,14 @@ function isSurrogate(codePoint: number) {
 }
 
 /**
- * Query variables, validated: names must be identifiers, and `undefined`
- * values are left out (they read as NONE).
+ * Query variables, validated: names must be identifiers not starting with
+ * "__" (reserved for the RPC variables), and `undefined` values are left out
+ * (they read as NONE).
  */
 export function toQueryVars(vars?: QueryVars) {
   const result: QueryVars = {};
   for (const [name, value] of Object.entries(vars ?? {})) {
-    if (!VARIABLE_NAME.test(name)) {
+    if (!VARIABLE_NAME.test(name) || name.startsWith("__")) {
       throw new ValidationError(`Invalid query variable ${name}`);
     }
     if (value !== undefined) result[name] = value;
@@ -155,10 +156,8 @@ export function toQueryVars(vars?: QueryVars) {
  * interpolation, so the literal cannot end early or run code), finite numbers,
  * booleans, null, arrays and plain objects. Anything else is refused.
  *
- * Values are written as literals rather than passed as RPC variables because
- * SurrealDB 2.3.3 parses JSON RPC variables with legacy strands, which turns a
- * string such as "secret:123456" into a record id. A quoted literal stays a
- * string, as it did in the old queries.
+ * A quoted literal stays a string in SurrealDB 2.3.3, including inside
+ * arrays and objects, as it did in the old queries.
  */
 export function toSurqlLiteral(value: unknown): string {
   if (value === null) return "null";
@@ -181,14 +180,33 @@ export function toSurqlLiteral(value: unknown): string {
   throw new ValidationError("Unsupported query value");
 }
 
+const STRING_MARKER = "\u0001";
+
 /**
- * One `LET $name = <literal>;` line per variable. JSON literals never contain
- * a raw line break, so each statement stays on its own line.
+ * The statements and RPC variables that set a query's variables.
+ *
+ * Strings (passwords, emails, ids) travel as RPC variables, never in the
+ * query text, so a SurrealDB query trace cannot show them. SurrealDB 2.3.3
+ * parses JSON RPC variables with legacy strands, which would turn a string such
+ * as "secret:123456" into a record id, so each is sent with a leading
+ * "\u0001" (which no SurrealQL value can start with) and the LET line strips it
+ * with string::slice. Other values (numbers, booleans, null, arrays and
+ * objects) are written as literals by toSurqlLiteral, which keeps nested
+ * strings as strings. JSON never writes a raw line break, so each LET is one
+ * line.
  */
-export function toLetStatements(vars?: QueryVars) {
-  return Object.entries(toQueryVars(vars)).map(
-    ([name, value]) => `LET $${name} = ${toSurqlLiteral(value)};`
-  );
+export function toQueryStatements(vars?: QueryVars) {
+  const lets: string[] = [];
+  const bindings: Record<string, string> = {};
+  for (const [name, value] of Object.entries(toQueryVars(vars))) {
+    if (typeof value === "string") {
+      bindings[`__${name}`] = STRING_MARKER + value;
+      lets.push(`LET $${name} = string::slice($__${name}, 1);`);
+    } else {
+      lets.push(`LET $${name} = ${toSurqlLiteral(value)};`);
+    }
+  }
+  return { lets, bindings };
 }
 
 // }
@@ -252,8 +270,9 @@ export async function performAgentProxyQuery(
 
 /**
  * Runs a query with root credentials through SurrealDB's RPC `query` method.
- * Variables are set by LET statements of literals before the query (see
- * toSurqlLiteral), so nothing is in the URL. Returns the per-statement results
+ * Variables are set by LET statements before the query (see
+ * toQueryStatements): strings from RPC variables, other values from literals.
+ * Nothing is in the URL. Returns the per-statement results
  * (the shape /sql returned) without the USE and LET statements, or the RPC
  * error.
  */
@@ -280,7 +299,7 @@ async function performRootQuery(params: DatabaseQueryParams) {
     headers.append("DB", db);
     headers.append("Surreal-NS", namespace);
     headers.append("Surreal-DB", db);
-    const lets = toLetStatements(params.vars);
+    const { lets, bindings } = toQueryStatements(params.vars);
     const sql = [
       `USE NAMESPACE ${namespace}; USE DATABASE ${db};`,
       ...lets,
@@ -293,7 +312,7 @@ async function performRootQuery(params: DatabaseQueryParams) {
       body: JSON.stringify({
         id: 1,
         method: "query",
-        params: [sql, {}]
+        params: [sql, bindings]
       }),
       headers
     });
