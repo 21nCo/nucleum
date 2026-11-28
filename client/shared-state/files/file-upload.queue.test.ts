@@ -181,9 +181,16 @@ const {
   startAccountUploadReplay
 } = await import("./filefn-client");
 const {
+  exportQueuedFiles,
   isQueuedFileFailed,
+  isRestorableLocalCopy,
+  listQueuedFiles,
+  markQueuedFileOrphaned,
+  markQueuedFileStale,
   replayFileQueue,
+  restoreLocalQueuedFiles,
   retryFailedQueuedFile,
+  settleQueuedFileMarks,
   withQueueLock,
   writeQueuedFileRecord
 } = await import("./file-queue");
@@ -470,6 +477,29 @@ function failEntryRemoval(name: string, times = Infinity) {
           if (entryName !== name || left-- <= 0)
             return target.removeEntry(entryName);
           throw new DOMException("The file system is busy", "NotReadableError");
+        };
+      }
+    });
+  navigator.storage.getDirectory = async () => wrap(await getDirectory());
+}
+
+/** Runs `hook` before a queued file named `name` is removed, once. */
+function hookEntryRemovalOnce(name: string, hook: () => Promise<void>) {
+  let isRun = false;
+  const getDirectory = navigator.storage.getDirectory;
+  const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+    new Proxy(dir, {
+      get(target, key) {
+        if (key === "getDirectoryHandle")
+          return async (dirName: string, options?: { create?: boolean }) =>
+            wrap(await target.getDirectoryHandle(dirName, options));
+        if (key !== "removeEntry") return Reflect.get(target, key);
+        return async (entryName: string) => {
+          if (entryName === name && !isRun) {
+            isRun = true;
+            await hook();
+          }
+          return target.removeEntry(entryName);
         };
       }
     });
@@ -1423,6 +1453,76 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.deletes).toEqual([]);
     expect(opfs.list(LOCAL_QUEUE)).toEqual([entry]);
     expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined();
+  });
+
+  it.each([
+    ["an unclaimed", false],
+    ["a claimed, stale", true]
+  ])(
+    "keeps the same marks of %s capture deleted in a guest namespace that retired, held, across replays and guest passes",
+    async (_, isClaimed) => {
+      const record = isClaimed
+        ? await captureThenSignOutDuringUpload()
+        : (await bootData(localAccount),
+          (uninstall = installDeviceFileQueue()),
+          await capturePhoto());
+      await settleTasks();
+      const entry = `queued_${record.fileId}`;
+      // An earlier build's tab fences the claimed capture.
+      if (isClaimed) await writeLocalEntryFile(record.fileId, "stale");
+      // The delete's pass cannot take the queue's lock; its fence marks it.
+      failQueueLockOnce();
+      await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+      await settleLocalFileRecords();
+      expect(opfs.read(LOCAL_QUEUE, entry, "deleted")).toBeDefined();
+      await signOutToLocal(true);
+      await settleLocalFileRecords();
+      const marks = opfs.list(LOCAL_QUEUE, entry).sort();
+
+      for (let run = 0; run < 3; run++) {
+        await signInToCloud("user-a");
+        await replayLocalQueue();
+        await settleTasks();
+        await signOutToLocal();
+        await settleLocalFileRecords();
+        expect(opfs.list(LOCAL_QUEUE, entry).sort()).toEqual(marks);
+      }
+
+      const [listed] = await listQueuedFiles(LOCAL_QUEUE, true);
+      expect(listed?.isDeleted).toBe(true);
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+    }
+  );
+
+  it("marks a capture deleted by an earlier build's tab with no generation no change names, when its pass cannot reconcile it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // An earlier build's tab deletes the guest record and stores the delete
+    // under the record's entry, with no generation.
+    await datafn.file.mutate({
+      operation: "delete",
+      id: record.id,
+      silent: true
+    } as never);
+    const key = [namespace, record.id].map(encodeURIComponent).join(":");
+    localStorage.setItem(`${LOCAL_QUEUE}-pending:${key}`, "delete");
+    fileCalls.beforeQuery = async () => {
+      fileCalls.beforeQuery = null;
+      throw new Error("The guest records cannot be read");
+    };
+
+    await openData();
+    await settleLocalFileRecords();
+
+    const entry = `queued_${record.fileId}`;
+    const marks = opfs.list(LOCAL_QUEUE, entry);
+    const deleted = marks.filter((name) => name.startsWith("deleted"));
+    expect(deleted).toContain("deleted");
+    expect(deleted).toHaveLength(2);
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
   });
 
   it("deletes nothing and publishes the takeover when another tab's guest record takes over an orphaned capture while its settle writes the discard mark", async () => {
@@ -2384,6 +2484,226 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
+  it.each<[string, "stale" | "pending", { name?: string; trashed?: boolean }]>([
+    ["a rename it fences", "stale", { name: "receipt.png" }],
+    ["a trash it fences", "stale", { trashed: true }],
+    ["a rename it only records pending", "pending", { name: "receipt.png" }]
+  ])(
+    "withdraws the uploaded mark a publish writes after its last check once another tab makes %s, and publishes the newer copy at the next replay",
+    async (_, hold, expected) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const namespace = String(readLocalCopy(record.fileId)?.namespace);
+      const entry = `queued_${record.fileId}`;
+      const key = [namespace, record.id].map(encodeURIComponent).join(":");
+      const pendingKey = `${LOCAL_QUEUE}-pending:${key}`;
+      // A guest tab changes the record after the publish saved it and found
+      // its copy current, just before it marks the file uploaded.
+      let isChanged = false;
+      hookEntryFiles({
+        create: async (name) => {
+          if (name !== "uploaded" || isChanged) return;
+          isChanged = true;
+          if (hold === "stale")
+            await writeLocalEntryFile(record.fileId, "stale");
+          // Its fence has not landed yet: only its pending change holds.
+          else localStorage.setItem(pendingKey, "change:t");
+        }
+      });
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      expect(isChanged).toBe(true);
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+      if (hold === "stale")
+        expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined();
+      expect((await readAnyRecord(record.id))?.name).toBe("photo.png");
+
+      await signOutToLocal();
+      await settleTasks();
+      await datafn.file.mutate(
+        (expected.name !== undefined
+          ? {
+              operation: "merge",
+              id: record.id,
+              record: { id: record.id, name: expected.name }
+            }
+          : { operation: "trash", id: record.id }) as never
+      );
+      await settleTasks();
+      await signInToCloud("user-a");
+      await vi.waitFor(() =>
+        expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined()
+      );
+      const published = await readAnyRecord(record.id);
+      expect(published?.fileId).toBe(record.fileId);
+      if (expected.name !== undefined) {
+        expect(published?.name).toBe(expected.name);
+      } else {
+        expect((published?.trashedAt ?? null) !== null).toBe(true);
+      }
+    }
+  );
+
+  it.each<[string, "removal" | "lookup"]>([
+    ["whose removal fails", "removal"],
+    ["after a reread and an entry lookup that fail", "lookup"]
+  ])(
+    "keeps a withdrawal of the uploaded mark a publish wrote after its last check %s for the next replay, which publishes the newer copy another tab renamed",
+    async (_, failure) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const entry = `queued_${record.fileId}`;
+      let isChanged = false;
+      let lookups = 0;
+      hookEntryFiles({
+        create: async (name) => {
+          if (name !== "uploaded" || isChanged) return;
+          isChanged = true;
+          await writeLocalEntryFile(record.fileId, "stale");
+          if (failure === "lookup") lookups = 2;
+        },
+        lookup: (name) => {
+          if (name !== entry || lookups <= 0) return;
+          lookups -= 1;
+          throw new DOMException("Unreadable", "NotReadableError");
+        }
+      });
+      if (failure === "removal") failEntryRemoval("uploaded", 1);
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      expect(isChanged).toBe(true);
+      expect((await readAnyRecord(record.id))?.name).toBe("photo.png");
+
+      await signOutToLocal();
+      await settleTasks();
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "receipt.png" }
+      } as never);
+      await settleTasks();
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png");
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
+    }
+  );
+
+  it.each([
+    ["a reread", false],
+    ["a reread that fails once", true]
+  ])(
+    "keeps the upload of a publish whose reread verified its copy when the removal of its publishing mark fails, and uploads nothing again at the next replay's verification by %s",
+    async (_, isRereadFailing) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const entry = `queued_${record.fileId}`;
+      let isFailed = false;
+      let isRemovalFailing = true;
+      let isArmed = false;
+      let isRereading = false;
+      let withdrawals = 0;
+      const getDirectory = navigator.storage.getDirectory;
+      const wrap = (
+        dir: FileSystemDirectoryHandle
+      ): FileSystemDirectoryHandle =>
+        new Proxy(dir, {
+          get(target, key) {
+            if (key === "getDirectoryHandle")
+              return async (name: string, options?: { create?: boolean }) =>
+                wrap(await target.getDirectoryHandle(name, options));
+            if (key === "getFileHandle")
+              return async (name: string, options?: { create?: boolean }) => {
+                if (name === "publishing" && isArmed) {
+                  isArmed = false;
+                  isRereading = true;
+                } else if (
+                  name === "record.json" &&
+                  isRereading &&
+                  !options?.create
+                ) {
+                  isRereading = false;
+                  throw new DOMException("Unreadable", "NotReadableError");
+                }
+                return target.getFileHandle(name, options);
+              };
+            if (key !== "removeEntry") return Reflect.get(target, key);
+            return async (name: string) => {
+              if (name === "uploaded" && isFailed) withdrawals += 1;
+              if (name === "publishing" && isRemovalFailing) {
+                isFailed = true;
+                throw new DOMException(
+                  "The file system is busy",
+                  "NotReadableError"
+                );
+              }
+              return target.removeEntry(name);
+            };
+          }
+        });
+      navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      const started = sdk.started.length;
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("publishing");
+      isRemovalFailing = false;
+      isArmed = isRereadFailing;
+      await replayLocalQueue();
+      await settleTasks();
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect(isFailed).toBe(true);
+      expect(isArmed || isRereading).toBe(false);
+      expect(withdrawals).toBe(0);
+      expect(sdk.started).toHaveLength(started);
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
+      expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+    }
+  );
+
+  it.each([
+    ["a whole backup", true],
+    ["a backup of the queue's changes", false]
+  ])(
+    "leaves out of %s the uploaded mark a publish left unverified, so its restore publishes the capture again",
+    async (_, isWhole) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      await writeLocalEntryFile(record.fileId, "uploaded", "version-1");
+      await writeLocalEntryFile(record.fileId, "sent-thumbnail");
+      await writeLocalEntryFile(record.fileId, "publishing", "{}");
+
+      const { files } = await exportQueuedFiles(
+        LOCAL_QUEUE,
+        async () => null,
+        isWhole
+      );
+
+      expect(files.map((copy) => copy.fileId)).toEqual([record.fileId]);
+      const names = (files[0]?.marks ?? []).map((mark) => mark.name);
+      expect(names).not.toContain("uploaded");
+    }
+  );
+
   it("keeps an account-side edit made after an outdated save over the guest change fenced during it", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
@@ -2578,6 +2898,2971 @@ describe("files captured offline or by a local-only user", () => {
     expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
     expect(sdk.deletes).toEqual([]);
     expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+  });
+
+  it.each([
+    ["renames", "rename"],
+    ["trashes", "trash"]
+  ])(
+    "leaves no outdated record in the account and no held capture when another tab %s the guest record during its publish",
+    async (_, change) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const namespace = String(readLocalCopy(record.fileId)?.namespace);
+      const entry = `queued_${record.fileId}`;
+      // Another tab commits its change while this tab saves the record, and
+      // records and fences it just after that save.
+      fileCalls.beforeMutate = async (args) => {
+        const [first] = Array.isArray(args) ? args : [args];
+        if ((first as { id?: string })?.id !== record.id) return;
+        fileCalls.beforeMutate = null;
+        return async (result) => {
+          const id = [namespace, record.id].map(encodeURIComponent);
+          localStorage.setItem(
+            `${LOCAL_QUEUE}-pending:${id.join(":")}`,
+            "change:t"
+          );
+          await writeLocalEntryFile(record.fileId, "stale", "changed");
+          return result;
+        };
+      };
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+      expect((await readAnyRecord(record.id))?.name).toBe("photo.png");
+
+      // The change is in the guest namespace this tab opens next, before
+      // its pass takes the queue's lock.
+      const gate = deferred<void>();
+      const otherTab = withQueueLock(
+        LOCAL_QUEUE,
+        new AbortController().signal,
+        () => gate.promise
+      );
+      await signOutToLocal();
+      await datafn.file.mutate(
+        (change === "trash"
+          ? { operation: "trash", id: record.id }
+          : {
+              operation: "merge",
+              id: record.id,
+              record: { id: record.id, name: "receipt.png" }
+            }) as never
+      );
+      gate.resolve();
+      await otherTab;
+      await settleTasks();
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      const published = await readAnyRecord(record.id);
+      if (change === "trash")
+        expect(published?.trashedAt ?? null).not.toBeNull();
+      else expect(published?.name).toBe("receipt.png");
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+    }
+  );
+
+  it("keeps a guest change another tab records while a full pass removes the changes it copied, and copies it on the next pass", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const other = await capturePhoto();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // The rename's own pass cannot take the queue's lock, so the full pass
+    // of the namespace opening again copies it.
+    failQueueLockOnce();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "first.png" }
+    } as never);
+    await settleLocalFileRecords();
+    expect(readLocalCopy(record.fileId)?.name).toBe("photo.png");
+
+    // After that pass rereads the record, another tab renames it again and
+    // records its change (as this build records one: shown by this tab's
+    // rename of another record) just before the pass removes the rename it
+    // copied; that tab reloads before its fence lands.
+    const setItem = Storage.prototype.setItem;
+    const removeItem = Storage.prototype.removeItem;
+    let written: [string, string] | undefined;
+    let recorded: [string, string] | undefined;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ) {
+      if (key.includes("-write:")) written ??= [key, value];
+      return setItem.call(this, key, value);
+    });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (
+      this: Storage,
+      key: string
+    ) {
+      if (recorded && key.includes(encodeURIComponent(record.id))) {
+        setItem.call(this, ...recorded);
+        recorded = undefined;
+      }
+      return removeItem.call(this, key);
+    });
+    let reads = 0;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id || ++reads < 2) return;
+      fileCalls.beforeQuery = null;
+      return async (result) => {
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "second.png" },
+          silent: true
+        } as never);
+        await datafn.file.mutate({
+          operation: "merge",
+          id: other.id,
+          record: { id: other.id, name: "other.png" }
+        } as never);
+        const [key, value] = written ?? ["", ""];
+        const id = encodeURIComponent(other.id);
+        recorded = [key.replace(id, encodeURIComponent(record.id)), value];
+        return result;
+      };
+    };
+
+    await openData();
+    await vi.waitFor(async () => {
+      await settleLocalFileRecords();
+      expect(readLocalCopy(other.fileId)?.name).toBe("other.png");
+    });
+    await settleTasks();
+
+    expect(reads).toBe(2);
+    expect(recorded).toBeUndefined();
+    expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+  });
+
+  it("keeps a capture held when another tab fences a later change after a pass verified the copy and before it clears the marks", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // Just after this tab's pass verifies its copy of the rename, another
+    // tab renames the record again (its pending entry only in its memory)
+    // and fences it; the pass ends with its clear.
+    const generation = `${Date.now() + 60_000}-00000000-0000-4000-8000-000000000001`;
+    let reads = 0;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id || ++reads < 2) return;
+      fileCalls.beforeQuery = null;
+      return async (result) => {
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "other.png" },
+          silent: true
+        } as never);
+        await writeLocalEntryFile(record.fileId, "stale", "changed");
+        await writeLocalEntryFile(record.fileId, `stale.${generation}`);
+        return result;
+      };
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    expect(reads).toBe(2);
+    expect(readLocalCopy(record.fileId)?.name).toBe("receipt.png");
+    const entry = `queued_${record.fileId}`;
+    expect(opfs.read(LOCAL_QUEUE, entry, `stale.${generation}`)).toBeDefined();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("releases a capture held in this tab once another tab's copy covers its change's generation, and not before", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // This tab renames the record while another tab holds the queue's lock;
+    // its pending entry cannot be stored, and its pass runs only once the
+    // sign-in left the guest namespace.
+    const gate = deferred<void>();
+    const lockedTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    const setItem = Storage.prototype.setItem;
+    let isRefused = false;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ) {
+      if (isRefused || !key.includes("-pending:"))
+        return setItem.call(this, key, value);
+      isRefused = true;
+      throw new DOMException("The storage is full", "QuotaExceededError");
+    });
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await vi.waitFor(() =>
+      expect(
+        opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+      ).toBeDefined()
+    );
+    expect(isRefused).toBe(true);
+    // The change's generation, as its fence's mark names it.
+    const generation =
+      opfs
+        .list(LOCAL_QUEUE, `queued_${record.fileId}`)
+        .find((name) => name.startsWith("stale."))
+        ?.slice("stale.".length) ?? "";
+    expect(generation).not.toBe("");
+    await signInToCloud("user-a");
+    gate.resolve();
+    await lockedTab;
+    await replayLocalQueue();
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+
+    // Another tab, in the guest namespace, copies the record under the
+    // queue's lock and removes the change it read.
+    const copyInOtherTab = (covered?: string[]) =>
+      withQueueLock(LOCAL_QUEUE, new AbortController().signal, async () => {
+        const copy = { ...readLocalCopy(record.fileId), name: "receipt.png" };
+        // It lists only the plain mark before its reread (as between a
+        // fence's two marks): the rest of its cover is what it read.
+        const cover = covered && { covered, listed: ["stale"] };
+        await writeQueuedFileRecord(
+          LOCAL_QUEUE,
+          record.fileId,
+          copy as never,
+          cover
+        );
+        for (const key of Object.keys(localStorage))
+          if (/-(pending|write):/.test(key)) localStorage.removeItem(key);
+      });
+    // A copy its pass has not verified, then one verified to cover another
+    // generation only, hold it still.
+    const other = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    for (const covered of [undefined, [other]]) {
+      await copyInOtherTab(covered);
+      await replayLocalQueue();
+      await settleTasks();
+      expect(sdk.started).toEqual([]);
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+    }
+
+    // A copy verified to cover the change's generation releases it.
+    await copyInOtherTab([generation]);
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png")
+    );
+  });
+
+  it("publishes a capture whose change's fence lands again after a pass copied and verified that change, as that fence writes no mark", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    const copy = readLocalCopy(record.fileId);
+    expect(copy?.name).toBe("receipt.png");
+    // Another tab's fence of that same rename lands only now.
+    const generation = String(
+      (copy?.covered as string[]).find((token) => /^\d+-/.test(token))
+    );
+    await markQueuedFileStale(LOCAL_QUEUE, record.fileId, false, generation);
+    expect(opfs.list(LOCAL_QUEUE, `queued_${record.fileId}`)).not.toContain(
+      "stale"
+    );
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png")
+    );
+  });
+
+  it("holds a capture by a stale mark written beside a covered generation's mark, as an earlier build's or a stopped fence's beside a leftover leaves it, until the following pass verifies its copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    const control = await capturePhoto();
+    await settleLocalFileRecords();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    const copy = readLocalCopy(record.fileId);
+    const generation = String(
+      (copy?.covered as string[]).find((token) => /^\d+-/.test(token))
+    );
+    await writeLocalEntryFile(record.fileId, `stale.${generation}`);
+    await writeLocalEntryFile(record.fileId, "stale", "changed");
+    const isListedStale = async () =>
+      (await listQueuedFiles(LOCAL_QUEUE, true)).find(
+        (entry) => entry.fileId === record.fileId
+      )?.stale !== undefined;
+    expect(await isListedStale()).toBe(true);
+
+    // The pass that follows (here, of another record's change) verifies it.
+    await datafn.file.mutate({
+      operation: "merge",
+      id: control.id,
+      record: { id: control.id, name: "control.png" }
+    } as never);
+    await settleLocalFileRecords();
+    expect(await isListedStale()).toBe(false);
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png")
+    );
+  });
+
+  it("publishes the copy of a capture whose record another tab renames after a pass read its pending changes and before it verifies that copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // As this tab's pass of a rename first reads the record, another tab
+    // renames it again, records its change and fences it.
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "second.png" },
+        silent: true
+      } as never);
+      const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      const id = [namespace, record.id, generation].map(encodeURIComponent);
+      localStorage.setItem(
+        `${LOCAL_QUEUE}-write:${id.join(":")}`,
+        `change:${generation}`
+      );
+      await writeLocalEntryFile(record.fileId, "stale", "changed");
+      await writeLocalEntryFile(record.fileId, `stale.${generation}`);
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "first.png" }
+    } as never);
+    await settleLocalFileRecords();
+    expect(fileCalls.beforeQuery).toBeNull();
+    expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+    );
+  });
+
+  it("keeps a published record whose capture lost its uploaded mark when its next publish stops before its save and the guest record is then deleted", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    const entry = `queued_${record.fileId}`;
+    await vi.waitFor(() =>
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined()
+    );
+    // The page reloaded before the uploaded mark landed; the next publish
+    // stops before its save, as another tab fences a guest change.
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await (await queue.getDirectoryHandle(entry)).removeEntry("uploaded");
+    let isFenced = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "saved" || isFenced) return;
+        isFenced = true;
+        await writeLocalEntryFile(record.fileId, "stale", "changed");
+      }
+    });
+    await replayLocalQueue();
+    await settleTasks();
+    expect(isFenced).toBe(true);
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  it("keeps an account record trashed to a state a stopped publish predicted when the guest record is then deleted", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    const entry = `queued_${record.fileId}`;
+    await vi.waitFor(() =>
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined()
+    );
+    // The page reloaded before the uploaded mark landed; the guest trashes
+    // the record, and its next publish stops before its save, as another
+    // tab fences a guest change.
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await (await queue.getDirectoryHandle(entry)).removeEntry("uploaded");
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    await settleLocalFileRecords();
+    expect(readLocalCopy(record.fileId)?.isTrashed).toBe(true);
+    let isFenced = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "saved" || isFenced) return;
+        isFenced = true;
+        await writeLocalEntryFile(record.fileId, "stale", "changed");
+      }
+    });
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(isFenced).toBe(true);
+    expect((await readAnyRecord(record.id))?.trashedAt ?? null).toBeNull();
+
+    // The account trashes the record itself, then the guest deletes it.
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  it("marks nothing uploaded when a publish saved nothing because its copy was held, although the hold is gone by the end of that publish", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    const entry = `queued_${record.fileId}`;
+    // Another tab records a guest change as the publish journals its save,
+    // and its sign-out clears it before that change's fence lands.
+    const key = `${LOCAL_QUEUE}-pending:${[namespace, record.id]
+      .map(encodeURIComponent)
+      .join(":")}`;
+    let isRecorded = false;
+    let checks = 0;
+    hookEntryFiles({
+      create(name) {
+        if (name !== "saved" || isRecorded) return;
+        isRecorded = true;
+        localStorage.setItem(key, "change:t");
+      }
+    });
+    failEntryLookup("uploaded", () => {
+      if (isRecorded && ++checks === 2) localStorage.removeItem(key);
+      return false;
+    });
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(isRecorded).toBe(true);
+    // Nothing holds it now: a replay publishes it before it is uploaded.
+    await replayLocalQueue();
+    await settleTasks();
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+  });
+
+  it("releases a capture held by a change only this tab's memory holds once a pass verifies a copy after that change's fence, while the clock stands still", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(Date.now());
+    // After the pass of a rename read its pending changes, a second rename
+    // lands, only in this tab's memory (its pending entry cannot be stored),
+    // and is fenced before the pass reads the record; its own pass cannot
+    // take the queue's lock.
+    const setItem = Storage.prototype.setItem;
+    let isRefused = false;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      failQueueLockOnce();
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+        this: Storage,
+        key: string,
+        value: string
+      ) {
+        if (isRefused || !key.includes("-pending:"))
+          return setItem.call(this, key, value);
+        isRefused = true;
+        throw new DOMException("The storage is full", "QuotaExceededError");
+      });
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "second.png" }
+      } as never);
+      while (!opfs.list(LOCAL_QUEUE, entry).some((n) => n.startsWith("stale.")))
+        await new Promise<void>((resolve) => setImmediate(resolve));
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "first.png" }
+    } as never);
+    await settleTasks();
+    clock.mockRestore();
+    expect(isRefused).toBe(true);
+    expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+    );
+  });
+
+  it("publishes a capture whose change an earlier build recorded once the pass that copies that change verifies the copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // An earlier build's tab renames the record: its pending entry and stale
+    // mark name no generation.
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "earlier.png" },
+      silent: true
+    } as never);
+    await changeInOtherTab(namespace, record.id, record.fileId);
+
+    await openData();
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.name).toBe("earlier.png");
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("earlier.png")
+    );
+  });
+
+  it("holds a verified copy by its plain stale mark alone while its clear stops between removing its generation mark and its stale mark, and nothing once the clear ends", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // The clear of the rename's pass stops after it removed the rename's
+    // generation mark, before its stale mark (removed last, so an earlier
+    // build's tab still sees the hold).
+    const stop = deferred<void>();
+    let isStopped = false;
+    let removed = 0;
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name.split(".")[0] === "stale" && ++removed === 2) {
+              isStopped = true;
+              await stop.promise;
+            }
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await vi.waitFor(() => expect(isStopped).toBe(true));
+
+    const [listed] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(opfs.list(LOCAL_QUEUE, `queued_${record.fileId}`)).toContain(
+      "stale"
+    );
+    expect(listed?.stale).toBe("changed");
+    stop.resolve();
+    await settleTasks();
+    const [cleared] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(cleared?.stale).toBeUndefined();
+    expect(cleared?.isDeleted).toBe(false);
+  });
+
+  it("keeps a capture held by another tab's fence that wrote its stale mark and not its generation's", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "other.png" },
+      silent: true
+    } as never);
+    hookEntryFiles({
+      create(name) {
+        if (name.startsWith("stale."))
+          throw new DOMException("The storage is full", "QuotaExceededError");
+      }
+    });
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    await expect(
+      markQueuedFileStale(LOCAL_QUEUE, record.fileId, false, generation)
+    ).rejects.toThrow();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("waits on no timer while a pass over the local files holds the queue's lock", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const first = await capturePhoto();
+    await capturePhoto();
+    await settleLocalFileRecords();
+    const locks = webLocks as LockManager;
+    const request = locks.request.bind(locks) as (
+      ...args: unknown[]
+    ) => Promise<unknown>;
+    let isLocked = false;
+    vi.spyOn(locks, "request").mockImplementation(((...args: unknown[]) => {
+      const run = args.at(-1) as LockGrantedCallback;
+      if (!String(args[0]).endsWith(`:${LOCAL_QUEUE}`)) return request(...args);
+      return request(args[0], args[1], async (lock: Lock) => {
+        isLocked = true;
+        try {
+          return await run(lock);
+        } finally {
+          isLocked = false;
+        }
+      });
+    }) as never);
+    const timeout = globalThis.setTimeout;
+    let lockedTimers = 0;
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      ...args: Parameters<typeof setTimeout>
+    ) => {
+      if (isLocked && args[1] === 1) lockedTimers++;
+      return timeout(...args);
+    }) as never);
+
+    await datafn.file.mutate({
+      operation: "merge",
+      id: first.id,
+      record: { id: first.id, name: "receipt.png" }
+    } as never);
+    await openData();
+    await settleTasks();
+
+    expect(readLocalCopy(first.fileId)?.name).toBe("receipt.png");
+    expect(lockedTimers).toBe(0);
+  });
+
+  it("holds a capture whose change's fence lands after a pass listed the marks, until a later pass covers that change, then publishes it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const start = Date.now() + 1_000;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(start);
+    // After the pass of a rename took its time and read its pending
+    // changes, a second rename lands; its own pass cannot take the queue's
+    // lock, and its fence lands only as the pass reads the record again.
+    const fence = deferred<void>();
+    hookEntryFiles({
+      async create(name) {
+        if (name.startsWith(`stale.${start + 10}-`)) await fence.promise;
+      }
+    });
+    let reads = 0;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      if (++reads === 2) {
+        fileCalls.beforeQuery = null;
+        fence.resolve();
+        const marks = () => opfs.list(LOCAL_QUEUE, entry);
+        while (!marks().some((n) => n.startsWith(`stale.${start + 10}-`)))
+          await new Promise<void>((resolve) => setImmediate(resolve));
+        return;
+      }
+      failQueueLockOnce();
+      clock.mockReturnValue(start + 10);
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "second.png" }
+      } as never);
+      clock.mockReturnValue(start + 20);
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "first.png" }
+    } as never);
+    await settleTasks();
+    clock.mockRestore();
+    expect(reads).toBe(2);
+    expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+    // The pass read neither that change nor its mark: the mark holds the
+    // capture until a later pass covers it.
+    const isMarked = () =>
+      opfs
+        .list(LOCAL_QUEUE, entry)
+        .some((name) => name.startsWith(`stale.${start + 10}-`));
+    expect(isMarked()).toBe(true);
+    await openData();
+    await settleLocalFileRecords();
+    expect(isMarked()).toBe(false);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+    );
+  });
+
+  it("keeps a capture held, once its tab signs in, whose fence another tab's pass split, covering its change between the fence's reread of the copy and its stale mark", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // Another tab records a change, and its fence writes its generation's
+    // mark and reads the copy, not covering it yet, then pauses before its
+    // stale mark while this tab copies and verifies a later rename, whose
+    // pass reads that change too.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, record.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+    const paused = deferred<void>();
+    const resume = deferred<void>();
+    let isPaused = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "stale" || isPaused) return;
+        isPaused = true;
+        paused.resolve();
+        await resume.promise;
+      }
+    });
+    const otherFence = markQueuedFileStale(
+      LOCAL_QUEUE,
+      record.fileId,
+      false,
+      generation
+    );
+    await paused.promise;
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain(`stale.${generation}`);
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "renamed.png" }
+    } as never);
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.name).toBe("renamed.png");
+    expect(readLocalCopy(record.fileId)?.covered).toContain(generation);
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain(`stale.${generation}`);
+    resume.resolve();
+    await otherFence;
+
+    // Its stale mark lands late; it never writes its covered generation's
+    // mark again.
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    // No pass listed that stale mark, which an earlier build's fence may
+    // rely on, so it holds until the following guest pass (a stated window).
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
+  });
+
+  it("publishes, once its tab signs in, a capture whose fence read the copy before another tab's pass verified a copy covering its change and wrote its marks after", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // A tab records a change, and its fence reads the copy, then pauses
+    // before its generation's mark while another tab's pass of a later
+    // rename reads that change, then copies and verifies the record.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, record.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+    const paused = deferred<void>();
+    const resume = deferred<void>();
+    let isPaused = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== `stale.${generation}` || isPaused) return;
+        isPaused = true;
+        paused.resolve();
+        await resume.promise;
+      }
+    });
+    const lateFence = markQueuedFileStale(
+      LOCAL_QUEUE,
+      record.fileId,
+      false,
+      generation
+    );
+    await paused.promise;
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "renamed.png" }
+    } as never);
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.covered).toContain(generation);
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("stale");
+    resume.resolve();
+    await lateFence;
+    // It reads the copy again after its generation's mark: covered, so it
+    // writes no stale mark.
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("stale");
+
+    // The fence's tab signs in before any other guest pass runs.
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("renamed.png")
+    );
+  });
+
+  it("keeps an account record the account trashed itself after a partial first save applied the insert and not the trash, when the guest record is then deleted", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    await settleLocalFileRecords();
+    // Each save of the record during the replay applies all but its trash.
+    let saves = 0;
+    fileCalls.beforeMutate = async (args) => {
+      const [first] = Array.isArray(args) ? args : [];
+      if (first?.id !== record.id) return;
+      saves++;
+      (args as unknown[]).splice(1);
+      return (result) => {
+        const failed = { ok: false, error: new Error("The trash failed") };
+        return [...(result as unknown[]), failed];
+      };
+    };
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    fileCalls.beforeMutate = null;
+    expect(saves).toBeGreaterThan(0);
+    expect((await readAnyRecord(record.id))?.trashedAt ?? null).toBeNull();
+
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    const kept = await readAnyRecord(record.id);
+    expect(kept?.fileId).toBe(record.fileId);
+    expect(kept?.trashedAt ?? null).not.toBeNull();
+    expect(sdk.deletes).toEqual([]);
+  });
+
+  it("settles an orphaned capture that another guest record's delete fenced in the same millisecond as the pass that orphaned it", async () => {
+    const orphan = await captureThenSignOutDuringUpload();
+    const other = await capturePhoto();
+    await settleLocalFileRecords();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(Date.now());
+    for (const { id } of [orphan, other])
+      await datafn.file.mutate({ operation: "delete", id } as never);
+    await settleLocalFileRecords();
+    clock.mockRestore();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.deletes).toEqual([orphan.fileId]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  it("keeps covering a change a verified copy covered once a later pass copies another state of the record, so another tab's memory of that change does not hold it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "renamed.png" }
+    } as never);
+    await settleLocalFileRecords();
+    const copy = readLocalCopy(record.fileId);
+    const generation = String(
+      (copy?.covered as string[]).find((token) => /^\d+-/.test(token))
+    );
+    expect(generation).toMatch(/^\d+-/);
+    // A later pass copies a second rename; another tab still holds the
+    // first rename's change, as its memory does after its pass failed.
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "second.png" }
+    } as never);
+    await settleLocalFileRecords();
+    expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+    const namespace = String(copy?.namespace);
+    const key = [namespace, record.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+    );
+  });
+
+  it.each([
+    // Order, then held (before and after a signed-in tab's settle) when the
+    // pass read the change, then when it did not. A stale mark that lands
+    // after the pass listed the marks holds until the following pass (a
+    // signed-in settle never clears one: an earlier build's fence may rely
+    // on it).
+    ["fence, pass", [false, false], [false, false]],
+    ["pass, fence", [false, false], [true, true]],
+    ["pass lists, fence, pass verifies", [true, true], [true, true]],
+    ["pass lists, stopped fence, pass verifies", [true, true], [true, true]],
+    ["stale mark, pass, generation mark", [false, false], [true, true]],
+    ["fence, pass stopped before it verifies", [true, true], [true, true]],
+    // Its clear removes the stale mark last, so the stop keeps it (held
+    // until the next guest pass, like an interrupted pass's).
+    ["fence, pass stopped while it clears", [true, true], [true, true]],
+    ["stopped fence, pass", [false, false], [false, false]],
+    ["pass, stopped fence", [true, true], [true, true]],
+    ["fence reads the copy, pass, fence writes", [false, false], [true, true]],
+    ["fence, pass, fence's stale mark", [true, true], [true, true]],
+    [
+      "pass lists, stale mark, fence, pass verifies before its first mark",
+      [true, true],
+      [true, true]
+    ]
+  ])(
+    "holds a capture by a fence's marks until a verified copy that listed them clears them, or a locked settle finds its generations' marks covered: %s",
+    async (order, ifRead, ifUnread) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const copy = readLocalCopy(fileId) as never;
+      const isListedStale = async () =>
+        (await listQueuedFiles(LOCAL_QUEUE, true)).find(
+          (entry) => entry.fileId === fileId
+        )?.stale !== undefined;
+      for (const isRead of [true, false]) {
+        const generation = `${Date.now()}-00000000-0000-4000-8000-00000000000${isRead ? "a" : "b"}`;
+        // A fence's steps (see markQueuedFileStale), and a locked pass's:
+        // it reads the pending changes, lists the marks, rereads the record,
+        // then writes the copy it verified, covering the changes it read. A
+        // stale mark alone is an earlier build's tab's (or a fence's whose
+        // generation's mark failed): its pending change holds until a pass
+        // reads it.
+        let isPending = false;
+        const isHeld = () => isPending;
+        const staleMark = async () => {
+          isPending = true;
+          await writeLocalEntryFile(fileId, "stale", "changed");
+        };
+        const generationMark = () =>
+          writeLocalEntryFile(fileId, `stale.${generation}`);
+        const fence = () =>
+          markQueuedFileStale(LOCAL_QUEUE, fileId, false, generation);
+        let listed: string[] = [];
+        const list = async () => {
+          isPending = false;
+          listed = await writeQueuedFileRecord(
+            LOCAL_QUEUE,
+            fileId,
+            copy,
+            "unverified"
+          );
+        };
+        const covered = isRead ? [generation] : [];
+        const verify = () =>
+          writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+            covered,
+            listed,
+            isHeld
+          });
+        const pass = async () => {
+          await list();
+          await verify();
+        };
+        // A fence that runs `step` just before it writes the mark `name`.
+        const lateFence = async (
+          name: string,
+          step: () => Promise<unknown>
+        ) => {
+          const getDirectory = navigator.storage.getDirectory;
+          let isRun = false;
+          hookEntryFiles({
+            async create(created) {
+              if (created !== name || isRun) return;
+              isRun = true;
+              await step();
+            }
+          });
+          await fence().finally(() => {
+            navigator.storage.getDirectory = getDirectory;
+          });
+        };
+        const stoppedClear = async () => {
+          await list();
+          failEntryRemoval(`stale.${generation}`, 1);
+          await verify().catch(() => undefined);
+        };
+        const steps: Record<string, (() => Promise<unknown>)[]> = {
+          "fence, pass": [fence, pass],
+          "pass, fence": [pass, fence],
+          "pass lists, fence, pass verifies": [list, fence, verify],
+          "pass lists, stopped fence, pass verifies": [list, staleMark, verify],
+          "stale mark, pass, generation mark": [
+            staleMark,
+            pass,
+            generationMark
+          ],
+          "fence, pass stopped before it verifies": [fence, list],
+          "fence, pass stopped while it clears": [fence, stoppedClear],
+          "stopped fence, pass": [staleMark, pass],
+          "pass, stopped fence": [pass, staleMark],
+          "fence reads the copy, pass, fence writes": [
+            () => lateFence(`stale.${generation}`, pass)
+          ],
+          "fence, pass, fence's stale mark": [() => lateFence("stale", pass)],
+          // The fence finds the stale mark set, so writes none: the mark
+          // stays the earlier build's, whose change is pending.
+          "pass lists, stale mark, fence, pass verifies before its first mark":
+            [list, staleMark, () => lateFence(`stale.${generation}`, verify)]
+        };
+        for (const step of steps[order]) await step();
+        const [before, settled] = isRead ? ifRead : ifUnread;
+        expect(await isListedStale()).toBe(before);
+        // A signed-in tab's settle, which reads only the copy, the marks and
+        // the pending changes.
+        await settleQueuedFileMarks(LOCAL_QUEUE, fileId, isHeld);
+        expect(await isListedStale()).toBe(settled);
+
+        // The pass that follows, whose reread sees the change, releases it.
+        listed = [];
+        await pass();
+        expect(await isListedStale()).toBe(false);
+      }
+    }
+  );
+
+  it("keeps a capture held at sign-in by another tab's fence that stopped after its first mark while a late fence of a covered change ends", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const copy = readLocalCopy(fileId) as never;
+    const [late, other] = ["a", "b"].map(
+      (id) => `${Date.now()}-00000000-0000-4000-8000-00000000000${id}`
+    );
+    // A late fence reads the copy, then pauses before its first mark while
+    // a pass reads its change and verifies a copy. Another tab's fence of a
+    // later change, pending only in that tab's memory, stops after its first
+    // mark; then the late fence ends.
+    const paused = deferred<void>();
+    const resume = deferred<void>();
+    let phase = "late";
+    let creates = 0;
+    hookEntryFiles({
+      async create() {
+        if (phase === "late") {
+          phase = "done";
+          paused.resolve();
+          await resume.promise;
+        } else if (phase === "other" && ++creates === 2)
+          throw new DOMException("The tab closed", "AbortError");
+      }
+    });
+    const lateFence = markQueuedFileStale(LOCAL_QUEUE, fileId, false, late);
+    await paused.promise;
+    await withQueueLock(LOCAL_QUEUE, new AbortController().signal, async () => {
+      const listed = await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        copy,
+        "unverified"
+      );
+      await writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+        covered: [late],
+        listed
+      });
+    });
+    phase = "other";
+    await expect(
+      markQueuedFileStale(LOCAL_QUEUE, fileId, false, other)
+    ).rejects.toThrow();
+    phase = "done";
+    resume.resolve();
+    await lateFence;
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it.each([
+    ["a local storage wipe", true],
+    ["its earlier build's tab's failed pending entry", false]
+  ])(
+    "keeps a capture held, once its tab signs in after %s, by the stale mark an earlier build's fence found set after a pass covered a late fence's generation",
+    async (_case, isStored) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const entry = `queued_${fileId}`;
+      const copy = readLocalCopy(fileId) as never;
+      const namespace = String(readLocalCopy(fileId)?.namespace);
+      const late = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      // A late fence reads the copy after its generation's mark; before its
+      // stale mark, a pass reads its change and verifies a copy covering it.
+      // Then an earlier build's tab renames the record, and its fence finds
+      // that stale mark set, so writes none.
+      let isPassed = false;
+      const getDirectory = navigator.storage.getDirectory;
+      hookEntryFiles({
+        async create(name) {
+          if (name === "stale" && !isPassed) {
+            isPassed = true;
+            await withQueueLock(LOCAL_QUEUE, new AbortController().signal, () =>
+              writeQueuedFileRecord(
+                LOCAL_QUEUE,
+                fileId,
+                copy,
+                "unverified"
+              ).then((listed) =>
+                writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+                  covered: [late],
+                  listed
+                })
+              )
+            );
+          }
+        }
+      });
+      await markQueuedFileStale(LOCAL_QUEUE, fileId, false, late);
+      navigator.storage.getDirectory = getDirectory;
+      expect(isPassed).toBe(true);
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "earlier.png" },
+        silent: true
+      } as never);
+      if (isStored) {
+        const key = [namespace, record.id].map(encodeURIComponent).join(":");
+        localStorage.setItem(`${LOCAL_QUEUE}-pending:${key}`, "change:t");
+      }
+      localStorage.clear();
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect(sdk.started).toEqual([]);
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+      expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined();
+    }
+  );
+
+  it("sets the stale mark an earlier build's tab reads again when an orphan transition clears it beside a mark of a generation it does not cover", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    // The pass listed the stale mark; a fence of a change it did not read
+    // then wrote its generation's mark.
+    await writeLocalEntryFile(fileId, "stale", "changed");
+    await writeLocalEntryFile(fileId, `stale.${generation}`);
+
+    await markQueuedFileOrphaned(LOCAL_QUEUE, fileId, ["stale"], []);
+
+    expect(opfs.read(LOCAL_QUEUE, `queued_${fileId}`, "stale")).toBeDefined();
+    const [entry] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(entry?.stale).toBe("changed");
+  });
+
+  it("keeps an orphaned capture held while signed in whose orphaning pass read another guest record's change when that change's fence lands during its lookups", async () => {
+    const orphan = await captureThenSignOutDuringUpload();
+    const other = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(orphan.fileId)?.namespace);
+    // Another tab records a change of the other record; the pass of this
+    // tab's delete reads it and lists the capture's marks; the other tab's
+    // fence, which marks orphaned and deleted files, lands while the pass
+    // looks the capture's file up, before it orphans the capture.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, other.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+    let isFenced = false;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { fileId?: string } };
+      if (isFenced || filters?.fileId !== orphan.fileId) return;
+      isFenced = true;
+      await markQueuedFileStale(LOCAL_QUEUE, orphan.fileId, false, generation);
+    };
+    await datafn.file.mutate({ operation: "delete", id: orphan.id } as never);
+    await settleLocalFileRecords();
+    fileCalls.beforeQuery = null;
+    expect(isFenced).toBe(true);
+    const [entry] = (await listQueuedFiles(LOCAL_QUEUE, true)).filter(
+      (queued) => queued.fileId === orphan.fileId
+    );
+    expect(entry?.isOrphaned).toBe(true);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    // The fence's stale mark came after the pass listed the marks, so it
+    // holds until a following pass of its namespace lists it (a stated
+    // window): a signed-in settle never clears a stale mark.
+    expect(sdk.deletes).toEqual([]);
+    const [held] = (await listQueuedFiles(LOCAL_QUEUE, true)).filter(
+      (queued) => queued.fileId === orphan.fileId
+    );
+    expect(held?.stale).toBe("changed");
+  });
+
+  it("keeps the deleted marks of a capture whose orphan transition could not write its orphaned mark, so the deleted guest record is never published", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    // A pass marks the record's delete, read under its lock, then orphans
+    // the capture, covering that delete; its orphaned mark cannot be written.
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, true, generation);
+    const getDirectory = navigator.storage.getDirectory;
+    failEntryFile("orphaned", true);
+    const listed = opfs
+      .list(LOCAL_QUEUE, entry)
+      .filter((name) => name.startsWith("deleted"));
+    await expect(
+      markQueuedFileOrphaned(LOCAL_QUEUE, fileId, listed, [generation])
+    ).rejects.toThrow();
+    navigator.storage.getDirectory = getDirectory;
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(opfs.read(LOCAL_QUEUE, entry, "deleted")).toBeDefined();
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(sdk.started).toEqual([]);
+  });
+
+  it.each([
+    ["a mark of a generation its copy does not cover", true, false],
+    ["a pending change its copy does not cover", false, true]
+  ])(
+    "keeps the listed stale mark of a capture held by %s when a verified copy write stops while it settles the marks",
+    async (_case, isMarked, isPending) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const copy = readLocalCopy(fileId) as never;
+      const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      await writeLocalEntryFile(fileId, "stale", "changed");
+      const listed = await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        copy,
+        "unverified"
+      );
+      expect(listed).toContain("stale");
+      // A fence of a change the pass did not read lands after its listing,
+      // and finds the stale mark set.
+      if (isMarked) await writeLocalEntryFile(fileId, `stale.${generation}`);
+      // The write stops before it could set a cleared stale mark again.
+      const getDirectory = navigator.storage.getDirectory;
+      failEntryFile("stale", true);
+      await writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+        covered: [],
+        listed,
+        isHeld: () => isPending
+      }).catch(() => undefined);
+      navigator.storage.getDirectory = getDirectory;
+
+      // An earlier build's tab reads only the stale mark.
+      expect(opfs.read(LOCAL_QUEUE, `queued_${fileId}`, "stale")).toBeDefined();
+    }
+  );
+
+  it("settles the marks of every local file once signed in when one local file cannot be read", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const unreadable = await capturePhoto();
+    const other = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    // The other capture's delete fence named a change its copy now covers,
+    // which a locked settle releases.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    await markQueuedFileStale(LOCAL_QUEUE, other.fileId, true, generation);
+    const copy = { ...readLocalCopy(other.fileId), covered: [generation] };
+    await writeLocalEntryFile(
+      other.fileId,
+      "record.json",
+      JSON.stringify(copy)
+    );
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true)).map((e) => e.isDeleted)
+    ).toEqual([false, true]);
+    let isFailing = false;
+    hookEntryFiles({
+      lookup(name) {
+        if (isFailing && name === `queued_${unreadable.fileId}`)
+          throw new DOMException("Unreadable", "NotReadableError");
+      }
+    });
+    isFailing = true;
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(other.id))?.fileId).toBe(other.fileId)
+    );
+    expect(await readAnyRecord(unreadable.id)).toBeUndefined();
+  });
+
+  it("publishes a capture whose change another tab could store only under its record's last-write entry, once a pass copied that change and its fence lands after", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    // Another tab renames the record: only the entry an earlier build's tab
+    // reads was stored (its own entry was not), and its fence lands only
+    // after this tab's pass copied the rename.
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "renamed.png" },
+      silent: true
+    } as never);
+    const key = [namespace, record.id].map(encodeURIComponent).join(":");
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-pending:${key}`,
+      `change:${generation}`
+    );
+    uninstall?.();
+    uninstall = installDeviceFileQueue();
+    await settleLocalFileRecords();
+    expect(readLocalCopy(record.fileId)?.name).toBe("renamed.png");
+    await markQueuedFileStale(LOCAL_QUEUE, record.fileId, false, generation);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("renamed.png")
+    );
+  });
+
+  it.each([
+    ["publishes it once its tab signs in", false],
+    [
+      "keeps it held once an earlier build's tab then stores a later change under that entry",
+      true
+    ]
+  ])(
+    "covers a change another tab stores under its record's last-write entry too, once a pass verified a copy after that change's fence, and %s",
+    async (_, isRewritten) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const namespace = String(readLocalCopy(record.fileId)?.namespace);
+      const generation = `${Date.now() + 60_000}-00000000-0000-4000-8000-000000000001`;
+      const key = [namespace, record.id].map(encodeURIComponent).join(":");
+      const lastWrite = `${LOCAL_QUEUE}-pending:${key}`;
+      // After the pass of this tab's rename read its pending changes, another
+      // tab renames the record again, stores both its entries and fences the
+      // rename before the pass reads the record and lists the marks.
+      fileCalls.beforeQuery = async (args) => {
+        const { filters } = args as { filters?: { id?: string } };
+        if (filters?.id !== record.id) return;
+        fileCalls.beforeQuery = null;
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "second.png" },
+          silent: true
+        } as never);
+        localStorage.setItem(lastWrite, `change:${generation}`);
+        localStorage.setItem(
+          `${LOCAL_QUEUE}-write:${key}:${encodeURIComponent(generation)}`,
+          `change:${generation}`
+        );
+        await markQueuedFileStale(
+          LOCAL_QUEUE,
+          record.fileId,
+          false,
+          generation
+        );
+      };
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "first.png" }
+      } as never);
+      await settleLocalFileRecords();
+      expect(fileCalls.beforeQuery).toBeNull();
+      expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+      expect(localStorage.getItem(lastWrite)).toBe(`change:${generation}`);
+      if (isRewritten) {
+        // An earlier build's tab renames it again: it rewrites that entry with
+        // a value of its own, and its fence finds no stale mark yet to write.
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "third.png" },
+          silent: true
+        } as never);
+        localStorage.setItem(lastWrite, "change:earlier-build-write");
+      }
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      if (isRewritten) {
+        expect(sdk.started).toEqual([]);
+        expect(await readAnyRecord(record.id)).toBeUndefined();
+      } else {
+        await vi.waitFor(async () =>
+          expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+        );
+      }
+    }
+  );
+
+  it("settles an orphaned capture once signed in whose orphaning pass read another guest record's change when that change's fence lands while the pass reconciles the other record's file", async () => {
+    const orphan = await captureThenSignOutDuringUpload();
+    const other = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(orphan.fileId)?.namespace);
+    // The capture's entry is listed after the other record's file, as an
+    // entry written later is.
+    const name = `queued_${orphan.fileId}`;
+    const files = opfs.list(LOCAL_QUEUE, name).map((file) => {
+      const bytes = opfs.read(LOCAL_QUEUE, name, file);
+      if (!bytes) throw new Error(`${file} is not a file`);
+      return [file, bytes] as const;
+    });
+    const queue = await (
+      await opfs.getDirectory()
+    ).getDirectoryHandle(LOCAL_QUEUE);
+    await queue.removeEntry(name, { recursive: true });
+    const moved = await queue.getDirectoryHandle(name, { create: true });
+    for (const [file, bytes] of files) {
+      const handle = await moved.getFileHandle(file, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(bytes);
+      await writable.close();
+    }
+    expect(opfs.list(LOCAL_QUEUE).indexOf(name)).toBeGreaterThan(
+      opfs.list(LOCAL_QUEUE).indexOf(`queued_${other.fileId}`)
+    );
+    // Another tab records a change of the other record; the pass of this
+    // tab's delete reads it and lists the local files; the other tab's
+    // fence, which marks orphaned and deleted files, lands while the pass
+    // looks the other record up, before it reaches the capture.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, other.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+    let isFenced = false;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (isFenced || filters?.id !== other.id) return;
+      isFenced = true;
+      await markQueuedFileStale(LOCAL_QUEUE, orphan.fileId, false, generation);
+    };
+    await datafn.file.mutate({ operation: "delete", id: orphan.id } as never);
+    await settleLocalFileRecords();
+    fileCalls.beforeQuery = null;
+    expect(isFenced).toBe(true);
+    const [entry] = (await listQueuedFiles(LOCAL_QUEUE, true)).filter(
+      (queued) => queued.fileId === orphan.fileId
+    );
+    expect(entry?.isOrphaned).toBe(true);
+    expect(entry?.stale).toBeUndefined();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.deletes).toEqual([orphan.fileId]);
+  });
+
+  it("keeps the cover of a record copy whose prior copy a copy write cannot read", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    const copy = readLocalCopy(record.fileId);
+    const covered = copy?.covered as string[];
+    expect(covered.length).toBeGreaterThan(0);
+
+    failEntryFile("record.json", false, 1);
+    await expect(
+      writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        record.fileId,
+        { ...copy, name: "other.png" } as never,
+        "unverified"
+      )
+    ).rejects.toThrow();
+
+    expect(readLocalCopy(record.fileId)?.covered).toEqual(covered);
+  });
+
+  it("keeps a capture held at sign-in by the stale mark of a late fence that could write no mark of its generation, as a fence stopped before its generation's mark leaves it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // A tab records a change; its fence cannot write its generation's mark,
+    // then pauses before its stale mark while another tab's pass reads that
+    // change and verifies a copy. Its stale mark alone tells nothing of whose
+    // change it holds, so it holds until a guest pass lists it.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, record.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+    const paused = deferred<void>();
+    const resume = deferred<void>();
+    let isPaused = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name === `stale.${generation}`)
+          throw new DOMException("The disk is full", "QuotaExceededError");
+        if (name !== "stale" || isPaused) return;
+        isPaused = true;
+        paused.resolve();
+        await resume.promise;
+      }
+    });
+    const lateFence = markQueuedFileStale(
+      LOCAL_QUEUE,
+      record.fileId,
+      false,
+      generation
+    );
+    await paused.promise;
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "renamed.png" }
+    } as never);
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.covered).toContain(generation);
+    resume.resolve();
+    await expect(lateFence).rejects.toThrow();
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
+  });
+
+  it("releases at a locked settle the deleted mark a delete fence wrote, naming its delete, after another record's takeover copy covering that delete was verified", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    // A locked pass lists the marks and writes the copy of the record that
+    // took the file over.
+    const takeover = { ...readLocalCopy(fileId), id: `${record.id}-copy` };
+    const listed = await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      takeover as never,
+      "unverified"
+    );
+    // The deleting tab's fence writes its generation's mark and reads the
+    // copy; before its deleted mark, the pass verifies the takeover's copy,
+    // covering that delete.
+    let isVerified = false;
+    hookEntryFiles({
+      async create(name) {
+        if (isVerified || name !== "deleted") return;
+        isVerified = true;
+        await writeQueuedFileRecord(LOCAL_QUEUE, fileId, takeover as never, {
+          covered: [generation],
+          listed
+        });
+      }
+    });
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, true, generation);
+    expect(isVerified).toBe(true);
+    expect(opfs.list(LOCAL_QUEUE, entry)).toEqual(
+      expect.arrayContaining(["deleted", `deleted.${generation}`])
+    );
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+
+    // A deleted mark beside its covered generation's mark is the fence's own.
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("deleted");
+    const [listedEntry] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(listedEntry?.isDeleted).toBe(false);
+    expect(listedEntry?.stale).toBeUndefined();
+  });
+
+  it.each([
+    ["with no generation", false],
+    ["whose generation's mark cannot be written", true]
+  ])(
+    "keeps a capture held at a locked settle by a delete re-mark %s beside a deleted mark that names a covered delete",
+    async (_, isFailed) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const entry = `queued_${fileId}`;
+      const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      const later = `${Date.now() + 1}-00000000-0000-4000-8000-000000000002`;
+      // A deleted mark names a delete the verified copy covers, as a delete
+      // fence that paused across that copy's write leaves it.
+      await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: [] }
+      );
+      await writeLocalEntryFile(fileId, "deleted", covered);
+      // A later delete's re-mark writes no generation's mark.
+      if (isFailed) {
+        hookEntryFiles({
+          create(name) {
+            if (name === `deleted.${later}`)
+              throw new Error("The disk is full");
+          }
+        });
+        await expect(
+          markQueuedFileStale(LOCAL_QUEUE, fileId, true, later)
+        ).rejects.toThrow("The disk is full");
+      } else await markQueuedFileStale(LOCAL_QUEUE, fileId, true);
+
+      await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+      expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+        true
+      );
+    }
+  );
+
+  it.each([
+    ["whose first write of it fails", false],
+    ["that cannot write it, while its pending change holds", true]
+  ])(
+    "keeps a capture held at a locked settle that removes a fence's covered deleted marks while a later delete's fence %s",
+    async (_, isFailed) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      const later = `${Date.now() + 1}-00000000-0000-4000-8000-000000000002`;
+      await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: [] }
+      );
+      await writeLocalEntryFile(fileId, "deleted", "");
+      await writeLocalEntryFile(fileId, `deleted.${covered}`);
+      let failures = 0;
+      hookEntryFiles({
+        create(name) {
+          if (name === `deleted.${later}` && (isFailed || !failures++))
+            throw new Error("The disk is full");
+        }
+      });
+      let fence: Promise<unknown> | undefined;
+      const at = isFailed ? `deleted.${covered}` : "deleted";
+      const getDirectory = navigator.storage.getDirectory;
+      const wrap = (
+        dir: FileSystemDirectoryHandle
+      ): FileSystemDirectoryHandle =>
+        new Proxy(dir, {
+          get(target, key) {
+            if (key === "getDirectoryHandle")
+              return async (name: string, options?: { create?: boolean }) =>
+                wrap(await target.getDirectoryHandle(name, options));
+            if (key !== "removeEntry") return Reflect.get(target, key);
+            return async (name: string) => {
+              if (name === at && !fence) {
+                fence = markQueuedFileStale(LOCAL_QUEUE, fileId, true, later);
+                await fence.catch(() => undefined);
+              }
+              return target.removeEntry(name);
+            };
+          }
+        });
+      navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+      await settleQueuedFileMarks(LOCAL_QUEUE, fileId, () => !!fence);
+
+      expect(fence).toBeDefined();
+      if (isFailed) await expect(fence).rejects.toThrow("The disk is full");
+      else await fence;
+      const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+      expect(marks).toContain("deleted");
+      expect(marks).not.toContain(`deleted.${covered}`);
+      expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+        true
+      );
+    }
+  );
+
+  it("leaves no mark of a fence whose generation's mark fails after a pass verified a copy covering its change", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const copy = readLocalCopy(fileId) as never;
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== `stale.${generation}`) return;
+        await writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+          covered: [generation],
+          listed: []
+        });
+        throw new DOMException("The disk is full", "QuotaExceededError");
+      }
+    });
+
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, false, generation);
+
+    const names = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(names.filter((name) => name.startsWith("stale"))).toEqual([]);
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
+  });
+
+  it("writes no other generation's mark for a fence whose generation's mark cannot be written, so a locked copy covering its change releases the capture", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    hookEntryFiles({
+      create(name) {
+        if (name === "stale" || name === `stale.${generation}`)
+          throw new DOMException("The disk is full", "QuotaExceededError");
+      }
+    });
+
+    await expect(
+      markQueuedFileStale(LOCAL_QUEUE, fileId, false, generation)
+    ).rejects.toThrow();
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [generation], listed: [] }
+    );
+
+    const names = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(names.filter((name) => name.startsWith("stale"))).toEqual([]);
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
+  });
+
+  it.each([
+    ["sees it set once its generation's mark lands", false],
+    ["keeps it set when the fence stops after its generation's mark", true]
+  ])(
+    "writes a delete fence's plain deleted mark first, so an earlier build's tab that reads only plain marks %s",
+    async (_, isStopped) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+      const { fileId } = record;
+      const entry = `queued_${fileId}`;
+      const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+      let isLanded = false;
+      let isPlainSeen = false;
+      hookEntryFiles({
+        create(name) {
+          if (name === `deleted.${generation}`) {
+            if (!isLanded)
+              isPlainSeen = opfs.list(LOCAL_QUEUE, entry).includes("deleted");
+            isLanded = true;
+          } else if (name === "deleted" && isLanded && isStopped)
+            throw new DOMException("The page closed", "AbortError");
+        }
+      });
+
+      await markQueuedFileStale(LOCAL_QUEUE, fileId, true, generation).catch(
+        () => undefined
+      );
+
+      expect(isLanded).toBe(true);
+      expect(isPlainSeen).toBe(true);
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+    }
+  );
+
+  it("publishes nothing once signed in for a guest record of a retired namespace whose delete only its pending entry told before a sign-out wiped it, beside a deleted mark that names a covered delete", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleTasks();
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const namespace = String(readLocalCopy(fileId)?.namespace);
+    const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", covered);
+    // The device moves to a new guest namespace; a tab of the earlier one
+    // deletes the guest record and closes before its fence.
+    await signOutToLocal(true);
+    await settleLocalFileRecords();
+    const key = [namespace, record.id].map(encodeURIComponent).join(":");
+    localStorage.setItem(`${LOCAL_QUEUE}-pending:${key}`, "delete");
+    // A guest pass re-marks it deleted; a sign-out then wipes that entry.
+    await openData();
+    await settleLocalFileRecords();
+    await signOutToLocal();
+    await settleLocalFileRecords();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+  });
+
+  it("holds no capture by a fence that paused across a verified copy covering its change and then another record's takeover copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const copy = readLocalCopy(fileId);
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    // The fence reads the copy, then pauses before its generation's mark
+    // while a pass verifies a copy covering its change and a later pass
+    // verifies the copy of another record that took the file over; the
+    // fence reads that copy again and finds its change covered.
+    let isRun = false;
+    hookEntryFiles({
+      async create(name) {
+        if (isRun || name !== `stale.${generation}`) return;
+        isRun = true;
+        const cover = (covered: string[]) => ({ covered, listed: [] });
+        await writeQueuedFileRecord(
+          LOCAL_QUEUE,
+          fileId,
+          copy as never,
+          cover([generation])
+        );
+        const takeover = { ...copy, id: `${record.id}-copy` };
+        await writeQueuedFileRecord(
+          LOCAL_QUEUE,
+          fileId,
+          takeover as never,
+          cover([])
+        );
+      }
+    });
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, false, generation);
+
+    expect(isRun).toBe(true);
+    expect(readLocalCopy(fileId)?.covered).toContain(generation);
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    const [entry] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(entry?.stale).toBeUndefined();
+  });
+
+  it("settles an orphaned capture whose orphaning pass read another guest record's change when that change's fence lands after it", async () => {
+    const orphan = await captureThenSignOutDuringUpload();
+    const other = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(orphan.fileId)?.namespace);
+    // Another tab records a change of the other record; the pass of this
+    // tab's delete reads it and orphans the capture; the other tab's fence,
+    // which marks orphaned files, lands after that.
+    const generation = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const key = [namespace, other.id, generation].map(encodeURIComponent);
+    localStorage.setItem(
+      `${LOCAL_QUEUE}-write:${key.join(":")}`,
+      `change:${generation}`
+    );
+    await datafn.file.mutate({ operation: "delete", id: orphan.id } as never);
+    await settleLocalFileRecords();
+    const [entry] = (await listQueuedFiles(LOCAL_QUEUE, true)).filter(
+      (queued) => queued.fileId === orphan.fileId
+    );
+    expect(entry?.isOrphaned).toBe(true);
+    await markQueuedFileStale(LOCAL_QUEUE, orphan.fileId, false, generation);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.deletes).toEqual([orphan.fileId]);
+  });
+
+  it("settles an orphaned capture once another tab's orphaning pass covered a change only this tab's pending memory still holds", async () => {
+    const orphan = await captureThenSignOutDuringUpload();
+    const other = await capturePhoto();
+    await datafn.file.mutate({ operation: "delete", id: orphan.id } as never);
+    await settleLocalFileRecords();
+    // This tab renames the other record, and its pass cannot take the
+    // queue's lock; another tab's pass reads the rename, orphans the capture
+    // again (clearing the stale marks the rename's fence wrote, which it
+    // listed) and removes the pending entries it read.
+    failQueueLockOnce();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: other.id,
+      record: { id: other.id, name: "receipt.png" }
+    } as never);
+    const token = Object.values(localStorage)
+      .find((value) => /^change:\d+-/.test(String(value)))
+      ?.slice("change:".length);
+    expect(token).toBeDefined();
+    await vi.waitFor(() =>
+      expect(opfs.list(LOCAL_QUEUE, `queued_${orphan.fileId}`)).toContain(
+        `stale.${token}`
+      )
+    );
+    const [entry] = (await listQueuedFiles(LOCAL_QUEUE, true)).filter(
+      (queued) => queued.fileId === orphan.fileId
+    );
+    await markQueuedFileOrphaned(LOCAL_QUEUE, orphan.fileId, entry.marks, [
+      String(token)
+    ]);
+    for (const key of Object.keys(localStorage))
+      if (/-(pending|write):/.test(key)) localStorage.removeItem(key);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.deletes).toEqual([orphan.fileId]);
+  });
+
+  it("keeps a capture held for an earlier build's tab by the pending entry it reads from a change until its fence's mark lands, and releases it once the change's pass verifies its copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // An earlier build's tab holds a capture by its plain marks and by the
+    // pending entry under the record's key, without a generation.
+    const earlierKey = `${LOCAL_QUEUE}-pending:${[namespace, record.id]
+      .map(encodeURIComponent)
+      .join(":")}`;
+    const isHeldForEarlierBuild = () =>
+      ["stale", "deleted"].some((mark) =>
+        opfs.list(LOCAL_QUEUE, entry).includes(mark)
+      ) || localStorage.getItem(earlierKey) !== null;
+    expect(isHeldForEarlierBuild()).toBe(false);
+    const paused = deferred<void>();
+    const resume = deferred<void>();
+    let isPaused = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "stale" || isPaused) return;
+        isPaused = true;
+        paused.resolve();
+        await resume.promise;
+      }
+    });
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await paused.promise;
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("stale");
+    expect(isHeldForEarlierBuild()).toBe(true);
+    resume.resolve();
+    await settleLocalFileRecords();
+
+    expect(readLocalCopy(record.fileId)?.name).toBe("receipt.png");
+    expect(isHeldForEarlierBuild()).toBe(false);
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png")
+    );
+  });
+
+  it("sets the plain stale mark an earlier build's tab reads again when a verified copy clears it while a later change's generation mark, written after its fence found it set, still holds", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const copy = readLocalCopy(fileId) as never;
+    const first = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const second = `${Date.now()}-00000000-0000-4000-8000-000000000002`;
+    // A pass lists a change's marks; a later change's fence finds the stale
+    // mark set and writes only its generation's; the pass verifies a copy
+    // covering the first change.
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, false, first);
+    const listed = await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      copy,
+      "unverified"
+    );
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, false, second);
+    await writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+      covered: [first],
+      listed
+    });
+
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("stale");
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain(`stale.${first}`);
+    // The pass of the later change lists the marks and covers it.
+    const next = await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      copy,
+      "unverified"
+    );
+    await writeQueuedFileRecord(LOCAL_QUEUE, fileId, copy, {
+      covered: [second],
+      listed: next
+    });
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("stale");
+    const [listedEntry] = await listQueuedFiles(LOCAL_QUEUE, true);
+    expect(listedEntry?.stale).toBeUndefined();
+  });
+
+  it("reset evidence: an older fence cannot erase a newer unnamed delete hold", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const older = "1800000000000-00000000-0000-4000-8000-000000000001";
+    let ranNewerFence = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "deleted" || ranNewerFence) return;
+        ranNewerFence = true;
+        await markQueuedFileStale(LOCAL_QUEUE, fileId, true);
+      }
+    });
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, true, older);
+    expect(ranNewerFence).toBe(true);
+
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [older], listed: [] }
+    );
+
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).toContain("deleted");
+  });
+
+  it("reset evidence: an interrupted settle keeps a newer generation visible to a plain-mark reader", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const later = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "deleted", covered);
+    await writeLocalEntryFile(fileId, `deleted.${covered}`);
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name === `deleted.${covered}`) {
+              await writeLocalEntryFile(fileId, `deleted.${later}`);
+              throw new DOMException("Interrupted settle", "NotReadableError");
+            }
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await expect(
+      writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: ["deleted", `deleted.${covered}`] }
+      )
+    ).rejects.toThrow("Interrupted settle");
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks).toContain(`deleted.${later}`);
+    expect(marks).toContain("deleted");
+  });
+
+  it("reset evidence: a verified copy written during the fallback releases the capture", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const deleted = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "deleted", earlier);
+    let attempts = 0;
+    let savedCopy = false;
+    hookEntryFiles({
+      async create(name) {
+        if (!name.startsWith("deleted.")) return;
+        attempts += 1;
+        if (attempts === 1)
+          throw new DOMException("Disk full", "QuotaExceededError");
+        if (savedCopy) return;
+        savedCopy = true;
+        await writeLocalEntryFile(
+          fileId,
+          "record.json",
+          JSON.stringify({
+            ...readLocalCopy(fileId),
+            covered: [earlier, deleted]
+          })
+        );
+      }
+    });
+    await markQueuedFileStale(LOCAL_QUEUE, fileId, true, deleted).catch(
+      (error) => {
+        if (
+          !(error instanceof DOMException) ||
+          error.name !== "QuotaExceededError"
+        )
+          throw error;
+      }
+    );
+    expect(savedCopy).toBe(true);
+
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+      false
+    );
+  });
+
+  it("keeps a restored plain deleted mark without a generation's held once signed in after a late fence of a covered delete", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await settleLocalFileRecords();
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", "");
+    const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await queue.removeEntry(entry, { recursive: true });
+    await restoreLocalQueuedFiles(files as never, () => false);
+
+    await writeLocalEntryFile(fileId, `deleted.${covered}`);
+    await signInToCloud("user-a");
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
+  });
+
+  it("releases a listed plain stale mark its verified copy covers without a reload when a covered generation's mark lands during the settle", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const late = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "stale", "changed");
+    await writeLocalEntryFile(fileId, `stale.${earlier}`);
+    hookEntryRemovalOnce(`stale.${earlier}`, () =>
+      writeLocalEntryFile(fileId, `stale.${late}`)
+    );
+
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [earlier, late], listed: ["stale", `stale.${earlier}`] }
+    );
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks).toContain(`stale.${late}`);
+    expect(marks).not.toContain("stale");
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
+  });
+
+  it("keeps a listed plain stale mark when a newer generation's mark lands while the settle removes a covered one, even if setting the plain mark again fails", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const newer = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeLocalEntryFile(fileId, "stale", "changed");
+    await writeLocalEntryFile(fileId, `stale.${covered}`);
+    hookEntryRemovalOnce(`stale.${covered}`, () =>
+      writeLocalEntryFile(fileId, `stale.${newer}`)
+    );
+    hookEntryFiles({
+      create(name) {
+        if (name === "stale")
+          throw new DOMException("Disk full", "QuotaExceededError");
+      }
+    });
+
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: ["stale", `stale.${covered}`] }
+    ).catch(() => undefined);
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks).toContain(`stale.${newer}`);
+    expect(marks).toContain("stale");
+  });
+
+  it("releases a verified delete once signed in whose fence wrote its plain and covered generation's marks during an earlier settle", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const deleted = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [earlier, deleted], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, `stale.${earlier}`);
+    hookEntryRemovalOnce(`stale.${earlier}`, async () => {
+      await writeLocalEntryFile(fileId, "deleted");
+      await writeLocalEntryFile(fileId, `deleted.${deleted}`);
+    });
+
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).not.toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+      false
+    );
+  });
+
+  it.each([
+    ["", false],
+    [" and the first withdrawal and the publishing mark's rewrite fail", true]
+  ])(
+    "withdraws the upload of a publish whose copy another tab fenced while its publishing mark was removed%s, so the next replay publishes the newer copy",
+    async (_, isFailing) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      const entry = `queued_${record.fileId}`;
+      let isFenced = false;
+      hookEntryRemovalOnce("publishing", async () => {
+        isFenced = true;
+        await writeLocalEntryFile(record.fileId, "stale");
+      });
+      if (isFailing) {
+        failEntryRemoval("uploaded", 1);
+        let isRewriteFailed = false;
+        hookEntryFiles({
+          create(name) {
+            if (name !== "publishing" || !isFenced || isRewriteFailed) return;
+            isRewriteFailed = true;
+            throw new DOMException("Disk full", "QuotaExceededError");
+          }
+        });
+      }
+
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+      expect(isFenced).toBe(true);
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+
+      await signOutToLocal();
+      await settleTasks();
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "receipt.png" }
+      } as never);
+      await settleTasks();
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png");
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("publishing");
+    }
+  );
+
+  it.each(["listing", "changes-only export"])(
+    "reset evidence: %s treats a provisional upload with a delivery log as unverified",
+    async (consumer) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const { fileId } = await capturePhoto();
+      await settleLocalFileRecords();
+      uninstall?.();
+      uninstall = undefined;
+
+      await writeLocalEntryFile(fileId, "uploaded", "test-version");
+      await writeLocalEntryFile(fileId, "publishing", "{}");
+      await writeLocalEntryFile(fileId, "sent-thumbnail");
+      const root = await opfs.getDirectory();
+      const log = await root.getDirectoryHandle(`${LOCAL_QUEUE}.uploads`, {
+        create: true
+      });
+      const row = await log.getFileHandle(encodeURIComponent(fileId), {
+        create: true
+      });
+      const writer = await row.createWritable();
+      await writer.write(
+        JSON.stringify({ versionId: "test-version", at: Date.now() })
+      );
+      await writer.close();
+
+      if (consumer === "listing") {
+        const entry = (await listQueuedFiles(LOCAL_QUEUE, true)).find(
+          (item) => item.fileId === fileId
+        );
+        expect(entry?.isUploaded).toBe(false);
+      } else {
+        const { files } = await exportQueuedFiles(
+          LOCAL_QUEUE,
+          async () => null,
+          false
+        );
+        expect(files.map((file) => file.fileId)).toContain(fileId);
+      }
+    }
+  );
+
+  it("keeps a fence's covered generation mark until its settle clears the deleted mark, so a settle retried after a failed removal releases the capture", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", "");
+    await writeLocalEntryFile(fileId, `deleted.${covered}`);
+    const getDirectory = navigator.storage.getDirectory;
+    failEntryRemoval("deleted", 1);
+
+    await expect(settleQueuedFileMarks(LOCAL_QUEUE, fileId)).rejects.toThrow();
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).toContain(
+      `deleted.${covered}`
+    );
+    navigator.storage.getDirectory = getDirectory;
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    const marks = opfs.list(LOCAL_QUEUE, `queued_${fileId}`);
+    expect(marks.filter((name) => name.startsWith("deleted"))).toEqual([]);
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+      false
+    );
+  });
+
+  it("rejects a strict listing whose publishing mark of an uploaded capture cannot be read, instead of counting it uploaded", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    await writeLocalEntryFile(fileId, "uploaded", "test-version");
+    await writeLocalEntryFile(fileId, "publishing", "{}");
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "getFileHandle") return Reflect.get(target, key);
+          return async (name: string, options?: { create?: boolean }) => {
+            if (name === "publishing")
+              throw new DOMException(
+                "The file system is busy",
+                "NotReadableError"
+              );
+            return target.getFileHandle(name, options);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await expect(listQueuedFiles(LOCAL_QUEUE, true)).rejects.toThrow(
+      "The file system is busy"
+    );
+  });
+
+  it("sets no stale mark at a settle for a generation mark that lands covered after its first scan", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const { fileId } = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    uninstall = undefined;
+    const earlier = "1800000000000-00000000-0000-4000-8000-000000000001";
+    const late = "1800000000001-00000000-0000-4000-8000-000000000002";
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [earlier, late], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, `stale.${earlier}`);
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name === `stale.${earlier}`)
+              await writeLocalEntryFile(fileId, `stale.${late}`);
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+
+    await settleQueuedFileMarks(LOCAL_QUEUE, fileId);
+
+    expect(opfs.list(LOCAL_QUEUE, `queued_${fileId}`)).not.toContain("stale");
+    expect(
+      (await listQueuedFiles(LOCAL_QUEUE, true))[0]?.stale
+    ).toBeUndefined();
+  });
+
+  it.each([
+    ["beside a covered generation's mark", false],
+    ["whose copy lists an empty covered token", true]
+  ])(
+    "keeps a restored claimed capture held once signed in by its backup's deleted mark %s",
+    async (_, isEmptyToken) => {
+      const record = await captureThenSignOutDuringUpload();
+      await settleLocalFileRecords();
+      const { fileId } = record;
+      const entry = `queued_${fileId}`;
+      const covered = "1800000000000-00000000-0000-4000-8000-000000000001";
+      await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        fileId,
+        readLocalCopy(fileId) as never,
+        { covered: [covered], listed: [] }
+      );
+      await writeLocalEntryFile(fileId, "deleted", "");
+      if (!isEmptyToken)
+        await writeLocalEntryFile(fileId, `deleted.${covered}`);
+      const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+      const [copy] = files;
+      const backup = isEmptyToken
+        ? { ...copy, record: { ...copy.record, covered: [""] } }
+        : copy;
+      const root = await opfs.getDirectory();
+      const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+      await queue.removeEntry(entry, { recursive: true });
+
+      await restoreLocalQueuedFiles([backup as never], () => false);
+      expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain(`deleted.${covered}`);
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+      expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+      expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(
+        true
+      );
+    }
+  );
+
+  it("restores no capture unheld whose backup holds the forced deleted mark beside a leftover covered generation's", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    const copy = readLocalCopy(record.fileId);
+    const generation = String(
+      (copy?.covered as string[]).find((token) => /^\d+-/.test(token))
+    );
+    // A clear stopped before it removed this covered mark.
+    await writeLocalEntryFile(record.fileId, `deleted.${generation}`);
+    const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+    const [backup] = files;
+    // A backup whose guest record is gone forces a deleted mark.
+    const marks = [...(backup.marks ?? []), { name: "deleted", text: "" }];
+
+    expect(isRestorableLocalCopy({ ...backup, marks })).toBe(false);
+    expect(isRestorableLocalCopy(backup)).toBe(true);
+  });
+
+  it("holds a capture an earlier build's tab changes again under the same pending key after a pass verified a copy of its earlier change, before that tab's fence lands", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    const key = `${LOCAL_QUEUE}-pending:${[namespace, record.id].map(encodeURIComponent).join(":")}`;
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "first.png" },
+      silent: true
+    } as never);
+    localStorage.setItem(key, "change:00000000-0000-4000-8000-000000000001");
+    await openData();
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.name).toBe("first.png");
+    expect(localStorage.getItem(key)).toBeNull();
+
+    // The earlier build reuses the key for its next change, and its fence
+    // has not landed.
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "second.png" },
+      silent: true
+    } as never);
+    localStorage.setItem(key, "change:00000000-0000-4000-8000-000000000002");
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("keeps a capture held only by a stale mark held while its pass stopped between its first copy write and its reread", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    const control = await capturePhoto();
+    await settleLocalFileRecords();
+    // An earlier build's fence: its plain mark alone.
+    await writeLocalEntryFile(record.fileId, "stale", "changed");
+    const stop = deferred<void>();
+    onTestFinished(() => stop.resolve());
+    let lookups = 0;
+    let isStopped = false;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id || ++lookups < 2) return;
+      fileCalls.beforeQuery = null;
+      isStopped = true;
+      await stop.promise;
+      throw new Error("The page closed");
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: control.id,
+      record: { id: control.id, name: "control.png" }
+    } as never);
+    await vi.waitFor(() => expect(isStopped).toBe(true));
+
+    const [held] = (await listQueuedFiles(LOCAL_QUEUE, true)).filter(
+      (entry) => entry.fileId === record.fileId
+    );
+    expect(held?.stale).toBeDefined();
+    expect(opfs.list(LOCAL_QUEUE, `queued_${record.fileId}`)).toContain(
+      "stale"
+    );
+  });
+
+  it("releases this tab's memory-only change once another tab's verified copy covers it, however many changes later copies cover", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // This tab renames the record while another tab holds the queue's lock;
+    // its pending entry cannot be stored, and its pass runs only once the
+    // sign-in left the guest namespace.
+    const gate = deferred<void>();
+    const lockedTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    const setItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ) {
+      if (!key.includes("-pending:")) return setItem.call(this, key, value);
+      throw new DOMException("The storage is full", "QuotaExceededError");
+    });
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    const entry = `queued_${record.fileId}`;
+    await vi.waitFor(() =>
+      expect(
+        opfs.list(LOCAL_QUEUE, entry).some((n) => n.startsWith("stale."))
+      ).toBe(true)
+    );
+    await signInToCloud("user-a");
+    gate.resolve();
+    await lockedTab;
+    await settleTasks();
+
+    // Another tab's pass lists the fence's marks, verifies the copy, then
+    // its later passes cover 150 more changes of the record.
+    await withQueueLock(LOCAL_QUEUE, new AbortController().signal, async () => {
+      const copy = { ...readLocalCopy(record.fileId), name: "receipt.png" };
+      const listed = await writeQueuedFileRecord(
+        LOCAL_QUEUE,
+        record.fileId,
+        copy as never,
+        "unverified"
+      );
+      await writeQueuedFileRecord(LOCAL_QUEUE, record.fileId, copy as never, {
+        covered: [],
+        listed
+      });
+      for (let later = 0; later < 150; later++) {
+        const id = String(later).padStart(12, "0");
+        const covered = [`${Date.now()}-00000000-0000-4000-8000-${id}`];
+        await writeQueuedFileRecord(LOCAL_QUEUE, record.fileId, copy as never, {
+          covered,
+          listed: []
+        });
+      }
+    });
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png")
+    );
+  });
+
+  it("holds a restored capture by a mark its backup's copy does not cover, keeping that copy's cover, and restores no malformed generation mark", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+    const [copy] = files;
+    const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    const uncovered = `${Date.now()}-00000000-0000-4000-8000-000000000002`;
+    const restored = {
+      ...copy,
+      record: { ...copy.record!, covered: [covered] },
+      marks: [
+        ...(copy.marks ?? []),
+        { name: `stale.${covered}`, text: "" },
+        { name: `stale.${uncovered}`, text: "" }
+      ]
+    };
+    for (const name of ["stale.", `stale.${covered}\nstale`])
+      await expect(
+        restoreLocalQueuedFiles(
+          [{ ...restored, marks: [...restored.marks, { name, text: "" }] }],
+          () => false
+        )
+      ).rejects.toThrow();
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await queue.removeEntry(`queued_${record.fileId}`, { recursive: true });
+    await restoreLocalQueuedFiles([restored], () => false);
+    expect(readLocalCopy(record.fileId)?.covered).toEqual([covered]);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("keeps a restored claimed capture held once signed in by its backup's deleted mark that names a delete its copy covers, and publishes nothing", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await settleLocalFileRecords();
+    const { fileId } = record;
+    const entry = `queued_${fileId}`;
+    const covered = `${Date.now()}-00000000-0000-4000-8000-000000000001`;
+    // A delete fence that paused across a verified copy covering its delete
+    // left its deleted mark naming that delete; the record that copy is of
+    // is then deleted before its own fence, and a guest backup is taken.
+    await writeQueuedFileRecord(
+      LOCAL_QUEUE,
+      fileId,
+      readLocalCopy(fileId) as never,
+      { covered: [covered], listed: [] }
+    );
+    await writeLocalEntryFile(fileId, "deleted", covered);
+    const { files } = await exportQueuedFiles(LOCAL_QUEUE, async () => null);
+    const [copy] = files;
+    expect(copy.claim).toBeDefined();
+    expect(copy.marks).toContainEqual({ name: "deleted", text: covered });
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await queue.removeEntry(entry, { recursive: true });
+
+    await restoreLocalQueuedFiles([copy], () => false);
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE, entry)).toContain("deleted");
+    expect((await listQueuedFiles(LOCAL_QUEUE, true))[0]?.isDeleted).toBe(true);
   });
 
   it("decides nothing on a runtime that replaced the one the publisher was created with, even in the same namespace", async () => {

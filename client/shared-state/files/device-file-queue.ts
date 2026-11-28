@@ -8,6 +8,7 @@ import {
   dequeueFile,
   isAppOffline,
   isFileQueueSupported,
+  listQueuedFileMarks,
   listQueuedFiles,
   LOCAL_FILE_QUEUE_DIR,
   markQueuedFileCommitted,
@@ -16,6 +17,9 @@ import {
   markQueuedFileStale,
   onAccountQueueReplay,
   replayFileQueue,
+  settleQueuedFileMarks,
+  toChangeGeneration,
+  toCovered,
   UNCOMMITTED_GRACE_MS,
   withQueueLock,
   writeQueuedFileRecord,
@@ -128,6 +132,7 @@ function toState(copy: QueuedFileRecord, trash = copy, archive = copy) {
  * with the record's current fields and its trashed and archived state,
  * unless the account already holds that record (an earlier publish whose
  * entry was not yet marked uploaded): then it updates it, if not edited since.
+ * Resolves false when it saved nothing because its copy was not current.
  */
 export function createLocalFilePublisher(
   uploader: Pick<FileQueueUploader, "userId" | "baseUrl" | "signal" | "client">
@@ -201,7 +206,7 @@ export function createLocalFilePublisher(
         both.flatMap((b) => both.map((c) => toState(a, b, c)))
       );
       await entry.mark("saved", [...entry.saved, ...states].join("\n"));
-      if (!(await entry.isCurrent())) return;
+      if (!(await entry.isCurrent())) return false;
       assertReady();
       assertSaved(await datafn.file.mutate(mutations as never));
       await entry.mark("saved", `${toState(record)}\nok ${record.id}`);
@@ -236,17 +241,27 @@ function isAbandoned(entry: QueuedFileEntry) {
  * Brings a local file in line with the local-only record that references it,
  * read in the guest namespace it was captured in: the file keeps a copy of
  * the record as it is now (another record that took over its `fileId` when
- * the first one was deleted, too) and is marked committed. A committed file
- * no record references any more, or one never committed and abandoned, is
- * removed under Web Locks; one claimed and not uploaded is marked orphaned,
- * for the claiming account to settle (see settleOrphanedLocalFiles).
+ * the first one was deleted, too) and is marked committed. A copy a reread
+ * confirms covers the changes `read` lists of its record and the marks
+ * listed before that reread (their changes came before it), and settles its
+ * marks, which hold it until then (see writeQueuedFileRecord); one the
+ * reread does not confirm gets a new stale mark, for a later pass. A
+ * committed file no record references any more, or one never committed and
+ * abandoned, is removed under Web Locks; one claimed and not uploaded is
+ * marked orphaned, covering every change `read` lists and the marks listed
+ * just before its lookups (none took it over), for the claiming account to
+ * settle (see settleOrphanedLocalFiles).
  * Resolves false for a file left as it was: one staged, whose record is not
  * saved yet.
  */
 async function reconcileLocalFile(
   namespace: string,
-  entry: QueuedFileEntry
+  entry: QueuedFileEntry,
+  read: PendingChange[]
 ): Promise<boolean> {
+  const dir = LOCAL_FILE_QUEUE_DIR;
+  const { fileId } = entry;
+  const marks = await listQueuedFileMarks(dir, fileId); // Before the lookups.
   const byId = entry.recordId
     ? await readFileRecord(namespace, { id: entry.recordId })
     : undefined;
@@ -256,12 +271,15 @@ async function reconcileLocalFile(
       : await readFileRecord(namespace, { fileId: entry.fileId });
   if (record) {
     const copy = toQueuedFileRecord(record, namespace);
-    if (entry.isOrphaned)
-      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
-    await writeQueuedFileRecord(LOCAL_FILE_QUEUE_DIR, entry.fileId, copy);
+    const ids = [copy.id, entry.recordId];
+    const covered = read.filter((c) => ids.includes(c.id)).flatMap(toTokens);
+    if (entry.isOrphaned) await markQueuedFileStale(dir, fileId);
+    const listed = await writeQueuedFileRecord(dir, fileId, copy, "unverified");
+    const cover = { covered, listed, isHeld };
     const now = await readFileRecord(namespace, { id: copy.id });
     if (!now || toState(toQueuedFileRecord(now, namespace)) !== toState(copy))
-      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, !now);
+      await markQueuedFileStale(dir, fileId, !now);
+    else await writeQueuedFileRecord(dir, fileId, copy, cover);
     if (!entry.isCommitted) {
       await markQueuedFileCommitted(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     }
@@ -269,12 +287,13 @@ async function reconcileLocalFile(
   }
   if (!entry.isCommitted && !isAbandoned(entry)) return false;
   if (entry.claim && !entry.isUploaded) {
-    await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+    const covered = read.flatMap(toTokens);
+    await markQueuedFileOrphaned(dir, fileId, marks, covered);
   } else if (globalThis.navigator?.locks) {
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));
     if (!(await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId, isUnused)))
-      return reconcileLocalFile(namespace, entry);
+      return reconcileLocalFile(namespace, entry, read);
   }
   return true;
 }
@@ -287,7 +306,8 @@ async function reconcileLocalFile(
  * marked deleted first (a staged file it leaves stays pending until that
  * mark is written); a pending, stale, orphaned or deleted file it could not
  * reconcile is marked with its pending action, so the mark holds it across a
- * sign-out (see markQueuedFileStale). Another keeps its copy, still current.
+ * sign-out (see markQueuedFileStale), of the generations it read (a new one,
+ * if none). Another keeps its copy, still current.
  */
 async function reconcileLocalFiles(
   namespace: string,
@@ -296,27 +316,38 @@ async function reconcileLocalFiles(
 ) {
   const failed: string[] = [];
   const ids = new Set(pending.map(({ id }) => id));
-  for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
+  const dir = LOCAL_FILE_QUEUE_DIR;
+  for (const entry of await listQueuedFiles(dir, true)) {
+    const { fileId } = entry;
     const id = entry.recordId ?? "";
     if (entry.namespace !== namespace) continue;
     const isHeld =
       entry.isOrphaned || entry.isDeleted || entry.stale !== undefined;
     if (!isFull && !ids.has(id) && !isHeld) continue;
-    let isDeleted = pending.some((c) => c.id === id && c.action === "delete");
+    const changes = pending.filter((c) => c.id === id);
+    const generations = changes.flatMap((c) => c.at ?? []);
+    const deletes = changes.filter((c) => c.action === "delete");
+    let isDeleted = deletes.length > 0;
+    const markDeletes = async () => {
+      for (const { at } of deletes)
+        await markQueuedFileStale(dir, fileId, true, at);
+    };
     try {
       const isMarked =
         !isDeleted ||
-        (await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, true)
-          .then(() => true)
-          .catch(() => false));
-      if (!(await reconcileLocalFile(namespace, entry)) && !isMarked)
+        (await markDeletes().then(
+          () => true,
+          () => false
+        ));
+      if (!(await reconcileLocalFile(namespace, entry, pending)) && !isMarked)
         throw new Error("The delete of a staged file is not marked");
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
-      const key = pendingKey(namespace, id);
-      if (!isHeld && !ids.has(id) && !memoryPending.has(key)) continue;
-      isDeleted ||= isPendingDelete(key);
-      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, isDeleted);
+      const isPending = readPendingChanges(namespace).some((c) => c.id === id);
+      if (!isHeld && !ids.has(id) && !isPending) continue;
+      isDeleted ||= isPendingDelete(namespace, id);
+      for (const at of generations.length ? generations : [undefined])
+        await markQueuedFileStale(dir, fileId, isDeleted, at);
       failed.push(id);
     }
   }
@@ -459,18 +490,21 @@ function scheduleChangePass(namespace: string, isFull = false) {
  * Uploads the device's local files (a local-only user's) through the signed-in
  * cloud account's client and publishes their records in the account, so the
  * account holds a record of each file it receives (see replayFileQueue),
- * once retired guest namespaces are released and the account's orphaned
- * files settled (see settleOrphanedLocalFiles).
+ * once retired guest namespaces are released, the local files' marks
+ * settled (see settleQueuedFileMarks) and the account's orphaned files
+ * settled (see settleOrphanedLocalFiles).
  */
 export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
   if (!globalThis.navigator?.locks) return;
   await settleLocalFileRecords();
   if (uploader.signal.aborted) return;
-  await withQueueLock(
-    LOCAL_FILE_QUEUE_DIR,
-    uploader.signal,
-    releaseRetiredNamespaces
-  ).catch(logReleaseError);
+  await withQueueLock(LOCAL_FILE_QUEUE_DIR, uploader.signal, async () => {
+    await releaseRetiredNamespaces().catch(logReleaseError);
+    for (const { fileId } of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR))
+      await settleQueuedFileMarks(LOCAL_FILE_QUEUE_DIR, fileId, isHeld).catch(
+        logReleaseError
+      );
+  }).catch(logReleaseError);
   const publisher = createLocalFilePublisher(uploader);
   await settleOrphanedLocalFiles(uploader, publisher).catch(logOrphanError);
   await replayFileQueue(
@@ -505,7 +539,7 @@ async function settleOrphanedLocalFiles(
     entry.claim?.userId === userId &&
     entry.claim.baseUrl === baseUrl &&
     !readPendingChanges(String(entry.namespace)).some(
-      ({ action }) => action !== "delete"
+      (c) => c.action !== "delete" && !isCovered(c, entry.covered)
     );
   const orphans = (await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)).filter(
     isOrphanOf
@@ -563,17 +597,20 @@ function logOrphanError(error: unknown) {
 
 /**
  * Guest changes not yet copied to their local files: one local-storage entry
- * each, `<PENDING_PREFIX><namespace>:<record ID>`, valued `<action>:<token>`,
- * so a reload and other tabs keep them, and a pass removes only those it
- * read and that did not change since; also in page memory, so this tab's
- * pass copies them after another tab's sign-out cleared local storage.
- * A local file's durable hold is its stale mark (see fenceChanges); until
- * that mark is written, its local-storage entry holds it, and its memory
- * entry too while either could not be written (`unfenced`).
+ * per write, `<WRITE_PREFIX><namespace>:<record ID>:<generation>`, valued
+ * `<action>:<generation>`, so a reload and other tabs keep them, and a pass
+ * removes only the writes it read; also in page memory, so this tab's pass
+ * copies them after another tab's sign-out cleared local storage. Each holds
+ * its file until a verified copy covers its generation (see isHeld), as its
+ * stale mark does (see fenceChanges). A record's last write is also under
+ * `<PENDING_PREFIX><namespace>:<record ID>`, the entry an earlier build's tab
+ * holds the file by (and writes, with a new value each time).
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
+const WRITE_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-write:`;
+const toPrefix = (key: string) =>
+  [PENDING_PREFIX, WRITE_PREFIX].find((prefix) => key.startsWith(prefix));
 const memoryPending = new Map<string, string>();
-const unfenced = new Set<string>();
 
 type PendingChange = {
   key: string;
@@ -581,20 +618,19 @@ type PendingChange = {
   namespace: string;
   id: string;
   action: string;
+  at?: string;
 };
+
+/**
+ * A pending change's tokens: its generation (an earlier build's key and
+ * value: it reuses the key for each write to a record, with a new value) and
+ * the generation its value names.
+ */
+const toTokens = ({ at, key, value, action }: PendingChange) =>
+  [at ?? `${key} ${value}`, value.slice(action.length + 1)].filter(Boolean);
 
 function pendingKey(namespace: string, id: string) {
   return PENDING_PREFIX + [namespace, id].map(encodeURIComponent).join(":");
-}
-
-/** Reads a pending change's local-storage entry. */
-function readStoredChange(key: string) {
-  try {
-    return globalThis.localStorage?.getItem(key) ?? undefined;
-  } catch (error) {
-    logger.warn({ at: "deviceFileQueue.pending", error });
-    return undefined;
-  }
 }
 
 /** Lists the pending changes (of one namespace, if given). */
@@ -604,46 +640,51 @@ function readPendingChanges(namespace?: string): PendingChange[] {
     const storage = globalThis.localStorage;
     for (let index = 0; index < (storage?.length ?? 0); index++) {
       const key = storage.key(index);
-      if (key?.startsWith(PENDING_PREFIX))
-        found.push([key, storage.getItem(key) ?? ""]);
+      if (key && toPrefix(key)) found.push([key, storage.getItem(key) ?? ""]);
     }
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
   }
   const changes = found.map(([key, value]) => {
-    const [owner = "", id = ""] = key
-      .slice(PENDING_PREFIX.length)
+    const [owner = "", id = "", at] = key
+      .slice(toPrefix(key)?.length)
       .split(":")
       .map(decodeURIComponent);
-    return { key, value, namespace: owner, id, action: value.split(":")[0] };
+    const action = value.split(":")[0];
+    return { key, value, namespace: owner, id, action, at };
   });
   return changes.filter((c) => !namespace || c.namespace === namespace);
 }
 
-function isPendingDelete(key: string) {
-  return [memoryPending.get(key), readStoredChange(key)].some((value) =>
-    value?.startsWith("delete:")
+function isPendingDelete(namespace: string, id: string) {
+  return readPendingChanges(namespace).some(
+    (change) => change.id === id && change.action === "delete"
   );
 }
 
 /** Records a pending change; a record's delete stays one. */
-function addPendingChange(namespace: string, id: string, action = "change") {
-  const key = pendingKey(namespace, id);
-  const isDeleted = isPendingDelete(key);
-  const value = `${isDeleted ? "delete" : action}:${crypto.randomUUID()}`;
+function addPendingChange(
+  namespace: string,
+  id: string,
+  action = "change",
+  generation = toChangeGeneration()
+) {
+  const mirror = pendingKey(namespace, id);
+  const key = `${WRITE_PREFIX}${mirror.slice(PENDING_PREFIX.length)}:${generation}`;
+  const isDeleted = isPendingDelete(namespace, id);
+  const value = `${isDeleted ? "delete" : action}:${generation}`;
   memoryPending.set(key, value);
   try {
+    globalThis.localStorage?.setItem(mirror, value);
     globalThis.localStorage?.setItem(key, value);
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
-    unfenced.add(key);
   }
 }
 
 /** Removes a pending change, unless it was recorded again since it was read. */
 function removePendingChange({ key, value }: PendingChange) {
   if (memoryPending.get(key) === value) memoryPending.delete(key);
-  if (!memoryPending.has(key)) unfenced.delete(key);
   try {
     const storage = globalThis.localStorage;
     if (storage?.getItem(key) === value) storage.removeItem(key);
@@ -652,12 +693,18 @@ function removePendingChange({ key, value }: PendingChange) {
   }
 }
 
-/** Whether a local file's record copy has a change not yet copied to it. */
+/** Whether a local file's record has a change its copy does not cover. */
 function isHeld(record: QueuedFileRecord) {
   if (typeof record.namespace !== "string") return false;
-  const key = pendingKey(record.namespace, record.id);
-  return unfenced.has(key) || readStoredChange(key) !== undefined;
+  const covered = toCovered(record);
+  return readPendingChanges(record.namespace).some(
+    (change) => change.id === record.id && !isCovered(change, covered)
+  );
 }
+
+/** Whether `covered` holds a token of a change (see toTokens). */
+const isCovered = (change: PendingChange, covered: string[]) =>
+  toTokens(change).some((token) => covered.includes(token));
 
 /**
  * Keeps each local file's record copy current: a change to a local-only
@@ -671,8 +718,10 @@ function onFileRecordsChanged(event: { ids?: string[]; action?: string }) {
   if (!namespace || !resolveMigrationQueueDir(namespace)) return;
   if (!event.ids?.length) return;
   const action = event.action === "delete" ? "delete" : "change";
-  for (const id of event.ids) addPendingChange(namespace, id, action);
-  fenceChanges(namespace, event.ids, action === "delete");
+  const generation = toChangeGeneration();
+  for (const id of event.ids)
+    addPendingChange(namespace, id, action, generation);
+  fenceChanges(namespace, event.ids, action === "delete", generation);
   void scheduleChangePass(namespace);
 }
 
@@ -681,11 +730,16 @@ let fences: Promise<void> = Promise.resolve();
 /**
  * Marks the changed records' local files (a delete's as deleted) and the
  * orphaned or deleted ones, which a changed record may take over, stale at
- * once, without the lock. Changes whose marks could not be written stay held
- * in page memory until a pass handles them.
+ * once, without the lock, with the changes' generation; it only adds marks.
+ * Changes whose marks could not be written stay held by their pending
+ * entries (see isHeld).
  */
-function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
-  const keys = ids.map((id) => pendingKey(namespace, id));
+function fenceChanges(
+  namespace: string,
+  ids: string[],
+  isDeleted: boolean,
+  generation: string
+) {
   fences = fences
     .then(async () => {
       for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
@@ -695,14 +749,12 @@ function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
           await markQueuedFileStale(
             LOCAL_FILE_QUEUE_DIR,
             entry.fileId,
-            index >= 0 && isDeleted
+            index >= 0 && isDeleted,
+            generation
           );
       }
     })
-    .catch((error) => {
-      logger.warn({ at: "deviceFileQueue.fence", error });
-      for (const key of keys) if (memoryPending.has(key)) unfenced.add(key);
-    });
+    .catch((error) => logger.warn({ at: "deviceFileQueue.fence", error }));
 }
 
 /**
