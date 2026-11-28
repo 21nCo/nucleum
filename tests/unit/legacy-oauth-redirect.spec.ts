@@ -146,6 +146,35 @@ describe("buildOAuthRedirectResponse", () => {
     });
   });
 
+  it.each(["g:web.memotron.app:8443", "web.memotron.app", 42])(
+    "refuses a malformed state %s",
+    async (state) => {
+      const signIn = vi.fn().mockResolvedValue(signedIn);
+      const response = await buildOAuthRedirectResponse(
+        { state, code: "test-code" },
+        "google",
+        "api.memotron.app",
+        signIn,
+        allowlist
+      );
+      expect(signIn).not.toHaveBeenCalled();
+      expect(response.headers).toEqual({
+        Location: "https://web.memotron.app/oauth/error?error=Unknown%20redirect%20host"
+      });
+    }
+  );
+
+  it("accepts an empty guest part", async () => {
+    const response = await buildOAuthRedirectResponse(
+      { state: ":web.memotron.app", code: "test-code" },
+      "google",
+      "api.memotron.app",
+      vi.fn().mockResolvedValue(signedIn),
+      allowlist
+    );
+    expect(response.headers.Location).toContain("https://web.memotron.app/oauth?token=");
+  });
+
   it("answers 400 when neither state nor the API host gives a trusted target", async () => {
     const signIn = vi.fn();
     const response = await buildOAuthRedirectResponse(

@@ -203,8 +203,7 @@ export async function buildOAuthRedirectResponse(
   signIn: OAuthSignIn,
   allowlist: OAuthRedirectAllowlist = defaultAllowlist()
 ) {
-  const domainPart =
-    typeof body?.state === "string" ? body.state.split(":")[1] : undefined;
+  const domainPart = stateDomainPart(body?.state);
   const target = resolveOAuthRedirectTarget(domainPart, endpoint, allowlist);
   console.log({ provider, endpoint, domainPart, trusted: target.trusted });
 
@@ -238,6 +237,13 @@ export async function buildOAuthRedirectResponse(
     console.error(e);
     return redirect(`${target.url}/error?error=Something went wrong`);
   }
+}
+
+/** The domain part of a `<guest>:<domainPart>` state; anything else has none. */
+function stateDomainPart(state: unknown) {
+  if (typeof state !== "string") return undefined;
+  const parts = state.split(":");
+  return parts.length === 2 ? parts[1] : undefined;
 }
 
 function redirect(location: string) {

@@ -33,46 +33,87 @@ export async function compileRedirectModule() {
   return result.outputFiles[0].text;
 }
 
-/** Returns the patched bundle source, or throws if the bundle does not have the expected shape. */
+const NAME = "[\\w$]+";
+
+/**
+ * Returns the patched bundle source, or throws if the bundle does not have the
+ * expected shape. The chain is resolved from the exported Lambda handler:
+ * `handler:()=>H`, `async function H(e){... return L(e,W,!1)}`,
+ * `async function W(e){return R(e,p,d)}`, and R is the redirect handler that
+ * reads the state and awaits the sign-in step S once.
+ */
 export function patchBundle(source, moduleSource) {
   if (source.includes(GLOBAL_NAME)) {
     throw new Error("bundle is already patched");
   }
-  // Wrapper: async function pYe(e){return ane(e,ev,hO)}
-  const wrappers = [
-    ...source.matchAll(
-      /async function ([\w$]+)\(e\)\{return ([\w$]+)\(e,([\w$]+),([\w$]+)\)\}/g
-    )
-  ].filter((m) =>
-    source.includes(`async function ${m[2]}(e,t,r){`) &&
-    handlerBody(source, m[2]).includes('e.state.split(":")[1]')
+  const handler = only(
+    source,
+    new RegExp(`handler:\\(\\)=>(${NAME})`, "g"),
+    "exported Lambda handler"
+  )[1];
+  const handlerSource = functionSource(source, `async function ${handler}(e){`);
+  const callback = only(
+    handlerSource,
+    new RegExp(`(${NAME})\\(e,(${NAME}),!1\\)`, "g"),
+    `unauthenticated callback in ${handler}`
+  )[2];
+  const wrapperMatch = only(
+    source,
+    new RegExp(
+      `async function ${escape(callback)}\\(e\\)\\{return (${NAME})\\(e,(${NAME}),(${NAME})\\);?\\}`,
+      "g"
+    ),
+    `wrapper ${callback}`
   );
-  if (wrappers.length !== 1) {
-    throw new Error(`expected one redirect handler wrapper, found ${wrappers.length}`);
-  }
-  const [wrapper, , handler, providerVar, endpointVar] = wrappers[0];
-  const signIns = [...handlerBody(source, handler).matchAll(/await ([\w$]+)\(e,t,r\)/g)];
-  if (signIns.length !== 1) {
-    throw new Error(`expected one sign-in call in ${handler}, found ${signIns.length}`);
-  }
-  const signIn = signIns[0][1];
-  if (!source.includes(`async function ${signIn}(e,t,r){`)) {
-    throw new Error(`sign-in function ${signIn} not found`);
-  }
-  const patchedWrapper = wrapper.replace(
-    `return ${handler}(e,${providerVar},${endpointVar})`,
-    `return ${GLOBAL_NAME}.buildOAuthRedirectResponse(e,${providerVar},${endpointVar},${signIn})`
+  const [wrapper, redirectHandler, providerVar, endpointVar] = wrapperMatch;
+  const redirectSource = functionSource(
+    source,
+    `async function ${redirectHandler}(e,t,r){`
   );
-  const body = source.replace(wrapper, patchedWrapper);
-  const strict = body.startsWith('"use strict";') ? '"use strict";\n' : "";
-  return strict + moduleSource + "\n" + body.slice(strict ? '"use strict";'.length : 0);
+  if (!redirectSource.includes('e.state.split(":")[1]')) {
+    throw new Error(`${redirectHandler} is not the OAuth redirect handler`);
+  }
+  const signIn = only(
+    redirectSource,
+    new RegExp(`await (${NAME})\\(e,t,r\\)`, "g"),
+    `sign-in call in ${redirectHandler}`
+  )[1];
+  functionSource(source, `async function ${signIn}(e,t,r){`);
+
+  const call = `${GLOBAL_NAME}.buildOAuthRedirectResponse(e,${providerVar},${endpointVar},${signIn})`;
+  const patchedWrapper = `async function ${callback}(e){return ${call}}`;
+  const at = wrapperMatch.index;
+  const body = source.slice(0, at) + patchedWrapper + source.slice(at + wrapper.length);
+  if (body.split(call).length !== 2) {
+    throw new Error("patched call not found exactly once");
+  }
+  const strict = '"use strict";';
+  return body.startsWith(strict)
+    ? `${strict}\n${moduleSource}\n${body.slice(strict.length)}`
+    : `${moduleSource}\n${body}`;
 }
 
-function handlerBody(source, name) {
-  const start = source.indexOf(`async function ${name}(e,t,r){`);
-  if (start < 0) return "";
-  const next = source.indexOf("async function ", start + 1);
+function only(source, pattern, what) {
+  const matches = [...source.matchAll(pattern)];
+  if (matches.length !== 1) {
+    throw new Error(`expected one ${what}, found ${matches.length}`);
+  }
+  return matches[0];
+}
+
+/** Source of the function that starts with `prefix`, up to the next function. */
+function functionSource(source, prefix) {
+  const starts = source.split(prefix).length - 1;
+  if (starts !== 1) {
+    throw new Error(`expected one ${prefix}, found ${starts}`);
+  }
+  const start = source.indexOf(prefix);
+  const next = source.indexOf("function ", start + prefix.length);
   return source.slice(start, next < 0 ? undefined : next);
+}
+
+function escape(name) {
+  return name.replace(/\$/g, "\\$");
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
