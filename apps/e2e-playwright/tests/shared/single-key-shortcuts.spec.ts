@@ -4,7 +4,7 @@ import {
   requireE2EProduct,
   resolveSurfaceContract
 } from "../../config/e2e.config";
-import { ensureInAppOnHome } from "../utils/helpers";
+import { browserShortcutModifier, ensureInAppOnHome } from "../utils/helpers";
 import { resolveRepoFsImportPath } from "../utils/repo-fs";
 import { openSettings } from "../utils/settings";
 import {
@@ -64,7 +64,7 @@ async function openSingleKeySwitch(page: Page) {
   await page
     .getByTestId("settings-sidebar")
     .getByRole("button", { name: /^Keyboard shortcuts$/i })
-    .click({ timeout: 5_000 });
+    .click({ noWaitAfter: true, timeout: 5_000 });
   const panel = page.getByTestId("keyboard-shortcut-settings");
   await expect(panel).toBeVisible({ timeout: 10_000 });
   const container = panel.getByTestId("toggle-single-key-shortcuts");
@@ -148,14 +148,12 @@ test.describe("single-key shortcuts setting", () => {
       await expect(page).not.toHaveURL(/\/calendar(\/|$|\?)/);
       await expect(page).not.toHaveURL(/navigator/);
 
-      await page.keyboard.press("ControlOrMeta+k");
+      await page.keyboard.press(`${await browserShortcutModifier(page)}+k`);
       await expect(page.getByTestId("command-bar-input")).toBeFocused({
         timeout: 10_000
       });
       await expect(page.getByTestId("super-bar-group-context")).toBeVisible();
-      await expect(page.getByTestId("super-bar-context-hotkey")).toHaveCount(
-        0
-      );
+      await expect(page.getByTestId("super-bar-context-hotkey")).toHaveCount(0);
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("command-bar-input")).toBeHidden({
         timeout: 10_000

@@ -25,6 +25,13 @@ import {
   type ResourceKey
 } from "./resource-matrix";
 
+/** Returns the app shortcut modifier for the browser's emulated platform. */
+export async function browserShortcutModifier(page: Page) {
+  return page.evaluate(() =>
+    /Macintosh/.test(navigator.userAgent) ? "Meta" : "Control"
+  );
+}
+
 /**
  * Assert every configured app menu nav label is visible as a button.
  */

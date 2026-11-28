@@ -4,7 +4,7 @@ import {
   resolveSurfaceContract
 } from "../../config/e2e.config";
 import type { Page } from "@playwright/test";
-import { ensureInAppOnHome } from "../utils/helpers";
+import { browserShortcutModifier, ensureInAppOnHome } from "../utils/helpers";
 import {
   blockExternalAuthRequests,
   openNodeRecordFromLibraryById
@@ -58,9 +58,12 @@ test.describe("super bar context and modes", () => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
     const label = await openSeededRecordPage(page, test.info().project.name);
+    await expect(page.getByTestId("top-bar-page-identity")).toContainText(
+      label
+    );
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
 
-    await page.keyboard.press("ControlOrMeta+k");
+    await page.keyboard.press(`${await browserShortcutModifier(page)}+k`);
     const input = page.getByTestId("command-bar-input");
     await expect(input).toBeFocused();
     await expect(page.getByTestId("super-bar-context-name")).toHaveText(label);

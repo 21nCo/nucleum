@@ -4,7 +4,7 @@ import {
   requireE2EProduct,
   resolveSurfaceContract
 } from "../../config/e2e.config";
-import { ensureInAppOnHome } from "../utils/helpers";
+import { browserShortcutModifier, ensureInAppOnHome } from "../utils/helpers";
 import { resolveRepoFsImportPath } from "../utils/repo-fs";
 import {
   blockExternalAuthRequests,
@@ -106,7 +106,7 @@ test.describe("page letters", () => {
     await expect(star.first()).not.toContainText("Starred");
     await closeMenu();
 
-    await page.keyboard.press("ControlOrMeta+k");
+    await page.keyboard.press(`${await browserShortcutModifier(page)}+k`);
     await expect(page.getByTestId("command-bar-input")).toBeFocused();
     await expect(page.getByTestId("super-bar-group-context")).toBeVisible();
     const superBarStarHint = page.getByLabel("Press S on the page", {
