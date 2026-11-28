@@ -1,0 +1,21 @@
+services/account/src/app.ts
+  s_69892bdd7e1600::t_76eb2126b94948 448-449
+services/account/src/mcp/mcp.test.ts
+  s_69892bdd7e1600::t_09bbfbda2363a8 347-361
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88df18e00347b6bbb05791d9b045c68848a65017",
+  "prompts": {},
+  "sessions": {
+    "s_69892bdd7e1600": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9539d20f-ea7d-473b-88ed-1aa7389830e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
