@@ -1,15 +1,27 @@
-import * as maplibregl from "maplibre-gl";
-import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import type { Map, MapOptions } from "maplibre-gl";
 
 /**
- * Builds a MapLibre map after pointing MapLibre at the worker file the bundler
- * emits. MapLibre 6 loads its worker from a separate file next to its own
- * module, which the app bundle does not contain. The setup runs inside this
- * function, not at module load, so tree-shaking cannot drop it.
+ * Loads MapLibre and its stylesheet on first use, so pages without a map do
+ * not download it, and points MapLibre at the worker file the bundler emits.
+ * MapLibre 6 loads its worker from a separate file next to its own module,
+ * which the app bundle does not contain.
  */
-export function createMaplibreMap(options: maplibregl.MapOptions) {
+export async function loadMaplibre() {
+  const [maplibregl, { default: maplibreWorkerUrl }] = await Promise.all([
+    import("maplibre-gl"),
+    import("maplibre-gl/dist/maplibre-gl-worker.mjs?url"),
+    import("maplibre-gl/dist/maplibre-gl.css")
+  ]);
   if (maplibregl.getWorkerUrl() !== maplibreWorkerUrl) {
     maplibregl.setWorkerUrl(maplibreWorkerUrl);
   }
+  return maplibregl;
+}
+
+/**
+ * Builds a MapLibre map once MapLibre has loaded.
+ */
+export async function createMaplibreMap(options: MapOptions): Promise<Map> {
+  const maplibregl = await loadMaplibre();
   return new maplibregl.Map(options);
 }

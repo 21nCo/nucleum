@@ -41,6 +41,8 @@
   } = $props();
 
   let isRendered = $state(false);
+  let isLoadFailed = $state(false);
+  let loadAttempt = $state(0);
   let isHideOrphans = $state(false);
   let graphRef = $state<GlobalGraphUsingG6>();
   let splitResource = $state<IRecordId | undefined>(undefined);
@@ -205,6 +207,20 @@
     isRendered = true;
   }
 
+  function onLoadError(error: unknown) {
+    logger.error("globalGraph - onLoadError", error);
+    isLoadFailed = true;
+  }
+
+  function retryLoad() {
+    if (loadAttempt > 0) {
+      window.location.reload();
+      return;
+    }
+    isLoadFailed = false;
+    loadAttempt += 1;
+  }
+
   function onNodeSelect(event: any) {
     const newResource = event.target.id;
     logger.log({
@@ -272,17 +288,32 @@
     <div
       class="absolute z-10 inset-0 w-full h-full flex justify-center items-center bg-bgs1"
     >
-      <EmptyStatusView isLoadingState={isLoading} mainText="Not enough data." />
+      {#if isLoadFailed}
+        <EmptyStatusView
+          mainText="Couldn't load the graph."
+          subText="Check your connection and try again."
+          actionText={loadAttempt > 0 ? "Reload" : "Retry"}
+          onclick={retryLoad}
+        />
+      {:else}
+        <EmptyStatusView
+          isLoadingState={isLoading}
+          mainText="Not enough data."
+        />
+      {/if}
     </div>
   {/if}
   {#if data.nodes.length > 0}
-    <GlobalGraphUsingG6
-      bind:this={graphRef}
-      {data}
-      {onRender}
-      onSelect={onNodeSelect}
-      {onCanvasClick}
-      layout="d3-force"
-    />
+    {#key loadAttempt}
+      <GlobalGraphUsingG6
+        bind:this={graphRef}
+        {data}
+        {onRender}
+        {onLoadError}
+        onSelect={onNodeSelect}
+        {onCanvasClick}
+        layout="d3-force"
+      />
+    {/key}
   {/if}
 </Layout>

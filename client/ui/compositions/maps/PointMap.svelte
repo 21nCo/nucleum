@@ -1,8 +1,7 @@
 <script lang="ts" generics="T extends MapPoint">
   import { onMount, onDestroy } from "svelte";
-  import * as maplibregl from "maplibre-gl";
-  import { createMaplibreMap } from "@21n/ui/compositions/maps/maplibre";
-  import "maplibre-gl/dist/maplibre-gl.css";
+  import type * as maplibregl from "maplibre-gl";
+  import { loadMaplibre } from "@21n/ui/compositions/maps/maplibre";
   import type { MapPoint } from "./map-point.type";
   import { mapTileStyles } from "@21n/ui/compositions/maps/map.styles";
 
@@ -18,6 +17,8 @@
 
   let mapContainer = $state<HTMLDivElement | null>(null);
   let map = $state<maplibregl.Map | null>(null);
+  let maplibre: typeof maplibregl | null = null;
+  let isDestroyed = false;
   /**
    * Sources and layers can only be added once the style has loaded; adding
    * them earlier throws "Style is not done loading".
@@ -33,6 +34,7 @@
   });
 
   onDestroy(() => {
+    isDestroyed = true;
     for (const cleanup of popupCleanups) cleanup();
     if (map) {
       map.remove();
@@ -45,12 +47,14 @@
     }
   });
 
-  function initializeMap() {
+  async function initializeMap() {
     try {
-      if (!mapContainer) {
+      const loadedMaplibre = await loadMaplibre();
+      if (isDestroyed || !mapContainer) {
         return;
       }
-      map = createMaplibreMap({
+      maplibre = loadedMaplibre;
+      map = new loadedMaplibre.Map({
         container: mapContainer,
         style: mapTileStyles.osm as any,
         center: [0, 0],
@@ -93,9 +97,9 @@
         const popupContainer = document.createElement("div");
 
         const point = data.find((point) => point.id === properties?.id);
-        if (!point || !renderPopup) return;
+        if (!point || !renderPopup || !maplibre) return;
         const dispose = renderPopup(popupContainer, point);
-        const popup = new maplibregl.Popup()
+        const popup = new maplibre.Popup()
           .setLngLat(coordinates)
           .setDOMContent(popupContainer)
           .addTo(mapInstance);
@@ -292,9 +296,9 @@
         });
       }
 
-      if (data.length > 0) {
+      if (data.length > 0 && maplibre) {
         try {
-          const bounds = new maplibregl.LngLatBounds();
+          const bounds = new maplibre.LngLatBounds();
           data.forEach((point) => {
             if (
               typeof point.latitude === "number" &&

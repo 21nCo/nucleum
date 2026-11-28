@@ -3,7 +3,7 @@
   import appearance from "@nucleum/shared-state/appearance/appearance.store";
   import { retrieveCurrentColors } from "@21n/theme/color-presentation";
   import { truncateString } from "@21n/shared-utils/text.utils";
-  import { Graph, GraphEvent, NodeEvent, CanvasEvent } from "@antv/g6";
+  import type * as G6 from "@antv/g6";
   import { onMount } from "svelte";
 
   let {
@@ -11,21 +11,37 @@
     layout = "force-1",
     onCanvasClick = undefined,
     onRender = undefined,
+    onLoadError = undefined,
     onSelect = undefined
   }: {
     data?: { nodes: any[]; edges: any[] };
     layout?: string;
     onCanvasClick?: ((event: any) => void) | undefined;
     onRender?: (() => void) | undefined;
+    onLoadError?: ((error: unknown) => void) | undefined;
     onSelect?: ((event: any) => void) | undefined;
   } = $props();
   let _data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
-  let graph: Graph;
+  let g6: typeof G6 | undefined;
+  let graph: G6.Graph;
   const currentColors: any = retrieveCurrentColors($appearance);
 
   onMount(() => {
-    preProcessData();
-    renderGraph();
+    let isDestroyed = false;
+    import("@antv/g6")
+      .then((module) => {
+        if (isDestroyed) return;
+        g6 = module;
+        preProcessData();
+        renderGraph();
+      })
+      .catch((error) => {
+        if (isDestroyed) return;
+        onLoadError?.(error);
+      });
+    return () => {
+      isDestroyed = true;
+    };
   });
 
   export function rerender() {
@@ -103,6 +119,8 @@
   }
 
   function renderGraph() {
+    if (!g6) return;
+    const { Graph, GraphEvent, CanvasEvent, NodeEvent } = g6;
     graph = new Graph({
       container: "globalgraphcontainer",
       data: _data,
