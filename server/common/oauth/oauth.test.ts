@@ -41,7 +41,7 @@ describe("oauthRedirect", () => {
       statusCode: 302,
       headers: {
         Location: expect.stringMatching(
-          /^https:\/\/dev2\.pointron\.io\/(oauth\?token=.*|error\?error=.*)$/
+          /^https:\/\/dev\.pointron\.app\/oauth(\?token=.*|\/error\?error=.*)$/
         )
       },
       body: ""
