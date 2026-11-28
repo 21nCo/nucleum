@@ -1,0 +1,27 @@
+services/account/src/api/router.ts
+  s_177d20eb9218a9::t_7a672102229c95 101,469-477,480-482,484,488-489,522-540,1061,1596-1605,1610
+services/account/src/mcp/mcp.test.ts
+  s_177d20eb9218a9::t_25e689572cc8f8 2-4,9,11,106-110,254-316
+services/account/src/mcp/routes.ts
+  s_177d20eb9218a9::t_bc689b5504a381 3-9,33-35,65,71-73,81,89
+services/account/src/mcp/tools.ts
+  s_177d20eb9218a9::t_1f10313ba0fe21 13-19,113-114,118,137-146,150,169,187-192,205-219,234-235
+services/account/src/mcp/write-manifests.ts
+  s_177d20eb9218a9::t_a78525996ae1b0 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3f4ffb9905d843d988ad8fd19b2892d1c18a37c9",
+  "prompts": {},
+  "sessions": {
+    "s_177d20eb9218a9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a8ceefd4-3635-44b3-8811-ede534839de5",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+package-lock.json
+  s_8a0c3c150b4aa3::t_d86da8079b3fa3 5519-5524,8535-8684,8703-8760,17901-17938,18023-18039,18800-18852,19133-19141,19690-19702,19740-19748,19784-19800,20891-20899,21782-21787,21834-21850,22162-22167,22620-22628,22653-22673,22797-22905,23041-23043,23186-23206,23331-23339,23360-23368,24133-24152,24571-24588,24967-24972,25499-25504,26292-26303,26972-27000,27451-27466,27941-27949,28182-28190,29279-29295,29416-29418,29528-29540,29546-29576,30103-30132,30419-30469,30497-30515,30582-30587,30956-30964,32088-32096,32910-32978,33174-33182,33365-33373,35654-35655,35678
+services/account/mcp/memotron.json
+  s_8a0c3c150b4aa3::t_12c338f0f82110 1-1107
+services/account/mcp/nucleum.json
+  s_8a0c3c150b4aa3::t_993327eef329ba 1-1917
+services/account/mcp/pointron.json
+  s_8a0c3c150b4aa3::t_d2f410956ae849 1-1658
+services/account/package.json
+  s_8a0c3c150b4aa3::t_2cf378fecf70bd 43,76-77,100
+services/account/src/app.ts
+  s_8a0c3c150b4aa3::t_7f207e417bb47b 55-56,503-515
+services/account/src/mcp/manifests.test.ts
+  s_8a0c3c150b4aa3::t_095254e27e7a44 1-9
+services/account/src/mcp/manifests.ts
+  s_8a0c3c150b4aa3::t_f0ab8da82356e9 1-25
+services/account/src/mcp/mcp.test.ts
+  s_8a0c3c150b4aa3::t_0cb06fc680c742 1-284
+services/account/src/mcp/routes.ts
+  s_8a0c3c150b4aa3::t_f392b2e1756707 1-143
+services/account/src/mcp/tools.ts
+  s_8a0c3c150b4aa3::t_4188cad2bb873d 1-219
+services/account/src/mcp/write-manifests.ts
+  s_8a0c3c150b4aa3::t_ef236e9395b5ed 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c0a0dda7a538f10a22acb90d37a5065eb510db1b",
+  "prompts": {},
+  "sessions": {
+    "s_8a0c3c150b4aa3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "554edd57-49c9-45c5-a546-d330766291b7",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
