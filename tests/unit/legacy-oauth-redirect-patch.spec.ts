@@ -104,6 +104,18 @@ describe("patch-legacy-oauth-redirect", () => {
     ).toThrow(/does not return an unauthenticated dispatch/);
   });
 
+  it("refuses a bundle where a scope shadows a name in the chain", () => {
+    expect(() =>
+      patchBundle(
+        legacyBundle.replace(
+          "async function lambdaHandler(e){",
+          "async function lambdaHandler(e){let pYe=decoy;"
+        ),
+        ""
+      )
+    ).toThrow(/pYe is bound 2 times/);
+  });
+
   it("keeps the strict-mode prologue first", async () => {
     const patched = patchBundle(legacyBundle, "var __legacyOAuthRedirect={};");
     expect(patched.startsWith('"use strict";\nvar __legacyOAuthRedirect')).toBe(true);

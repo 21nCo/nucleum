@@ -55,8 +55,11 @@ export function patchBundle(source, moduleSource) {
     ts.ScriptKind.JS
   );
   const functions = new Map();
+  const bindings = new Map();
   const handlers = [];
   visit(file, (node) => {
+    const bound = bindingName(node);
+    if (bound) bindings.set(bound, (bindings.get(bound) ?? 0) + 1);
     if (ts.isFunctionDeclaration(node) && node.name) {
       const list = functions.get(node.name.text) ?? [];
       list.push(node);
@@ -138,6 +141,14 @@ export function patchBundle(source, moduleSource) {
   const signIn = signIns[0];
   fn(signIn, "sign-in step");
 
+  // Every name in the chain must be bound once in the whole bundle, so no
+  // scope can shadow it and point the handler somewhere else.
+  for (const name of [handlers[0], callbackName, redirectName, signIn, providerVar, endpointVar]) {
+    if (bindings.get(name) !== 1) {
+      throw new Error(`${name} is bound ${bindings.get(name) ?? 0} times; expected once`);
+    }
+  }
+
   const call = `${GLOBAL_NAME}.buildOAuthRedirectResponse(${wrapperEvent},${providerVar},${endpointVar},${signIn})`;
   const start = returned.getStart(file);
   const body = source.slice(0, start) + call + source.slice(returned.end);
@@ -194,6 +205,27 @@ function paramNames(node, count, what) {
     throw new Error(`${what} does not take ${count} plain parameters`);
   }
   return names;
+}
+
+/** The name a declaration binds: functions, classes, variables, parameters and catch clauses. */
+function bindingName(node) {
+  if (
+    (ts.isFunctionDeclaration(node) ||
+      ts.isFunctionExpression(node) ||
+      ts.isClassDeclaration(node) ||
+      ts.isClassExpression(node) ||
+      ts.isVariableDeclaration(node) ||
+      ts.isParameter(node) ||
+      ts.isBindingElement(node) ||
+      ts.isImportSpecifier(node) ||
+      ts.isImportClause(node) ||
+      ts.isNamespaceImport(node)) &&
+    node.name &&
+    ts.isIdentifier(node.name)
+  ) {
+    return node.name.text;
+  }
+  return undefined;
 }
 
 function propertyName(node) {
