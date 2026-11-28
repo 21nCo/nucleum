@@ -205,7 +205,7 @@ export async function buildOAuthRedirectResponse(
 ) {
   const domainPart = stateDomainPart(body?.state);
   const target = resolveOAuthRedirectTarget(domainPart, endpoint, allowlist);
-  console.log({ provider, endpoint, domainPart, trusted: target.trusted });
+  console.log({ provider, endpoint, trusted: target.trusted });
 
   if (!target.trusted) {
     if (!target.url) {
