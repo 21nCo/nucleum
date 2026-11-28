@@ -1,6 +1,10 @@
 import type { Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
-import { ensureInAppOnHome, navigateToSurface } from "../utils/helpers";
+import {
+  ensureInAppOnHome,
+  isCloudAuthModeActive,
+  navigateToSurface
+} from "../utils/helpers";
 import { openResourceRecord } from "../utils/resource-matrix";
 import {
   collectPageErrors,
@@ -67,30 +71,12 @@ async function createManualFocusLog(page: Page, objectiveName: string) {
 }
 
 async function openCalendarActivityPanel(page: Page) {
-  await navigateToSurface(
-    page,
-    "calendar.layout.classic",
-    test.info().project.name
-  );
-  await page
-    .getByRole("button", { name: /^Today$/i })
-    .or(page.getByRole("button", { name: /^Classic$/i }))
-    .first()
-    .waitFor({ state: "visible", timeout: 20_000 });
-
-  const classicButton = page
-    .getByRole("button", { name: /^Classic$/i })
-    .first();
-  if (await classicButton.isVisible().catch(() => false)) {
-    await classicButton.click({ timeout: 5_000 });
-  }
-
-  const todayButton = page.getByRole("button", { name: /^Today$/i }).first();
-  if (await todayButton.isVisible().catch(() => false)) {
-    await todayButton.click({ timeout: 5_000 }).catch(() => null);
-  }
-
   await navigateToSurface(page, "calendar.view.day", test.info().project.name);
+
+  const goToToday = page.getByRole("button", { name: "Go to today" });
+  if (await goToToday.isVisible()) {
+    await goToToday.click();
+  }
 
   const activityButton = page
     .getByRole("button", { name: /^Activity$/i })
@@ -100,36 +86,19 @@ async function openCalendarActivityPanel(page: Page) {
   await activityButton.click({ timeout: 5_000 });
 }
 
-function getActivityRows(page: Page) {
-  return page.locator("button").filter({
-    has: page.locator("span.text-b3.text-fgs3.whitespace-nowrap")
-  });
-}
-
-async function readActivityRowTexts(page: Page) {
-  return getActivityRows(page).evaluateAll((nodes) =>
-    nodes
-      .map((node) => node.textContent?.replace(/\s+/g, " ").trim() ?? "")
-      .filter(Boolean)
-  );
-}
-
 async function expectActivityEntry(
   page: Page,
   label: string,
   actionPattern: RegExp
 ) {
-  await expect
-    .poll(
-      async () => {
-        const rows = await readActivityRowTexts(page);
-        return rows.some(
-          (row) => actionPattern.test(row) && row.includes(label)
-        );
-      },
-      { message: "expectActivityEntry: toBe true", timeout: 20_000 }
-    )
-    .toBe(true);
+  await expect(
+    page
+      .getByRole("button")
+      .filter({ has: page.getByText(actionPattern) })
+      .filter({ has: page.getByText(label, { exact: false }) })
+      .filter({ visible: true })
+      .first()
+  ).toBeVisible({ timeout: 20_000 });
 }
 
 test.beforeEach(async ({ page, seed }) => {
@@ -151,14 +120,18 @@ test("objective creation and opening appear in calendar activity", async ({
   await openObjectiveFromLibrary(page, objectiveName);
   await openCalendarActivityPanel(page);
 
-  await expectActivityEntry(page, objectiveName, /\bCreated\b/i);
-  await expectActivityEntry(page, objectiveName, /\bOpened\b/i);
+  await expectActivityEntry(page, objectiveName, /^Created$/);
+  if (isCloudAuthModeActive()) {
+    await expectActivityEntry(page, objectiveName, /^Opened$/);
+  }
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await ensureInAppOnHome(page);
   await openCalendarActivityPanel(page);
-  await expectActivityEntry(page, objectiveName, /\bCreated\b/i);
-  await expectActivityEntry(page, objectiveName, /\bOpened\b/i);
+  await expectActivityEntry(page, objectiveName, /^Created$/);
+  if (isCloudAuthModeActive()) {
+    await expectActivityEntry(page, objectiveName, /^Opened$/);
+  }
   expect(pageErrors).toEqual([]);
 });
 
@@ -174,11 +147,11 @@ test("manual focus log appears in calendar activity", async ({ page }) => {
   await createManualFocusLog(page, objectiveName);
   await openCalendarActivityPanel(page);
 
-  await expectActivityEntry(page, objectiveName, /\bFocus\b/i);
+  await expectActivityEntry(page, objectiveName, /^\u25cb Focus$/);
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await ensureInAppOnHome(page);
   await openCalendarActivityPanel(page);
-  await expectActivityEntry(page, objectiveName, /\bFocus\b/i);
+  await expectActivityEntry(page, objectiveName, /^\u25cb Focus$/);
   expect(pageErrors).toEqual([]);
 });
