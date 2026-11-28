@@ -296,7 +296,7 @@
               isLoadingState={isRefreshing}
               loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
               mainText="No recents found."
-              subText="Recent focus items will appear here as you complete few focus sessions."
+              subText="Recent focus items will appear here as you complete a few focus sessions."
             />
           </div>
         {/if}
