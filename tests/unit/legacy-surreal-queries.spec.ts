@@ -138,6 +138,16 @@ describe("database host by region", () => {
     expect(authorize).toHaveBeenCalled();
   });
 
+  it.each([false, 0, null])("refuses a bootstrap region of %s", async (region) => {
+    await expect(
+      performUserAccountAction("Bearer test-token", {
+        action: "bootstrap",
+        region,
+        context: { host: "web.memotron.app" }
+      })
+    ).rejects.toThrow(/Unknown region/);
+  });
+
   it("refuses a bootstrap region outside the allowlist before anything else runs", async () => {
     await expect(
       performUserAccountAction("Bearer test-token", {
