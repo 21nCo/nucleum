@@ -1,0 +1,23 @@
+server/common/oauth/oauth.ts
+  s_545bb079978e5a::t_94158aeb4e1b94 41
+server/common/oauth/oauth.endpoints.ts
+  s_545bb079978e5a::t_94158aeb4e1b94 21,35-36,53-54
+tools/cloudflare/sync-waf-exceptions.mjs
+  s_545bb079978e5a::t_6488977dce1d30 1-2,14-16,51,53-64,70-80,82-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "29e0c24acae4f95297ba5f2628524407c0ae44cc",
+  "prompts": {},
+  "sessions": {
+    "s_545bb079978e5a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a2144f-8f2a-7690-8b1a-e7858b67a889",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+server/common/account/account.utils.ts
+  s_69892bdd7e1600::t_029ae36c037ac8 3-7,23-25
+tests/unit/legacy-user-info.spec.ts
+  s_69892bdd7e1600::t_9cac7d7c07e96b 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "27b0c32a6f574c35cbf325349a710bcde36d379b",
+  "prompts": {},
+  "sessions": {
+    "s_69892bdd7e1600": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9539d20f-ea7d-473b-88ed-1aa7389830e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

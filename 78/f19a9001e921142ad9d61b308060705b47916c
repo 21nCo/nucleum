@@ -1,0 +1,21 @@
+tests/unit/legacy-oauth-redirect-patch.spec.ts
+  s_69892bdd7e1600::t_0c61d9791f72cc 96
+server/scripts/patch-legacy-oauth-redirect.mjs
+  s_69892bdd7e1600::t_0c61d9791f72cc 286-287,304,308,316-321,338,365-371,373-375,377,381
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "78f19a9001e921142ad9d61b308060705b47916c",
+  "prompts": {},
+  "sessions": {
+    "s_69892bdd7e1600": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9539d20f-ea7d-473b-88ed-1aa7389830e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

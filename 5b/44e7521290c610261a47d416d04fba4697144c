@@ -1,0 +1,30 @@
+server/common/oauth/oauth.test.ts
+  s_69892bdd7e1600::t_1ce12d828d0061 8,34
+server/scripts/patch-legacy-oauth-redirect.mjs
+  s_69892bdd7e1600::t_b682c4eca1133e 1-89
+tests/unit/legacy-oauth-redirect.spec.ts
+  s_69892bdd7e1600::t_40b7bd069ec711 7
+  s_69892bdd7e1600::t_776027b292d7b2 1-6,8-189
+server/common/oauth/oauth.endpoints.ts
+  s_69892bdd7e1600::t_64e6d29bc5685a 2,10,13,21-26
+server/common/oauth/oauth-redirect.ts
+  s_69892bdd7e1600::t_eba6fceceaf74d 1-245
+tests/unit/legacy-oauth-redirect-patch.spec.ts
+  s_69892bdd7e1600::t_7e8dd8c4f0045e 1-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5b44e7521290c610261a47d416d04fba4697144c",
+  "prompts": {},
+  "sessions": {
+    "s_69892bdd7e1600": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9539d20f-ea7d-473b-88ed-1aa7389830e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

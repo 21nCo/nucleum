@@ -1,0 +1,44 @@
+deployment/cdk/client/clientStack.ts
+  s_545bb079978e5a::t_b48f681bddaa4b 33
+services/frontend/scripts/sync-waf-exceptions.mjs
+  s_545bb079978e5a::t_3523a4df76fbd6 12,46-52
+deployment/cdk/staticClient/clientStaticStack.ts
+  s_545bb079978e5a::t_b48f681bddaa4b 33
+services/frontend/scripts/sync-routes.mjs
+  s_545bb079978e5a::t_d109208b46efca 11,41
+server/common/oauth/oauth.endpoints.ts
+  s_545bb079978e5a::t_b48f681bddaa4b 21-22,36,53-54
+server/database/providers/dynamodb.provider.ts
+  s_545bb079978e5a::t_b48f681bddaa4b 92
+apps/e2e-playwright/scripts/save-google-auth-state.ts
+  s_545bb079978e5a::t_b48f681bddaa4b 26-30,32,41
+  s_545bb079978e5a::t_9718df1fc5e580 33
+tools/cloudflare/sync-zone-routes.mjs
+  s_545bb079978e5a::t_d109208b46efca 1-34
+services/account/scripts/sync-routes.mjs
+  s_545bb079978e5a::t_d109208b46efca 11,36
+tools/cloudflare/sync-waf-exceptions.mjs
+  s_545bb079978e5a::t_3523a4df76fbd6 1-89
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/WebView/CustomWebView.swift
+  s_545bb079978e5a::t_b48f681bddaa4b 45-66
+services/account/scripts/dev-multiregion.mjs
+  s_545bb079978e5a::t_e27f84082fb305 5,43,57,60
+services/account/scripts/sync-waf-exceptions.mjs
+  s_545bb079978e5a::t_3523a4df76fbd6 11,49-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3bd159f2d21e10e1091df6a395ce72f0e028be17",
+  "prompts": {},
+  "sessions": {
+    "s_545bb079978e5a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a2144f-8f2a-7690-8b1a-e7858b67a889",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
